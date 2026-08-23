@@ -30,6 +30,11 @@ class Settings(BaseSettings):
         "http://localhost:8000",
     ]
 
+    # JWT Authentication
+    JWT_SECRET_KEY: str = "threattrace_development_jwt_secret_key_change_in_production"
+    JWT_ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 8  # 8 hours
+
     # Database Configuration
     POSTGRES_SERVER: str = "localhost"
     POSTGRES_PORT: int = 5432

@@ -1,3 +1,5 @@
+export * from "./auth";
+
 export type HealthStatus = "healthy" | "degraded" | "unhealthy";
 export type DatabaseStatus = "connected" | "disconnected" | "not_configured";
 

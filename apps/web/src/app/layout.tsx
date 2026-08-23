@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeRegistry } from "@/theme/ThemeRegistry";
 import { QueryProvider } from "@/providers/QueryProvider";
+import { AuthProvider } from "@/context/AuthContext";
 import { AppShell } from "@/components/layout/AppShell";
 
 export const metadata: Metadata = {
@@ -20,7 +21,9 @@ export default function RootLayout({
       <body>
         <ThemeRegistry>
           <QueryProvider>
-            <AppShell>{children}</AppShell>
+            <AuthProvider>
+              <AppShell>{children}</AppShell>
+            </AuthProvider>
           </QueryProvider>
         </ThemeRegistry>
       </body>

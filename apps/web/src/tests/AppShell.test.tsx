@@ -3,6 +3,7 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { AppShell } from "@/components/layout/AppShell";
 import { QueryProvider } from "@/providers/QueryProvider";
+import { AuthProvider } from "@/context/AuthContext";
 
 // Mock useHealth hook to provide deterministic data
 vi.mock("@/hooks/useHealth", () => ({
@@ -33,9 +34,11 @@ describe("AppShell & Navigation", () => {
   it("renders branding, sidebar navigation items, and children", () => {
     render(
       <QueryProvider>
-        <AppShell>
-          <div data-testid="test-content">Investigation Content</div>
-        </AppShell>
+        <AuthProvider>
+          <AppShell>
+            <div data-testid="test-content">Investigation Content</div>
+          </AppShell>
+        </AuthProvider>
       </QueryProvider>
     );
 
