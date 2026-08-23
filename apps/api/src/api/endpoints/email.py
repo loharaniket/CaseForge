@@ -10,6 +10,7 @@ from src.models.case import Case, CaseStatus
 from src.models.user import User
 from src.schemas.email import ParsedEmailResponse
 from src.schemas.forensics import HeaderForensicsResponse
+from src.schemas.geo import CaseGeoInfrastructureResponse, GeoLocationResultSchema
 from src.schemas.intel import CaseThreatIntelResponse, ReputationResultSchema
 from src.schemas.ioc import CaseIOCListResponse, IOCRecordSchema
 from src.schemas.risk import RiskAssessmentResponse
@@ -17,6 +18,7 @@ from src.schemas.threat import ThreatAssessmentResponse
 from src.schemas.upload import EmailUploadResponse
 from src.services.detection_service import DetectionService, get_detection_service
 from src.services.forensics.service import HeaderForensicsService, get_forensics_service
+from src.services.geo.service import GeoIPService, get_geoip_service
 from src.services.intel.service import ThreatIntelService, get_intel_service
 from src.services.ioc.service import IOCService, get_ioc_service
 from src.services.parser_service import ParserService, get_parser_service
@@ -400,6 +402,69 @@ async def get_case_threat_intel(
     """Retrieves threat intelligence for a case."""
     return await query_case_threat_intel(
         case_id=case_id, current_user=current_user, db=db, intel_service=intel_service
+    )
+
+
+@router.post(
+    "/{case_id}/geo-infrastructure",
+    response_model=CaseGeoInfrastructureResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Enrich Case IP Infrastructure & Geolocation",
+    description="Enriches candidate origin IPs and relay infrastructure with geographic and ASN information (Probable Infrastructure Origin).",
+    responses={
+        200: {"description": "GeoIP infrastructure enrichment completed"},
+        400: {"description": "Case processing failed"},
+        401: {"description": "Authentication required"},
+        404: {"description": "Case not found"},
+    },
+)
+def enrich_case_geo_infrastructure(
+    case_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    geoip_service: GeoIPService = Depends(get_geoip_service),
+) -> CaseGeoInfrastructureResponse:
+    """Enriches all case IP infrastructure with GeoIP and ASN intelligence."""
+    result = geoip_service.analyze_case_infrastructure(case_id=case_id, db=db)
+    ip_schemas = [GeoLocationResultSchema.model_validate(r) for r in result["ip_infrastructure"]]
+
+    return CaseGeoInfrastructureResponse(
+        case_id=result["case_id"],
+        provider_name=result["provider_name"],
+        candidate_origin_ip=result["candidate_origin_ip"],
+        probable_infrastructure_origin=result["probable_infrastructure_origin"],
+        origin_country=result["origin_country"],
+        origin_country_code=result["origin_country_code"],
+        origin_asn=result["origin_asn"],
+        origin_isp=result["origin_isp"],
+        disclaimer=result["disclaimer"],
+        total_ips_analyzed=result["total_ips_analyzed"],
+        ip_infrastructure=ip_schemas,
+    )
+
+
+@router.get(
+    "/{case_id}/geo-infrastructure",
+    response_model=CaseGeoInfrastructureResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get Case GeoIP Infrastructure Result",
+    description="Retrieves enriched GeoIP network infrastructure and probable origin for a case.",
+    responses={
+        200: {"description": "GeoIP infrastructure data"},
+        400: {"description": "Case processing failed"},
+        401: {"description": "Authentication required"},
+        404: {"description": "Case not found"},
+    },
+)
+def get_case_geo_infrastructure(
+    case_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    geoip_service: GeoIPService = Depends(get_geoip_service),
+) -> CaseGeoInfrastructureResponse:
+    """Retrieves GeoIP infrastructure for a case."""
+    return enrich_case_geo_infrastructure(
+        case_id=case_id, current_user=current_user, db=db, geoip_service=geoip_service
     )
 
 

@@ -9,6 +9,7 @@ from src.schemas.forensics import (
     ProtocolAuthDetailSchema,
     RelayHopSchema,
 )
+from src.schemas.geo import CaseGeoInfrastructureResponse, GeoLocationResultSchema
 from src.schemas.health import DatabaseStatus, HealthResponse, HealthStatus, LivenessResponse
 from src.schemas.intel import CaseThreatIntelResponse, ReputationResultSchema
 from src.schemas.ioc import CaseIOCListResponse, IOCRecordSchema
@@ -21,12 +22,14 @@ from src.schemas.user import UserCreate, UserResponse, UserRole
 __all__ = [
     "AttachmentMetadataResponse",
     "AuthenticationResultSchema",
+    "CaseGeoInfrastructureResponse",
     "CaseIOCListResponse",
     "CaseThreatIntelResponse",
     "DatabaseStatus",
     "EmailUploadResponse",
     "ErrorDetail",
     "ErrorResponse",
+    "GeoLocationResultSchema",
     "HeaderForensicsResponse",
     "HealthResponse",
     "HealthStatus",

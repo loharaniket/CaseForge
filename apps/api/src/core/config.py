@@ -59,6 +59,10 @@ class Settings(BaseSettings):
     VIRUSTOTAL_API_KEY: str | None = None
     INTEL_CACHE_TTL_SECONDS: int = 3600
 
+    # MaxMind GeoIP Database Paths (optional local MMDBs)
+    GEOIP_CITY_DB_PATH: str | None = None
+    GEOIP_ASN_DB_PATH: str | None = None
+
     @field_validator("LOG_LEVEL")
     @classmethod
     def validate_log_level(cls, v: str) -> str:
