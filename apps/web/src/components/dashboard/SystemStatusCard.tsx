@@ -1,11 +1,33 @@
 "use client";
 
 import React from "react";
-import { useHealth } from "@/hooks/useHealth";
+import { useHealth, useReadiness } from "@/hooks/useHealth";
+import { StatusBadge } from "@/components/common/StatusBadge";
 import { Server, Database, Activity, RefreshCw } from "lucide-react";
 
 export const SystemStatusCard: React.FC = () => {
-  const { data: health, isLoading, isError, refetch, isFetching } = useHealth();
+  const {
+    data: health,
+    isLoading: healthLoading,
+    isError: healthError,
+    refetch: refetchHealth,
+    isFetching: healthFetching,
+  } = useHealth();
+
+  const {
+    data: readiness,
+    isLoading: readyLoading,
+    isError: readyError,
+    refetch: refetchReady,
+    isFetching: readyFetching,
+  } = useReadiness();
+
+  const isRefreshing = healthFetching || readyFetching;
+
+  const handleRefresh = () => {
+    refetchHealth();
+    refetchReady();
+  };
 
   return (
     <div className="card">
@@ -15,12 +37,15 @@ export const SystemStatusCard: React.FC = () => {
           <h2 className="card-title">System Infrastructure Status</h2>
         </div>
         <button
-          onClick={() => refetch()}
-          disabled={isFetching}
+          onClick={handleRefresh}
+          disabled={isRefreshing}
           className="refresh-button"
           title="Refresh status"
+          aria-label="Refresh telemetry status"
         >
-          <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin text-cyan-400" : ""}`} />
+          <RefreshCw
+            className={`w-4 h-4 ${isRefreshing ? "animate-spin text-cyan-400" : ""}`}
+          />
         </button>
       </div>
 
@@ -32,33 +57,35 @@ export const SystemStatusCard: React.FC = () => {
             <span className="status-item-label">FastAPI Gateway</span>
           </div>
           <div className="status-item-value">
-            {isLoading ? (
-              <span className="status-pill loading">Checking...</span>
-            ) : isError || !health ? (
-              <span className="status-pill offline">Offline</span>
+            {healthLoading ? (
+              <StatusBadge status="Checking..." variant="loading" />
+            ) : healthError || !health ? (
+              <StatusBadge status="Offline" variant="offline" />
             ) : (
-              <span className={`status-pill ${health.status === "healthy" ? "healthy" : "degraded"}`}>
-                {health.status.toUpperCase()}
-              </span>
+              <StatusBadge
+                status={health.status}
+                variant={health.status === "healthy" ? "healthy" : "degraded"}
+              />
             )}
           </div>
         </div>
 
-        {/* Database Status */}
+        {/* PostgreSQL Database Status */}
         <div className="status-item">
           <div className="status-item-header">
             <Database className="w-4 h-4 text-cyan-400" />
             <span className="status-item-label">PostgreSQL Database</span>
           </div>
           <div className="status-item-value">
-            {isLoading ? (
-              <span className="status-pill loading">Checking...</span>
-            ) : isError || !health ? (
-              <span className="status-pill offline">Unknown</span>
+            {readyLoading ? (
+              <StatusBadge status="Checking..." variant="loading" />
+            ) : readyError || !readiness ? (
+              <StatusBadge status="Offline" variant="offline" />
             ) : (
-              <span className={`status-pill ${health.database === "connected" ? "healthy" : "warning"}`}>
-                {health.database.toUpperCase()}
-              </span>
+              <StatusBadge
+                status={readiness.database}
+                variant={readiness.database === "connected" ? "ready" : "warning"}
+              />
             )}
           </div>
         </div>

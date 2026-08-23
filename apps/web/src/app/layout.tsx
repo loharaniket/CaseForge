@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { ThemeRegistry } from "@/theme/ThemeRegistry";
 import { QueryProvider } from "@/providers/QueryProvider";
-import { Header } from "@/components/common/Header";
-import { Footer } from "@/components/common/Footer";
+import { AppShell } from "@/components/layout/AppShell";
 
 export const metadata: Metadata = {
   title: "ThreatTrace AI — Cybersecurity Email Investigation Platform",
-  description: "Advanced AI-powered cybersecurity email forensics and SOC investigation platform.",
+  description:
+    "Production-grade cybersecurity email forensics, AI-driven threat analysis, and tamper-evident SOC investigation platform.",
 };
 
 export default function RootLayout({
@@ -17,11 +18,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <QueryProvider>
-          <Header />
-          <main className="main-content">{children}</main>
-          <Footer />
-        </QueryProvider>
+        <ThemeRegistry>
+          <QueryProvider>
+            <AppShell>{children}</AppShell>
+          </QueryProvider>
+        </ThemeRegistry>
       </body>
     </html>
   );
