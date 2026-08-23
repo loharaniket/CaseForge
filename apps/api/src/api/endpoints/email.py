@@ -9,7 +9,9 @@ from src.core.errors import AppException
 from src.models.case import Case, CaseStatus
 from src.models.user import User
 from src.schemas.email import ParsedEmailResponse
+from src.schemas.threat import ThreatAssessmentResponse
 from src.schemas.upload import EmailUploadResponse
+from src.services.detection_service import DetectionService, get_detection_service
 from src.services.parser_service import ParserService, get_parser_service
 from src.services.storage import EvidenceStorage, get_evidence_storage
 
@@ -158,3 +160,51 @@ def get_parsed_email_case(
     """Retrieves or parses on demand the structured forensic data."""
     parsed_record = parser_service.get_parsed_case(case_id=case_id, db=db)
     return ParsedEmailResponse.model_validate(parsed_record)
+
+
+@router.post(
+    "/{case_id}/threat-analysis",
+    response_model=ThreatAssessmentResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Execute Explainable Threat Detection",
+    description="Runs deterministic heuristic threat detection on an ingested case, classifying it into normal, spam, phishing, or BEC with explainable forensic signals.",
+    responses={
+        200: {"description": "Threat assessment generated"},
+        400: {"description": "Case processing failed or unparseable"},
+        401: {"description": "Authentication required"},
+        404: {"description": "Case not found"},
+    },
+)
+def analyze_email_threat(
+    case_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    detection_service: DetectionService = Depends(get_detection_service),
+) -> ThreatAssessmentResponse:
+    """Triggers threat detection evaluation on an email case."""
+    assessment = detection_service.analyze_case(case_id=case_id, db=db)
+    return ThreatAssessmentResponse.model_validate(assessment)
+
+
+@router.get(
+    "/{case_id}/threat-analysis",
+    response_model=ThreatAssessmentResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get Threat Assessment Result",
+    description="Retrieves or evaluates on demand the explainable threat classification for a case.",
+    responses={
+        200: {"description": "Threat assessment data"},
+        400: {"description": "Case processing failed"},
+        401: {"description": "Authentication required"},
+        404: {"description": "Case not found"},
+    },
+)
+def get_email_threat(
+    case_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    detection_service: DetectionService = Depends(get_detection_service),
+) -> ThreatAssessmentResponse:
+    """Retrieves or generates on demand the threat assessment."""
+    assessment = detection_service.get_assessment(case_id=case_id, db=db)
+    return ThreatAssessmentResponse.model_validate(assessment)

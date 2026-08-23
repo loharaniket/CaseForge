@@ -45,3 +45,6 @@ class Case(Base):
     parsed_email = relationship(
         "ParsedEmail", back_populates="case", uselist=False, cascade="all, delete-orphan"
     )
+    threat_assessment = relationship(
+        "ThreatAssessment", back_populates="case", uselist=False, cascade="all, delete-orphan"
+    )
