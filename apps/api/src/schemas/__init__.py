@@ -16,6 +16,7 @@ from src.schemas.ioc import CaseIOCListResponse, IOCRecordSchema
 from src.schemas.ready import ReadyResponse, ReadyStatus
 from src.schemas.risk import RiskAssessmentResponse, RiskBreakdownSchema
 from src.schemas.threat import ThreatAssessmentResponse
+from src.schemas.timeline import ForensicTimelineResponse, TimelineEventSchema
 from src.schemas.upload import EmailUploadResponse
 from src.schemas.user import UserCreate, UserResponse, UserRole
 
@@ -29,6 +30,7 @@ __all__ = [
     "EmailUploadResponse",
     "ErrorDetail",
     "ErrorResponse",
+    "ForensicTimelineResponse",
     "GeoLocationResultSchema",
     "HeaderForensicsResponse",
     "HealthResponse",
@@ -45,6 +47,7 @@ __all__ = [
     "RiskAssessmentResponse",
     "RiskBreakdownSchema",
     "ThreatAssessmentResponse",
+    "TimelineEventSchema",
     "TokenResponse",
     "UserCreate",
     "UserResponse",

@@ -15,6 +15,7 @@ from src.schemas.intel import CaseThreatIntelResponse, ReputationResultSchema
 from src.schemas.ioc import CaseIOCListResponse, IOCRecordSchema
 from src.schemas.risk import RiskAssessmentResponse
 from src.schemas.threat import ThreatAssessmentResponse
+from src.schemas.timeline import ForensicTimelineResponse
 from src.schemas.upload import EmailUploadResponse
 from src.services.detection_service import DetectionService, get_detection_service
 from src.services.forensics.service import HeaderForensicsService, get_forensics_service
@@ -24,6 +25,7 @@ from src.services.ioc.service import IOCService, get_ioc_service
 from src.services.parser_service import ParserService, get_parser_service
 from src.services.risk.service import RiskScoringService, get_risk_service
 from src.services.storage import EvidenceStorage, get_evidence_storage
+from src.services.timeline.service import ForensicTimelineService, get_timeline_service
 
 router = APIRouter()
 
@@ -514,3 +516,26 @@ def get_case_risk(
     """Retrieves or generates on-demand the risk assessment."""
     assessment = risk_service.get_case_risk(case_id=case_id, db=db)
     return RiskAssessmentResponse.model_validate(assessment)
+
+
+@router.get(
+    "/{case_id}/timeline",
+    response_model=ForensicTimelineResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get Chronological Forensic Timeline",
+    description="Constructs and returns an accurate chronological evidence timeline from email transmission headers, authentication results, and analysis events.",
+    responses={
+        200: {"description": "Chronological forensic timeline results"},
+        401: {"description": "Authentication required"},
+        404: {"description": "Case not found"},
+    },
+)
+def get_case_timeline(
+    case_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    timeline_service: ForensicTimelineService = Depends(get_timeline_service),
+) -> ForensicTimelineResponse:
+    """Retrieves chronological investigation timeline for a case."""
+    timeline = timeline_service.build_case_timeline(case_id=case_id, db=db)
+    return ForensicTimelineResponse.model_validate(timeline.to_dict())

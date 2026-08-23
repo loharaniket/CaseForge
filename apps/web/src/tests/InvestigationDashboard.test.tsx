@@ -14,6 +14,7 @@ vi.mock("@/lib/api/email", () => ({
   getCaseIOCs: vi.fn(),
   getCaseThreatIntel: vi.fn(),
   getCaseGeoInfrastructure: vi.fn(),
+  getCaseTimeline: vi.fn(),
 }));
 
 const mockParsed = {
@@ -180,7 +181,7 @@ const mockGeo = {
   origin_country: "Germany",
   origin_country_code: "DE",
   origin_asn: 24940,
-  origin_isp: "Hetzner Online",
+  origin_isp: "Hetzner Online GmbH",
   disclaimer:
     "Geolocation describes network infrastructure and does not establish the physical location or identity of an attacker.",
   total_ips_analyzed: 1,
@@ -194,7 +195,7 @@ const mockGeo = {
       country_name: "Germany",
       region_name: "Hessen",
       city_name: "Frankfurt am Main",
-      postal_code: "60311",
+      postal_code: "60313",
       latitude: 50.1109,
       longitude: 8.6821,
       asn_number: 24940,
@@ -207,6 +208,26 @@ const mockGeo = {
         "Geolocation describes network infrastructure and does not establish the physical location or identity of an attacker.",
       provider_name: "MockGeoIPProvider",
       cached: false,
+    },
+  ],
+};
+
+const mockTimeline = {
+  case_id: "case-uuid-1234",
+  total_events: 2,
+  earliest_timestamp: "2026-08-23T12:00:00Z",
+  latest_timestamp: "2026-08-23T12:00:15Z",
+  has_missing_timestamps: false,
+  events: [
+    {
+      event_id: "evt-1",
+      event_type: "EMAIL_DATE",
+      title: "Email Message Date Declared",
+      description: "Message origin date declared by sender: phisher@attacker-infra.com",
+      source: "header.date",
+      timestamp_iso: "2026-08-23T12:00:00Z",
+      timestamp_quality: "HEADER_DECLARED",
+      delay_from_previous_seconds: 0,
     },
   ],
 };
@@ -234,6 +255,7 @@ describe("InvestigationDashboard", () => {
     vi.mocked(emailApi.getCaseIOCs).mockResolvedValue(mockIocs);
     vi.mocked(emailApi.getCaseThreatIntel).mockResolvedValue(mockIntel);
     vi.mocked(emailApi.getCaseGeoInfrastructure).mockResolvedValue(mockGeo);
+    vi.mocked(emailApi.getCaseTimeline).mockResolvedValue(mockTimeline);
   });
 
   it("renders loading state when initial case data is resolving", () => {
@@ -321,6 +343,22 @@ describe("InvestigationDashboard", () => {
       expect(screen.getByText("Extracted Indicators of Compromise (IOCs)")).toBeInTheDocument();
       expect(screen.getByText("198.51.100.200")).toBeInTheDocument();
       expect(screen.getByText("attacker-infra.com")).toBeInTheDocument();
+    });
+  });
+
+  it("switches to Forensic Timeline tab and renders chronological events", async () => {
+    renderDashboard();
+
+    await waitFor(() => {
+      expect(screen.getByText("Case Investigation Console")).toBeInTheDocument();
+    });
+
+    const timelineTab = screen.getByRole("tab", { name: /Forensic Timeline/i });
+    fireEvent.click(timelineTab);
+
+    await waitFor(() => {
+      expect(screen.getByText("Chronological Forensic Timeline")).toBeInTheDocument();
+      expect(screen.getByText("Email Message Date Declared")).toBeInTheDocument();
     });
   });
 

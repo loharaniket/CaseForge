@@ -88,6 +88,15 @@ from src.services.storage import (
     LocalEvidenceStorage,
     get_evidence_storage,
 )
+from src.services.timeline import (
+    ForensicTimelineResult,
+    ForensicTimelineService,
+    TimelineEvent,
+    TimelineEventType,
+    TimestampQuality,
+    default_timeline_service,
+    get_timeline_service,
+)
 
 __all__ = [
     "DISCLAIMER_TEXT",
@@ -103,6 +112,8 @@ __all__ = [
     "EmailAuthenticationAnalyzer",
     "EmailParser",
     "EvidenceStorage",
+    "ForensicTimelineResult",
+    "ForensicTimelineService",
     "GeoIPProvider",
     "GeoIPService",
     "GeoLocationResult",
@@ -136,6 +147,9 @@ __all__ = [
     "ThreatDetectionResult",
     "ThreatDetector",
     "ThreatIntelService",
+    "TimelineEvent",
+    "TimelineEventType",
+    "TimestampQuality",
     "VirusTotalDomainProvider",
     "default_auth_analyzer",
     "default_detection_service",
@@ -148,6 +162,7 @@ __all__ = [
     "default_parser_service",
     "default_risk_service",
     "default_rule_detector",
+    "default_timeline_service",
     "extract_urls",
     "get_detection_service",
     "get_evidence_storage",
@@ -157,5 +172,6 @@ __all__ = [
     "get_ioc_service",
     "get_parser_service",
     "get_risk_service",
+    "get_timeline_service",
     "normalize_auth_status",
 ]

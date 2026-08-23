@@ -208,3 +208,45 @@ export interface CaseGeoInfrastructureResponse {
   total_ips_analyzed: number;
   ip_infrastructure: GeoLocationResult[];
 }
+
+export type TimelineEventType =
+  | "EMAIL_DATE"
+  | "RECEIVED_HOP"
+  | "MTA_RELAY"
+  | "AUTHENTICATION"
+  | "INGESTION_STARTED"
+  | "PARSING_COMPLETED"
+  | "THREAT_ASSESSMENT"
+  | "INTEL_ENRICHMENT"
+  | "GEO_ENRICHMENT";
+
+export type TimestampQuality =
+  | "EXACT"
+  | "HEADER_DECLARED"
+  | "SERVER_INGESTION"
+  | "DERIVED"
+  | "ESTIMATED"
+  | "MISSING";
+
+export interface TimelineEvent {
+  event_id: string;
+  event_type: TimelineEventType | string;
+  title: string;
+  description: string;
+  source: string;
+  timestamp_iso: string | null;
+  timestamp_raw?: string | null;
+  timestamp_quality: TimestampQuality | string;
+  delay_from_previous_seconds?: number | null;
+  details?: Record<string, unknown>;
+}
+
+export interface ForensicTimelineResponse {
+  case_id: string;
+  total_events: number;
+  earliest_timestamp: string | null;
+  latest_timestamp: string | null;
+  has_missing_timestamps: boolean;
+  events: TimelineEvent[];
+}
+

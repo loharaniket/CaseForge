@@ -34,12 +34,14 @@ import {
   Paperclip,
   Copy,
   Check,
+  Clock,
 } from "lucide-react";
 import {
   getCaseGeoInfrastructure,
   getCaseIOCs,
   getCaseRisk,
   getCaseThreatIntel,
+  getCaseTimeline,
   getHeaderForensics,
   getParsedEmail,
   getThreatAnalysis,
@@ -49,10 +51,12 @@ import { AuthenticationForensicsWidget } from "./AuthenticationForensicsWidget";
 import { RelayHopsTimelineWidget } from "./RelayHopsTimelineWidget";
 import { ThreatIntelGeoWidget } from "./ThreatIntelGeoWidget";
 import { IOCTableWidget } from "./IOCTableWidget";
+import { ForensicTimelineWidget } from "./ForensicTimelineWidget";
 import {
   CaseGeoInfrastructureResponse,
   CaseIOCListResponse,
   CaseThreatIntelResponse,
+  ForensicTimelineResponse,
   HeaderForensicsResponse,
   ParsedEmail,
   RiskAssessmentResponse,
@@ -141,6 +145,16 @@ export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ 
     enabled: !!caseId,
   });
 
+  const {
+    data: timeline,
+    isLoading: isTimelineLoading,
+    refetch: refetchTimeline,
+  } = useQuery<ForensicTimelineResponse, Error>({
+    queryKey: ["case_timeline", caseId],
+    queryFn: () => getCaseTimeline(caseId),
+    enabled: !!caseId,
+  });
+
   const handleRefetchAll = () => {
     refetchParsed();
     refetchRisk();
@@ -149,6 +163,7 @@ export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ 
     refetchIocs();
     refetchIntel();
     refetchGeo();
+    refetchTimeline();
   };
 
   const handleCopy = (text: string) => {
@@ -164,7 +179,8 @@ export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ 
     isForensicsLoading ||
     isIocLoading ||
     isIntelLoading ||
-    isGeoLoading;
+    isGeoLoading ||
+    isTimelineLoading;
 
   if (isParsedLoading && !parsed) {
     return (
@@ -309,7 +325,13 @@ export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ 
             iconPosition="start"
             label={`IOC Indicators (${iocData?.total_count || 0})`}
           />
-          <Tab value={4} icon={<FileText size={16} />} iconPosition="start" label="Evidence & Body Preview" />
+          <Tab
+            value={4}
+            icon={<Clock size={16} />}
+            iconPosition="start"
+            label={`Forensic Timeline (${timeline?.total_events || 0})`}
+          />
+          <Tab value={5} icon={<FileText size={16} />} iconPosition="start" label="Evidence & Body Preview" />
         </Tabs>
       </Box>
 
@@ -416,8 +438,13 @@ export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ 
         <IOCTableWidget iocData={iocData} isLoading={isIocLoading} />
       )}
 
-      {/* Tab 4: Evidence & Body Preview */}
+      {/* Tab 4: Forensic Timeline */}
       {activeTab === 4 && (
+        <ForensicTimelineWidget timeline={timeline} isLoading={isTimelineLoading} />
+      )}
+
+      {/* Tab 5: Evidence & Body Preview */}
+      {activeTab === 5 && (
         <Card sx={{ bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 2 }}>
           <CardContent sx={{ p: 3 }}>
             <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
