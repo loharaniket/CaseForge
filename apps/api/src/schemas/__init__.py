@@ -10,6 +10,7 @@ from src.schemas.forensics import (
     RelayHopSchema,
 )
 from src.schemas.health import DatabaseStatus, HealthResponse, HealthStatus, LivenessResponse
+from src.schemas.ioc import CaseIOCListResponse, IOCRecordSchema
 from src.schemas.ready import ReadyResponse, ReadyStatus
 from src.schemas.risk import RiskAssessmentResponse, RiskBreakdownSchema
 from src.schemas.threat import ThreatAssessmentResponse
@@ -19,6 +20,7 @@ from src.schemas.user import UserCreate, UserResponse, UserRole
 __all__ = [
     "AttachmentMetadataResponse",
     "AuthenticationResultSchema",
+    "CaseIOCListResponse",
     "DatabaseStatus",
     "EmailUploadResponse",
     "ErrorDetail",
@@ -26,6 +28,7 @@ __all__ = [
     "HeaderForensicsResponse",
     "HealthResponse",
     "HealthStatus",
+    "IOCRecordSchema",
     "LivenessResponse",
     "LoginRequest",
     "ParsedEmailResponse",

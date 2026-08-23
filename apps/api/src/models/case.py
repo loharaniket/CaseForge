@@ -54,3 +54,4 @@ class Case(Base):
     header_forensics = relationship(
         "HeaderForensics", back_populates="case", uselist=False, cascade="all, delete-orphan"
     )
+    iocs = relationship("CaseIOC", back_populates="case", cascade="all, delete-orphan")

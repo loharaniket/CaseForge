@@ -10,11 +10,13 @@ from src.models.case import Case, CaseStatus
 from src.models.user import User
 from src.schemas.email import ParsedEmailResponse
 from src.schemas.forensics import HeaderForensicsResponse
+from src.schemas.ioc import CaseIOCListResponse, IOCRecordSchema
 from src.schemas.risk import RiskAssessmentResponse
 from src.schemas.threat import ThreatAssessmentResponse
 from src.schemas.upload import EmailUploadResponse
 from src.services.detection_service import DetectionService, get_detection_service
 from src.services.forensics.service import HeaderForensicsService, get_forensics_service
+from src.services.ioc.service import IOCService, get_ioc_service
 from src.services.parser_service import ParserService, get_parser_service
 from src.services.risk.service import RiskScoringService, get_risk_service
 from src.services.storage import EvidenceStorage, get_evidence_storage
@@ -260,6 +262,76 @@ def get_header_forensics(
     """Retrieves or generates on-demand header forensics."""
     assessment = forensics_service.get_case_forensics(case_id=case_id, db=db)
     return HeaderForensicsResponse.model_validate(assessment)
+
+
+@router.post(
+    "/{case_id}/iocs",
+    response_model=CaseIOCListResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Extract and Normalize Case IOCs",
+    description="Deterministically extracts and deduplicates all Indicators of Compromise (IPv4, IPv6, domains, URLs, emails, attachment SHA-256 hashes) from case evidence.",
+    responses={
+        200: {"description": "IOC extraction completed and persisted"},
+        400: {"description": "Case processing failed"},
+        401: {"description": "Authentication required"},
+        404: {"description": "Case not found"},
+    },
+)
+def extract_case_iocs(
+    case_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    ioc_service: IOCService = Depends(get_ioc_service),
+) -> CaseIOCListResponse:
+    """Extracts, normalizes, deduplicates, and persists IOCs for a case."""
+    records = ioc_service.extract_case_iocs(case_id=case_id, db=db)
+    ioc_schemas = [IOCRecordSchema.model_validate(r) for r in records]
+
+    by_type: dict[str, int] = {}
+    for r in records:
+        by_type[r.ioc_type] = by_type.get(r.ioc_type, 0) + 1
+
+    return CaseIOCListResponse(
+        case_id=case_id,
+        total_count=len(records),
+        by_type=by_type,
+        iocs=ioc_schemas,
+    )
+
+
+@router.get(
+    "/{case_id}/iocs",
+    response_model=CaseIOCListResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get Case IOCs",
+    description="Retrieves existing extracted IOCs for a case or extracts on demand.",
+    responses={
+        200: {"description": "Extracted IOC list data"},
+        400: {"description": "Case processing failed"},
+        401: {"description": "Authentication required"},
+        404: {"description": "Case not found"},
+    },
+)
+def get_case_iocs(
+    case_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    ioc_service: IOCService = Depends(get_ioc_service),
+) -> CaseIOCListResponse:
+    """Retrieves or extracts on demand IOCs for a case."""
+    records = ioc_service.get_case_iocs(case_id=case_id, db=db)
+    ioc_schemas = [IOCRecordSchema.model_validate(r) for r in records]
+
+    by_type: dict[str, int] = {}
+    for r in records:
+        by_type[r.ioc_type] = by_type.get(r.ioc_type, 0) + 1
+
+    return CaseIOCListResponse(
+        case_id=case_id,
+        total_count=len(records),
+        by_type=by_type,
+        iocs=ioc_schemas,
+    )
 
 
 @router.post(

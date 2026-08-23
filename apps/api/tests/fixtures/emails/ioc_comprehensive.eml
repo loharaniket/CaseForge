@@ -1,0 +1,53 @@
+Received: from mail.attacker-infra.com (198.51.100.200) by mx.victim-corp.com with ESMTPS id 12345; Sun, 23 Aug 2026 12:00:00 +0000
+Received: from [2001:db8::1] by mail.attacker-infra.com with ESMTP id 12344; Sun, 23 Aug 2026 11:59:50 +0000
+Authentication-Results: mx.victim-corp.com;
+ spf=pass (sender IP is 198.51.100.200) smtp.mailfrom=security-ops.com;
+ dkim=pass header.d=security-ops.com header.s=s2026;
+ dmarc=pass header.from=security-ops.com
+From: "Security Ops Admin" <admin@security-ops.com>
+To: target1@victim-corp.com, target2@victim-corp.com
+Cc: audit@external-partner.org
+Reply-To: phisher-drop@dark-web.org
+Return-Path: <bounce@security-ops.com>
+Subject: Urgent Security Advisory & Hash Verification
+Date: Sun, 23 Aug 2026 11:59:45 +0000
+Message-ID: <ioc-comp-9988@security-ops.com>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============IOC_BOUNDARY_12345=="
+
+--===============IOC_BOUNDARY_12345==
+Content-Type: text/plain; charset="UTF-8"
+
+Security Incident Notification:
+
+We detected suspicious connections from IPv4 203.0.113.88 and IPv6 2001:db8:85a3::8a2e:370:7334.
+Please review the portal immediately:
+https://phish-login.attacker-infra.com/login?session=123
+
+Secondary download link:
+http://198.51.100.45/payload.bin
+
+Suspicious binary SHA-256 hash:
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+
+Duplicate contact for verification: admin@security-ops.com
+Secondary URL mention: https://phish-login.attacker-infra.com/login?session=123
+Duplicate IP mention: 198.51.100.200
+
+Malformed items that must be rejected:
+999.999.999.999
+broken_email@
+http://
+short_hash_1234567890abcdef
+
+Contact support: phisher-drop@dark-web.org
+
+--===============IOC_BOUNDARY_12345==
+Content-Type: application/pdf; name="invoice_details.pdf"
+Content-Disposition: attachment; filename="invoice_details.pdf"
+Content-Transfer-Encoding: base64
+
+JVBERi0xLjQKJcTl8uXrCjEgMCBvYmoKPDwKL1R5cGUgL0NhdGFsb2cKL1BhZ2VzIDIgMCBSCj4+
+CmVuZG9iagoyIDAgb2JqCjw8Ci9UeXBlIC9QYWdlcwovS2lkcyBbMyAwIFJdCi9Db3VudCAxCj4+
+CmVuZG9iago=
+--===============IOC_BOUNDARY_12345==--
