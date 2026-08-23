@@ -14,6 +14,7 @@ from src.schemas.health import DatabaseStatus, HealthResponse, HealthStatus, Liv
 from src.schemas.intel import CaseThreatIntelResponse, ReputationResultSchema
 from src.schemas.ioc import CaseIOCListResponse, IOCRecordSchema
 from src.schemas.ready import ReadyResponse, ReadyStatus
+from src.schemas.report import InvestigationReportDataResponse
 from src.schemas.risk import RiskAssessmentResponse, RiskBreakdownSchema
 from src.schemas.threat import ThreatAssessmentResponse
 from src.schemas.timeline import ForensicTimelineResponse, TimelineEventSchema
@@ -36,6 +37,7 @@ __all__ = [
     "HealthResponse",
     "HealthStatus",
     "IOCRecordSchema",
+    "InvestigationReportDataResponse",
     "LivenessResponse",
     "LoginRequest",
     "ParsedEmailResponse",

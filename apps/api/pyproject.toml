@@ -16,6 +16,8 @@ dependencies = [
     "alembic>=1.13.1",
     "psycopg[binary]>=3.1.18",
     "python-multipart>=0.0.9",
+    "neo4j>=5.18.0",
+    "reportlab>=4.2.0",
 ]
 
 [project.optional-dependencies]

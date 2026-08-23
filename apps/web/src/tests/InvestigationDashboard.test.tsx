@@ -15,6 +15,7 @@ vi.mock("@/lib/api/email", () => ({
   getCaseThreatIntel: vi.fn(),
   getCaseGeoInfrastructure: vi.fn(),
   getCaseTimeline: vi.fn(),
+  downloadInvestigationReport: vi.fn(),
 }));
 
 const mockParsed = {
@@ -360,6 +361,20 @@ describe("InvestigationDashboard", () => {
       expect(screen.getByText("Chronological Forensic Timeline")).toBeInTheDocument();
       expect(screen.getByText("Email Message Date Declared")).toBeInTheDocument();
     });
+  });
+
+  it("triggers PDF report download when Export PDF Report button is clicked", async () => {
+    vi.mocked(emailApi.downloadInvestigationReport).mockResolvedValue();
+    renderDashboard();
+
+    await waitFor(() => {
+      expect(screen.getByText("Case Investigation Console")).toBeInTheDocument();
+    });
+
+    const exportBtn = screen.getByRole("button", { name: /Export PDF Report/i });
+    fireEvent.click(exportBtn);
+
+    expect(emailApi.downloadInvestigationReport).toHaveBeenCalledWith("case-uuid-1234");
   });
 
   it("renders error state when case fails to load", async () => {

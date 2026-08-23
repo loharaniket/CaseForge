@@ -250,3 +250,105 @@ export interface ForensicTimelineResponse {
   events: TimelineEvent[];
 }
 
+export type GraphNodeType =
+  | "Email"
+  | "Domain"
+  | "IP"
+  | "Country"
+  | "EmailAddress"
+  | "AttachmentHash";
+
+export type GraphRelType =
+  | "USES"
+  | "RESOLVES_TO"
+  | "LOCATED_IN"
+  | "SENT_FROM"
+  | "CONTAINS";
+
+export interface GraphNode {
+  id: string;
+  node_type: GraphNodeType | string;
+  label: string;
+  properties?: Record<string, unknown>;
+}
+
+export interface GraphEdge {
+  id: string;
+  source: string;
+  target: string;
+  rel_type: GraphRelType | string;
+  properties?: Record<string, unknown>;
+}
+
+export interface InvestigationGraphResponse {
+  case_id: string;
+  provider: string;
+  status: string;
+  total_nodes: number;
+  total_edges: number;
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+}
+
+export interface InvestigationReportData {
+  report_title: string;
+  system_name: string;
+  version: string;
+  generated_at_iso: string;
+  case_id: string;
+  file_name: string;
+  file_size_bytes: number;
+  sha256_hash: string;
+  case_status: string;
+  analyst_name?: string | null;
+  analyst_email?: string | null;
+  incident_summary: string;
+  threat_classification: string;
+  threat_confidence: number;
+  threat_model_version: string;
+  threat_score: number;
+  threat_severity: string;
+  score_breakdown: Record<string, number>;
+  explainability_reasons: string[];
+  subject: string;
+  sender: string;
+  from_name: string;
+  from_address: string;
+  recipients: string[];
+  cc: string[];
+  reply_to: string[];
+  date_declared: string;
+  message_id: string;
+  spf_status: string;
+  dkim_status: string;
+  dmarc_status: string;
+  authentication_details: Record<string, unknown>;
+  probable_origin_ip: string;
+  origin_ip_candidates: string[];
+  relay_hops_count: number;
+  relay_hops: Record<string, unknown>[];
+  spoofing_indicators: string[];
+  header_anomalies: string[];
+  total_iocs_count: number;
+  iocs: Record<string, unknown>[];
+  ip_intel_provider: string;
+  domain_intel_provider: string;
+  max_ip_risk_score?: number | null;
+  max_domain_risk_score?: number | null;
+  malicious_ips: string[];
+  malicious_domains: string[];
+  ip_intel_results: Record<string, unknown>[];
+  domain_intel_results: Record<string, unknown>[];
+  probable_infrastructure_origin: string;
+  origin_country: string;
+  origin_asn?: number | null;
+  origin_isp: string;
+  geo_disclaimer: string;
+  timeline_events_count: number;
+  timeline_events: Record<string, unknown>[];
+  recommendations: string[];
+  evidence_sha256: string;
+  custody_verification: string;
+}
+
+

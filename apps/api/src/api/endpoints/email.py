@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, File, UploadFile, status
+from fastapi import APIRouter, Depends, File, Response, UploadFile, status
 from sqlalchemy.orm import Session
 
 from src.api.deps import get_current_active_user, get_db
@@ -13,6 +13,7 @@ from src.schemas.forensics import HeaderForensicsResponse
 from src.schemas.geo import CaseGeoInfrastructureResponse, GeoLocationResultSchema
 from src.schemas.intel import CaseThreatIntelResponse, ReputationResultSchema
 from src.schemas.ioc import CaseIOCListResponse, IOCRecordSchema
+from src.schemas.report import InvestigationReportDataResponse
 from src.schemas.risk import RiskAssessmentResponse
 from src.schemas.threat import ThreatAssessmentResponse
 from src.schemas.timeline import ForensicTimelineResponse
@@ -23,6 +24,7 @@ from src.services.geo.service import GeoIPService, get_geoip_service
 from src.services.intel.service import ThreatIntelService, get_intel_service
 from src.services.ioc.service import IOCService, get_ioc_service
 from src.services.parser_service import ParserService, get_parser_service
+from src.services.report.service import InvestigationReportService, get_report_service
 from src.services.risk.service import RiskScoringService, get_risk_service
 from src.services.storage import EvidenceStorage, get_evidence_storage
 from src.services.timeline.service import ForensicTimelineService, get_timeline_service
@@ -539,3 +541,56 @@ def get_case_timeline(
     """Retrieves chronological investigation timeline for a case."""
     timeline = timeline_service.build_case_timeline(case_id=case_id, db=db)
     return ForensicTimelineResponse.model_validate(timeline.to_dict())
+
+
+@router.get(
+    "/{case_id}/report/pdf",
+    status_code=status.HTTP_200_OK,
+    summary="Download Investigation PDF Report",
+    description="Compiles and streams a complete 18-section SOC investigation report in PDF format.",
+    responses={
+        200: {
+            "content": {"application/pdf": {}},
+            "description": "Binary PDF investigation report stream",
+        },
+        401: {"description": "Authentication required"},
+        404: {"description": "Case not found"},
+    },
+)
+def download_case_pdf_report(
+    case_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    report_service: InvestigationReportService = Depends(get_report_service),
+) -> Response:
+    """Streams a generated PDF investigation report."""
+    pdf_bytes, filename = report_service.generate_case_pdf(case_id=case_id, db=db)
+    headers = {
+        "Content-Disposition": f'attachment; filename="{filename}"',
+        "Content-Type": "application/pdf",
+        "X-Report-Case-ID": case_id,
+    }
+    return Response(content=pdf_bytes, media_type="application/pdf", headers=headers)
+
+
+@router.get(
+    "/{case_id}/report/data",
+    response_model=InvestigationReportDataResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get Investigation Report Data Structure",
+    description="Returns the aggregated 18-section structured investigation data model in JSON format.",
+    responses={
+        200: {"description": "Structured investigation report payload"},
+        401: {"description": "Authentication required"},
+        404: {"description": "Case not found"},
+    },
+)
+def get_case_report_data(
+    case_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    report_service: InvestigationReportService = Depends(get_report_service),
+) -> InvestigationReportDataResponse:
+    """Retrieves structured report data for a case."""
+    report_data = report_service.build_report_data(case_id=case_id, db=db)
+    return InvestigationReportDataResponse.model_validate(report_data.to_dict())

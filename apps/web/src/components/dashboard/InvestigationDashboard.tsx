@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box,
+  Button,
   Card,
   CardContent,
   Chip,
@@ -35,8 +36,10 @@ import {
   Copy,
   Check,
   Clock,
+  FileDown,
 } from "lucide-react";
 import {
+  downloadInvestigationReport,
   getCaseGeoInfrastructure,
   getCaseIOCs,
   getCaseRisk,
@@ -71,6 +74,18 @@ export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ 
   const [activeTab, setActiveTab] = useState<number>(0);
   const [bodyFormat, setBodyFormat] = useState<"plain" | "html">("plain");
   const [copiedText, setCopiedText] = useState<string | null>(null);
+  const [isDownloadingReport, setIsDownloadingReport] = useState<boolean>(false);
+
+  const handleDownloadReport = async () => {
+    try {
+      setIsDownloadingReport(true);
+      await downloadInvestigationReport(caseId);
+    } catch (err) {
+      console.error("Failed to download investigation PDF report:", err);
+    } finally {
+      setIsDownloadingReport(false);
+    }
+  };
 
   // Orchestrate parallel data fetching for the case
   const {
@@ -246,6 +261,23 @@ export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ 
 
             <Stack direction="row" spacing={1} alignItems="center">
               <Chip label="ACTIVE INVESTIGATION" size="small" color="primary" sx={{ fontWeight: 700, fontSize: "0.75rem" }} />
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={handleDownloadReport}
+                disabled={isDownloadingReport}
+                startIcon={<FileDown size={14} className={isDownloadingReport ? "animate-bounce" : ""} />}
+                sx={{
+                  textTransform: "none",
+                  fontWeight: 600,
+                  fontSize: "0.75rem",
+                  borderColor: "rgba(6, 182, 212, 0.4)",
+                  color: "#06b6d4",
+                  "&:hover": { borderColor: "#06b6d4", bgcolor: "rgba(6, 182, 212, 0.1)" },
+                }}
+              >
+                {isDownloadingReport ? "Exporting PDF..." : "Export PDF Report"}
+              </Button>
               <Tooltip title="Refresh investigation telemetry">
                 <IconButton onClick={handleRefetchAll} size="small" sx={{ border: "1px solid", borderColor: "divider" }}>
                   <RefreshCw size={16} className={isAnyLoading ? "animate-spin text-cyan-400" : ""} />
