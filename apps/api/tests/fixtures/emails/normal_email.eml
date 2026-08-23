@@ -1,0 +1,19 @@
+From: John Doe <john.doe@example.com>
+To: Jane Smith <jane.smith@example.com>
+Cc: Audit <audit@example.com>
+Subject: Q3 Security Review and Roadmap
+Date: Mon, 24 Aug 2026 09:00:00 +0000
+Message-ID: <q3-security-20260824@example.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+
+Hi Jane,
+
+Attached is our schedule for the Q3 application security review.
+Please let me know if Monday 10am works for our sync.
+
+Documentation is available at https://internal.example.com/sec-roadmap.
+
+Best,
+John Doe
+Security Lead

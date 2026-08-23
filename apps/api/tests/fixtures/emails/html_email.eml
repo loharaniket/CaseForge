@@ -1,0 +1,20 @@
+From: Marketing Newsletter <newsletter@retail-deals.org>
+To: subscriber@example.com
+Subject: Exclusive 50% Off Flash Sale for Cybersecurity Professionals!
+Date: Sun, 23 Aug 2026 15:00:00 +0000
+Message-ID: <html-promo-2026@retail-deals.org>
+MIME-Version: 1.0
+Content-Type: text/html; charset="UTF-8"
+
+<!DOCTYPE html>
+<html>
+<head><title>Flash Sale</title></head>
+<body style="font-family: Arial, sans-serif; background-color: #f4f4f4;">
+  <div style="max-width: 600px; margin: 0 auto; background: #ffffff; padding: 20px;">
+    <h1 style="color: #333;">Flash Sale Announcement</h1>
+    <p>Get instant access to top-tier developer utilities and security training courses.</p>
+    <a href="https://promotions.retail-deals.org/claim-discount?ref=summer2026" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none;">Claim 50% Discount</a>
+    <p>Visit our store at <a href="https://store.retail-deals.org">store.retail-deals.org</a>.</p>
+  </div>
+</body>
+</html>

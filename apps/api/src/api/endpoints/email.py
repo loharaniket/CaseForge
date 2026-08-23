@@ -8,7 +8,9 @@ from src.core.config import settings
 from src.core.errors import AppException
 from src.models.case import Case
 from src.models.user import User
+from src.schemas.email import ParsedEmailResponse
 from src.schemas.upload import EmailUploadResponse
+from src.services.parser_service import ParserService, get_parser_service
 from src.services.storage import EvidenceStorage, get_evidence_storage
 
 router = APIRouter()
@@ -100,3 +102,49 @@ async def upload_eml(
         sha256=new_case.sha256_hash,
         created_at=new_case.created_at,
     )
+
+
+@router.post(
+    "/{case_id}/parse",
+    response_model=ParsedEmailResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Execute EML Forensic Parsing",
+    description="Deterministically parses raw evidence for an investigation case into structured headers, body, attachment hashes, and extracted URLs.",
+    responses={
+        200: {"description": "Case parsed successfully"},
+        401: {"description": "Authentication required"},
+        404: {"description": "Case or evidence file not found"},
+    },
+)
+def parse_email_case(
+    case_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    parser_service: ParserService = Depends(get_parser_service),
+) -> ParsedEmailResponse:
+    """Triggers forensic parsing of an ingested email."""
+    parsed_record = parser_service.parse_case(case_id=case_id, db=db)
+    return ParsedEmailResponse.model_validate(parsed_record)
+
+
+@router.get(
+    "/{case_id}/parsed",
+    response_model=ParsedEmailResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get Parsed Forensic Email Data",
+    description="Retrieves the structured forensic email analysis for a specified case.",
+    responses={
+        200: {"description": "Parsed email data"},
+        401: {"description": "Authentication required"},
+        404: {"description": "Case or evidence file not found"},
+    },
+)
+def get_parsed_email_case(
+    case_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    parser_service: ParserService = Depends(get_parser_service),
+) -> ParsedEmailResponse:
+    """Retrieves or parses on demand the structured forensic data."""
+    parsed_record = parser_service.get_parsed_case(case_id=case_id, db=db)
+    return ParsedEmailResponse.model_validate(parsed_record)

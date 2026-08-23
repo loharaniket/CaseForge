@@ -1,0 +1,21 @@
+From: "IT Support Helpdesk" <security-alerts@suspicious-domain-phish.com>
+To: target.user@victim-corp.com
+Subject: URGENT: Your corporate mailbox will be suspended in 24 hours
+Date: Sun, 23 Aug 2026 14:20:10 +0000
+Message-ID: <phish-alert-99201@suspicious-domain-phish.com>
+Reply-To: harvest@attacker-c2.net
+MIME-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+
+Dear Employee,
+
+Our security system detected unauthorized access to your account from IP 198.51.100.99.
+You must immediately verify your password at the following secure portal:
+
+http://login.suspicious-domain-phish.com/auth/verify?session=99a8b7c6
+http://backup-c2.attacker-c2.net/portal
+
+Failure to act within 24 hours will result in permanent mailbox lockout.
+
+IT Security Desk
+Global Corporation

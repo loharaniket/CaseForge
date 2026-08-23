@@ -1,11 +1,119 @@
-# Byte-compiled / optimized / DLL files
+# ==============================================================================
+# ThreatTrace AI — Git Ignore Rules
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. AI / ML Models, Weights, Checkpoints & Datasets (Keep Repo Lightweight)
+# ------------------------------------------------------------------------------
+*.pt
+*.pth
+*.bin
+*.safetensors
+*.onnx
+*.tflite
+*.pkl
+*.pickle
+*.joblib
+*.h5
+*.model
+*.weights
+*.ckpt
+
+# AI / ML Cache & Checkpoint Directories
+models/weights/
+models/checkpoints/
+models/pretrained/
+apps/api/models/weights/
+apps/api/models/checkpoints/
+apps/api/models/pretrained/
+.cache/huggingface/
+.cache/torch/
+.cache/transformers/
+**/wandb/
+**/tensorboard/
+**/runs/
+
+# Large Datasets & Compressed Email Corpora
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.zip
+*.7z
+*.rar
+samples/raw/
+samples/corpus/
+samples/downloaded/
+samples/datasets/
+
+# ------------------------------------------------------------------------------
+# 2. Test Artifacts, Caches, Reports & Test Dumps
+# ------------------------------------------------------------------------------
+.cache/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.vitest/
+
+# Coverage and Test Output Reports
+.coverage
+.coverage.*
+coverage/
+coverage.xml
+htmlcov/
+nosetests.xml
+junit.xml
+test-results/
+playwright-report/
+cypress/videos/
+cypress/screenshots/
+*.cover
+*.log
+
+# ------------------------------------------------------------------------------
+# 3. Environment, Secrets & Credentials (Security Protection)
+# ------------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+cred.txt
+credentials.txt
+secrets.json
+secrets.yaml
+*.pem
+*.key
+*.cert
+*.pfx
+
+# ------------------------------------------------------------------------------
+# 4. Storage, Database Files & Uploaded Evidence
+# ------------------------------------------------------------------------------
+*.sqlite3
+*.sqlite
+*.db
+*.db-journal
+*.db-wal
+threattrace.db
+
+# Ingested Raw Evidence & Local File Storage
+storage/
+uploads/
+evidence_storage/
+apps/api/storage/
+apps/api/uploads/
+scratch/
+tmp/
+temp/
+
+# ------------------------------------------------------------------------------
+# 5. Python Build, Packaging & Bytecode
+# ------------------------------------------------------------------------------
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
-
-# Distribution / packaging
 build/
 develop-eggs/
 dist/
@@ -23,43 +131,28 @@ share/python-wheels/
 .installed.cfg
 *.egg
 
-# Virtual Environments
-.env
-.env.*
-!.env.example
-.venv
+# Python Virtual Environments
+.venv/
 env/
 venv/
 ENV/
 env.bak/
 venv.bak/
 
-# Testing & Coverage
-.cache
-.pytest_cache/
-.coverage
-.coverage.*
-htmlcov/
-nosetests.xml
-coverage.xml
-*.cover
-*.log
-
-# Type checking / Linters
-.mypy_cache/
-.dmypy.json
-dmypy.json
-.ruff_cache/
-
-# Node & Frontend
+# ------------------------------------------------------------------------------
+# 6. Node.js, Next.js & Frontend Build Outputs
+# ------------------------------------------------------------------------------
 node_modules/
 .pnp
 .pnp.js
 .next/
 out/
 next-env.d.ts
+*.tsbuildinfo
 
-# IDEs and Editors
+# ------------------------------------------------------------------------------
+# 7. IDE, Editor & OS Generated Files
+# ------------------------------------------------------------------------------
 .idea/
 .vscode/
 *.swp
@@ -67,16 +160,4 @@ next-env.d.ts
 *~
 .DS_Store
 Thumbs.db
-
-# Database / Storage files
-*.sqlite3
-*.db
-uploads/
-evidence_storage/
-storage/
-apps/api/storage/
-
-# Temporary / Scratch files
-tmp/
-temp/
-scratch/
+Desktop.ini

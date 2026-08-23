@@ -1,0 +1,29 @@
+From: "Accounts Receivable" <invoicing@vendor-supply.com>
+To: accounts.payable@victim-corp.com
+Subject: Invoicing Statement for August 2026 #INV-99018
+Date: Sun, 23 Aug 2026 17:00:00 +0000
+Message-ID: <invoice-attachment-99018@vendor-supply.com>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============ATTACHMENT_BOUNDARY_12345=="
+
+--===============ATTACHMENT_BOUNDARY_12345==
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+
+Dear Accounts Team,
+
+Please find attached the official tax invoice #INV-99018 for the recent services provided.
+Kindly remit payment at your earliest convenience.
+
+Portal: https://vendor-supply.com/payments
+
+Kind regards,
+Billing Operations
+
+--===============ATTACHMENT_BOUNDARY_12345==
+Content-Type: application/pdf; name="invoice_august_2026.pdf"
+Content-Disposition: attachment; filename="invoice_august_2026.pdf"
+Content-Transfer-Encoding: base64
+
+JVBERi0xLjQKMSAwIG9iago8PD4+CmVuZG9iagp0cmFpbGVyCjw8Pj4KJSVFT0Y=
+--===============ATTACHMENT_BOUNDARY_12345==--

@@ -34,14 +34,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
     {
       icon: MailSearch,
       label: "Email Ingestion",
-      href: "#investigations",
-      status: "planned",
+      href: "#ingestion-zone",
+      status: "active",
     },
     {
       icon: Fingerprint,
       label: "Header Forensics",
-      href: "#forensics",
-      status: "planned",
+      href: "#forensics-zone",
+      status: "active",
     },
     {
       icon: Globe2,
@@ -80,7 +80,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                 key={index}
                 href={item.href}
                 className={`nav-item ${isActive ? "active" : "disabled"}`}
-                aria-current={isActive ? "page" : undefined}
+                aria-current={item.href === "/" ? "page" : undefined}
               >
                 <Icon className="w-4 h-4 nav-icon" />
                 <span className="nav-label">{item.label}</span>

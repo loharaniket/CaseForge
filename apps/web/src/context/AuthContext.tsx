@@ -5,7 +5,7 @@ import { LoginCredentials, User } from "@/types/auth";
 import { getCurrentUser, loginUser } from "@/lib/api/auth";
 import { apiClient } from "@/lib/api/client";
 
-interface AuthContextValue {
+export interface AuthContextValue {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
@@ -14,7 +14,7 @@ interface AuthContextValue {
   logout: () => void;
 }
 
-const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+export const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 const TOKEN_STORAGE_KEY = "threattrace_auth_token";
 

@@ -1,0 +1,7 @@
+Content-Type: multipart/alternative; boundary="BROKEN_BOUNDARY_MARKER_MISSING"
+
+This is a malformed raw email payload without standard RFC headers.
+--BROKEN_BOUNDARY_MARKER_MISSING
+Corrupt chunk without headers
+--UNCLOSED_BOUNDARY
+Some text with arbitrary embedded URL: http://malformed-embedded-link.com/payload

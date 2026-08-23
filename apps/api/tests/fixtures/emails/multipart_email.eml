@@ -1,0 +1,35 @@
+From: "DevOps Automated Reports" <reports@cloud-infra.io>
+To: engineering-team@cloud-infra.io
+Subject: [PROD] Automated Cluster Health & Metrics Digest
+Date: Sun, 23 Aug 2026 16:30:00 +0000
+Message-ID: <metrics-digest-20260823@cloud-infra.io>
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="===============7382910482910385921=="
+
+--===============7382910482910385921==
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+
+Production Cluster Status: OPTIMAL
+CPU Utilization: 24.5%
+Memory Utilization: 48.2%
+Active Pods: 142/142
+
+Dashboard: https://metrics.cloud-infra.io/grafana/d/k8s-overview
+
+--===============7382910482910385921==
+Content-Type: text/html; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+
+<html>
+<body>
+  <h2>Production Cluster Status: <span style="color: green;">OPTIMAL</span></h2>
+  <ul>
+    <li>CPU Utilization: 24.5%</li>
+    <li>Memory Utilization: 48.2%</li>
+    <li>Active Pods: 142/142</li>
+  </ul>
+  <p><a href="https://metrics.cloud-infra.io/grafana/d/k8s-overview">View Grafana Dashboard</a></p>
+</body>
+</html>
+--===============7382910482910385921==--

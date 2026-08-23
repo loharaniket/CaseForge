@@ -1,0 +1,18 @@
+From: =?UTF-8?Q?Departamento_de_Seguridad?= <seguridad@banco-verificacion.es>
+To: usuario@victima.com
+Subject: =?UTF-8?B?QWxlcnRhIGRlIFNlZ3VyaWRhZDogQWNjZXNvIG5vIGF1dG9yaXphZG8gZGV0ZWN0YWRv?=
+Date: Sun, 23 Aug 2026 18:30:00 +0200
+Message-ID: <rfc2047-test-20260823@banco-verificacion.es>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
+
+Estimado cliente,
+
+Hemos detectado un intento de inicio de sesión no autorizado en su cuenta bancaria.
+Por favor, verifique su identidad en nuestro portal seguro:
+
+https://banco-verificacion.es/portal/seguridad?token=es883910
+
+Atentamente,
+Equipo de Ciberseguridad
