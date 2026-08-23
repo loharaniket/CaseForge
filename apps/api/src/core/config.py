@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import AnyHttpUrl, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -13,7 +15,7 @@ class Settings(BaseSettings):
     # General
     PROJECT_NAME: str = "ThreatTrace AI API"
     VERSION: str = "0.1.0"
-    ENVIRONMENT: str = "development"
+    ENVIRONMENT: Literal["development", "test", "staging", "production"] = "development"
     LOG_LEVEL: str = "INFO"
 
     # API Server
@@ -28,22 +30,55 @@ class Settings(BaseSettings):
         "http://localhost:8000",
     ]
 
+    # Database Configuration
+    POSTGRES_SERVER: str = "localhost"
+    POSTGRES_PORT: int = 5432
+    POSTGRES_USER: str = "threattrace_user"
+    POSTGRES_PASSWORD: str = "threattrace_secret_password"
+    POSTGRES_DB: str = "threattrace"
+    DATABASE_URL: str = "postgresql+psycopg://threattrace_user:threattrace_secret_password@localhost:5432/threattrace"
+
+    # Database Connection Pool Settings
+    POSTGRES_POOL_SIZE: int = 5
+    POSTGRES_MAX_OVERFLOW: int = 10
+    POSTGRES_POOL_TIMEOUT: int = 30
+    POSTGRES_CONNECT_TIMEOUT: int = 2
+
+    @field_validator("LOG_LEVEL")
+    @classmethod
+    def validate_log_level(cls, v: str) -> str:
+        valid_levels = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
+        upper_v = v.upper()
+        if upper_v not in valid_levels:
+            raise ValueError(f"LOG_LEVEL must be one of {valid_levels}, got '{v}'")
+        return upper_v
+
+    @field_validator("API_PORT", "POSTGRES_PORT")
+    @classmethod
+    def validate_port(cls, v: int) -> int:
+        if not (1 <= v <= 65535):
+            raise ValueError(f"Port must be between 1 and 65535, got {v}")
+        return v
+
+    @field_validator("DATABASE_URL")
+    @classmethod
+    def validate_database_url(cls, v: str) -> str:
+        valid_prefixes = (
+            "postgresql://",
+            "postgresql+psycopg://",
+            "postgresql+asyncpg://",
+            "sqlite://",
+        )
+        if not any(v.startswith(prefix) for prefix in valid_prefixes):
+            raise ValueError(f"DATABASE_URL must start with one of {valid_prefixes}, got '{v}'")
+        return v
+
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")
     @classmethod
     def assemble_cors_origins(cls, v: str | list[str]) -> list[str] | str:
         if isinstance(v, str) and not v.startswith("["):
             return [i.strip() for i in v.split(",") if i.strip()]
         return v
-
-    # PostgreSQL Database
-    POSTGRES_SERVER: str = "localhost"
-    POSTGRES_PORT: int = 5432
-    POSTGRES_USER: str = "threattrace_user"
-    POSTGRES_PASSWORD: str = "threattrace_secret_password"
-    POSTGRES_DB: str = "threattrace"
-
-    # Database URL
-    DATABASE_URL: str = "postgresql+psycopg://threattrace_user:threattrace_secret_password@localhost:5432/threattrace"
 
 
 settings = Settings()

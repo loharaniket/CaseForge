@@ -6,18 +6,27 @@ from sqlalchemy.orm import Session, sessionmaker
 from src.core.config import settings
 from src.core.logging import logger
 
-# Configure connection args based on database engine
 connect_args = {}
+engine_kwargs = {
+    "pool_pre_ping": True,
+}
+
 if settings.DATABASE_URL.startswith("sqlite"):
     connect_args["check_same_thread"] = False
 else:
-    # Set a reasonable connection timeout for network engines
-    connect_args["connect_timeout"] = 2
+    connect_args["connect_timeout"] = settings.POSTGRES_CONNECT_TIMEOUT
+    engine_kwargs.update(
+        {
+            "pool_size": settings.POSTGRES_POOL_SIZE,
+            "max_overflow": settings.POSTGRES_MAX_OVERFLOW,
+            "pool_timeout": settings.POSTGRES_POOL_TIMEOUT,
+        }
+    )
 
 engine = create_engine(
     settings.DATABASE_URL,
-    pool_pre_ping=True,
     connect_args=connect_args,
+    **engine_kwargs,
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

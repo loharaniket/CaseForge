@@ -16,6 +16,31 @@ class DatabaseStatus(StrEnum):
     NOT_CONFIGURED = "not_configured"
 
 
+class LivenessResponse(BaseModel):
+    """Liveness probe response confirming application process availability."""
+
+    status: HealthStatus = Field(
+        default=HealthStatus.HEALTHY, description="Application liveness status"
+    )
+    version: str = Field(..., description="Service semantic version")
+    environment: str = Field(..., description="Application execution environment")
+    timestamp: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        description="UTC timestamp of the liveness check",
+    )
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "status": "healthy",
+                "version": "0.1.0",
+                "environment": "development",
+                "timestamp": "2026-08-23T00:00:00Z",
+            }
+        }
+    }
+
+
 class HealthResponse(BaseModel):
     """API health status response schema."""
 
@@ -24,7 +49,8 @@ class HealthResponse(BaseModel):
     environment: str = Field(..., description="Application execution environment")
     database: DatabaseStatus = Field(..., description="Database connectivity status")
     timestamp: datetime = Field(
-        default_factory=lambda: datetime.now(UTC), description="UTC timestamp of the health check"
+        default_factory=lambda: datetime.now(UTC),
+        description="UTC timestamp of the health check",
     )
 
     model_config = {
