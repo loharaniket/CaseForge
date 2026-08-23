@@ -10,12 +10,14 @@ from src.models.case import Case, CaseStatus
 from src.models.user import User
 from src.schemas.email import ParsedEmailResponse
 from src.schemas.forensics import HeaderForensicsResponse
+from src.schemas.intel import CaseThreatIntelResponse, ReputationResultSchema
 from src.schemas.ioc import CaseIOCListResponse, IOCRecordSchema
 from src.schemas.risk import RiskAssessmentResponse
 from src.schemas.threat import ThreatAssessmentResponse
 from src.schemas.upload import EmailUploadResponse
 from src.services.detection_service import DetectionService, get_detection_service
 from src.services.forensics.service import HeaderForensicsService, get_forensics_service
+from src.services.intel.service import ThreatIntelService, get_intel_service
 from src.services.ioc.service import IOCService, get_ioc_service
 from src.services.parser_service import ParserService, get_parser_service
 from src.services.risk.service import RiskScoringService, get_risk_service
@@ -331,6 +333,73 @@ def get_case_iocs(
         total_count=len(records),
         by_type=by_type,
         iocs=ioc_schemas,
+    )
+
+
+@router.post(
+    "/{case_id}/threat-intel",
+    response_model=CaseThreatIntelResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Query Threat Intelligence for Case Indicators",
+    description="Queries IP and Domain reputation providers (AbuseIPDB, VirusTotal, or Mock adapters) for all unique case IOCs with caching and graceful error resilience.",
+    responses={
+        200: {"description": "Threat intelligence lookup complete"},
+        400: {"description": "Case processing failed"},
+        401: {"description": "Authentication required"},
+        404: {"description": "Case not found"},
+    },
+)
+async def query_case_threat_intel(
+    case_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    intel_service: ThreatIntelService = Depends(get_intel_service),
+) -> CaseThreatIntelResponse:
+    """Queries threat intelligence providers for all case IPs and domains."""
+    result = await intel_service.analyze_case_indicators(case_id=case_id, db=db)
+
+    ip_schemas = [ReputationResultSchema.model_validate(r) for r in result["ip_results"]]
+    domain_schemas = [ReputationResultSchema.model_validate(r) for r in result["domain_results"]]
+
+    return CaseThreatIntelResponse(
+        case_id=result["case_id"],
+        ip_provider=result["ip_provider"],
+        domain_provider=result["domain_provider"],
+        ip_lookups_count=result["ip_lookups_count"],
+        domain_lookups_count=result["domain_lookups_count"],
+        max_ip_score=result["max_ip_score"],
+        max_domain_score=result["max_domain_score"],
+        avg_ip_score=result["avg_ip_score"],
+        avg_domain_score=result["avg_domain_score"],
+        malicious_ips=result["malicious_ips"],
+        malicious_domains=result["malicious_domains"],
+        ip_results=ip_schemas,
+        domain_results=domain_schemas,
+    )
+
+
+@router.get(
+    "/{case_id}/threat-intel",
+    response_model=CaseThreatIntelResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get Case Threat Intelligence",
+    description="Retrieves threat intelligence reputation assessments for case indicators.",
+    responses={
+        200: {"description": "Threat intelligence data"},
+        400: {"description": "Case processing failed"},
+        401: {"description": "Authentication required"},
+        404: {"description": "Case not found"},
+    },
+)
+async def get_case_threat_intel(
+    case_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    intel_service: ThreatIntelService = Depends(get_intel_service),
+) -> CaseThreatIntelResponse:
+    """Retrieves threat intelligence for a case."""
+    return await query_case_threat_intel(
+        case_id=case_id, current_user=current_user, db=db, intel_service=intel_service
     )
 
 

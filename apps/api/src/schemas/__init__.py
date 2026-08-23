@@ -10,6 +10,7 @@ from src.schemas.forensics import (
     RelayHopSchema,
 )
 from src.schemas.health import DatabaseStatus, HealthResponse, HealthStatus, LivenessResponse
+from src.schemas.intel import CaseThreatIntelResponse, ReputationResultSchema
 from src.schemas.ioc import CaseIOCListResponse, IOCRecordSchema
 from src.schemas.ready import ReadyResponse, ReadyStatus
 from src.schemas.risk import RiskAssessmentResponse, RiskBreakdownSchema
@@ -21,6 +22,7 @@ __all__ = [
     "AttachmentMetadataResponse",
     "AuthenticationResultSchema",
     "CaseIOCListResponse",
+    "CaseThreatIntelResponse",
     "DatabaseStatus",
     "EmailUploadResponse",
     "ErrorDetail",
@@ -36,6 +38,7 @@ __all__ = [
     "ReadyResponse",
     "ReadyStatus",
     "RelayHopSchema",
+    "ReputationResultSchema",
     "RiskAssessmentResponse",
     "RiskBreakdownSchema",
     "ThreatAssessmentResponse",

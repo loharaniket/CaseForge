@@ -54,6 +54,11 @@ class Settings(BaseSettings):
     POSTGRES_POOL_TIMEOUT: int = 30
     POSTGRES_CONNECT_TIMEOUT: int = 2
 
+    # Threat Intelligence External Providers (Keys from env only)
+    ABUSEIPDB_API_KEY: str | None = None
+    VIRUSTOTAL_API_KEY: str | None = None
+    INTEL_CACHE_TTL_SECONDS: int = 3600
+
     @field_validator("LOG_LEVEL")
     @classmethod
     def validate_log_level(cls, v: str) -> str:
