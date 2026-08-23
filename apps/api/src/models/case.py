@@ -48,3 +48,6 @@ class Case(Base):
     threat_assessment = relationship(
         "ThreatAssessment", back_populates="case", uselist=False, cascade="all, delete-orphan"
     )
+    risk_assessment = relationship(
+        "RiskAssessment", back_populates="case", uselist=False, cascade="all, delete-orphan"
+    )

@@ -9,10 +9,12 @@ from src.core.errors import AppException
 from src.models.case import Case, CaseStatus
 from src.models.user import User
 from src.schemas.email import ParsedEmailResponse
+from src.schemas.risk import RiskAssessmentResponse
 from src.schemas.threat import ThreatAssessmentResponse
 from src.schemas.upload import EmailUploadResponse
 from src.services.detection_service import DetectionService, get_detection_service
 from src.services.parser_service import ParserService, get_parser_service
+from src.services.risk.service import RiskScoringService, get_risk_service
 from src.services.storage import EvidenceStorage, get_evidence_storage
 
 router = APIRouter()
@@ -208,3 +210,51 @@ def get_email_threat(
     """Retrieves or generates on demand the threat assessment."""
     assessment = detection_service.get_assessment(case_id=case_id, db=db)
     return ThreatAssessmentResponse.model_validate(assessment)
+
+
+@router.post(
+    "/{case_id}/risk-assessment",
+    response_model=RiskAssessmentResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Calculate Deterministic Risk Score",
+    description="Calculates normalized 0-100 risk score using exact MVP weights: AI (40%), Headers (25%), Domain (15%), IP (10%), URL (10%).",
+    responses={
+        200: {"description": "Risk score computed and persisted"},
+        400: {"description": "Case processing failed"},
+        401: {"description": "Authentication required"},
+        404: {"description": "Case not found"},
+    },
+)
+def compute_case_risk(
+    case_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    risk_service: RiskScoringService = Depends(get_risk_service),
+) -> RiskAssessmentResponse:
+    """Calculates and persists deterministic risk score for a case."""
+    assessment = risk_service.calculate_case_risk(case_id=case_id, db=db)
+    return RiskAssessmentResponse.model_validate(assessment)
+
+
+@router.get(
+    "/{case_id}/risk-assessment",
+    response_model=RiskAssessmentResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get Risk Assessment Result",
+    description="Retrieves or calculates on-demand the deterministic risk score for a case.",
+    responses={
+        200: {"description": "Risk assessment data"},
+        400: {"description": "Case processing failed"},
+        401: {"description": "Authentication required"},
+        404: {"description": "Case not found"},
+    },
+)
+def get_case_risk(
+    case_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    risk_service: RiskScoringService = Depends(get_risk_service),
+) -> RiskAssessmentResponse:
+    """Retrieves or generates on-demand the risk assessment."""
+    assessment = risk_service.get_case_risk(case_id=case_id, db=db)
+    return RiskAssessmentResponse.model_validate(assessment)

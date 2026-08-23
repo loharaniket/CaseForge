@@ -25,6 +25,14 @@ from src.services.parser_service import (
     default_parser_service,
     get_parser_service,
 )
+from src.services.risk import (
+    RiskCalculationResult,
+    RiskScoreBreakdown,
+    RiskScoringService,
+    RiskSeverity,
+    default_risk_service,
+    get_risk_service,
+)
 from src.services.storage import (
     EvidenceStorage,
     LocalEvidenceStorage,
@@ -40,6 +48,10 @@ __all__ = [
     "LocalEvidenceStorage",
     "ParsedEmailData",
     "ParserService",
+    "RiskCalculationResult",
+    "RiskScoreBreakdown",
+    "RiskScoringService",
+    "RiskSeverity",
     "RuleBasedThreatDetector",
     "ThreatCategory",
     "ThreatDetectionResult",
@@ -47,9 +59,11 @@ __all__ = [
     "default_detection_service",
     "default_eml_parser",
     "default_parser_service",
+    "default_risk_service",
     "default_rule_detector",
     "extract_urls",
     "get_detection_service",
     "get_evidence_storage",
     "get_parser_service",
+    "get_risk_service",
 ]
