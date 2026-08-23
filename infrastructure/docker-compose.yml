@@ -1,0 +1,72 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: threattrace_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: threattrace
+      POSTGRES_USER: threattrace_user
+      POSTGRES_PASSWORD: threattrace_secret_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U threattrace_user -d threattrace"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - threattrace_net
+
+  api:
+    build:
+      context: ../apps/api
+      dockerfile: Dockerfile
+    container_name: threattrace_api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ENVIRONMENT: development
+      POSTGRES_SERVER: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: threattrace
+      POSTGRES_USER: threattrace_user
+      POSTGRES_PASSWORD: threattrace_secret_password
+      DATABASE_URL: postgresql+psycopg://threattrace_user:threattrace_secret_password@postgres:5432/threattrace
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../apps/api:/app
+    networks:
+      - threattrace_net
+
+  web:
+    build:
+      context: ../apps/web
+      dockerfile: Dockerfile
+    container_name: threattrace_web
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../apps/web:/app
+      - /app/node_modules
+      - /app/.next
+    networks:
+      - threattrace_net
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  threattrace_net:
+    driver: bridge
