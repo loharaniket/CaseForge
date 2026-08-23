@@ -26,6 +26,26 @@ class RelayHopSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class ProtocolAuthDetailSchema(BaseModel):
+    """Granular evidence and provenance details for a specific authentication protocol."""
+
+    protocol: str = Field(..., description="Authentication protocol (spf, dkim, dmarc)")
+    status: str = Field(..., description="Raw granular verification status")
+    normalized_status: str = Field(
+        ..., description="Normalized 5-tier status (pass, fail, neutral, none, unknown)"
+    )
+    domain: str | None = Field(None, description="Validated domain extracted from header")
+    selector: str | None = Field(None, description="DKIM selector key if present")
+    sender_ip: str | None = Field(None, description="Transmitting sender IP if present")
+    evidence: str | None = Field(None, description="Raw matching clause from source header")
+    source_header: str | None = Field(
+        None, description="Source header name (e.g. Authentication-Results)"
+    )
+    explanation: str = Field(..., description="Human-auditable explanation for security analysts")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class AuthenticationResultSchema(BaseModel):
     """Schema for SPF, DKIM, and DMARC verification results."""
 

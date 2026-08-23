@@ -15,11 +15,17 @@ from src.services.detector import (
 from src.services.forensics import (
     AuthenticationResult,
     AuthenticationStatus,
+    AuthStatus,
+    EmailAuthenticationAnalyzer,
     HeaderForensicsResult,
     HeaderForensicsService,
+    NormalizedEmailAuthentication,
+    ProtocolAuthResult,
     RelayHop,
+    default_auth_analyzer,
     default_forensics_service,
     get_forensics_service,
+    normalize_auth_status,
 )
 from src.services.parser import (
     AttachmentMetadata,
@@ -50,17 +56,21 @@ from src.services.storage import (
 
 __all__ = [
     "AttachmentMetadata",
+    "AuthStatus",
     "AuthenticationResult",
     "AuthenticationStatus",
     "DetectionService",
     "EMLParser",
+    "EmailAuthenticationAnalyzer",
     "EmailParser",
     "EvidenceStorage",
     "HeaderForensicsResult",
     "HeaderForensicsService",
     "LocalEvidenceStorage",
+    "NormalizedEmailAuthentication",
     "ParsedEmailData",
     "ParserService",
+    "ProtocolAuthResult",
     "RelayHop",
     "RiskCalculationResult",
     "RiskScoreBreakdown",
@@ -70,6 +80,7 @@ __all__ = [
     "ThreatCategory",
     "ThreatDetectionResult",
     "ThreatDetector",
+    "default_auth_analyzer",
     "default_detection_service",
     "default_eml_parser",
     "default_forensics_service",
@@ -82,4 +93,5 @@ __all__ = [
     "get_forensics_service",
     "get_parser_service",
     "get_risk_service",
+    "normalize_auth_status",
 ]

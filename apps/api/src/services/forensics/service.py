@@ -10,6 +10,10 @@ from src.core.errors import AppException, NotFoundError
 from src.models.case import Case, CaseStatus
 from src.models.email import ParsedEmail
 from src.models.forensics import HeaderForensics
+from src.services.forensics.auth_analyzer import (
+    EmailAuthenticationAnalyzer,
+    default_auth_analyzer,
+)
 from src.services.forensics.types import (
     AuthenticationResult,
     AuthenticationStatus,
@@ -27,23 +31,8 @@ RE_BY_HOST = re.compile(r"by\s+([^\s\(\);]+)", re.IGNORECASE)
 RE_WITH_PROTO = re.compile(r"with\s+([^\s\(\);]+)", re.IGNORECASE)
 RE_DATE_TAIL = re.compile(r";\s*([A-Za-z0-9,:\s+-]+)$")
 
-# Regex matchers for Authentication-Results
-RE_SPF_STATUS = re.compile(
-    r"\bspf=(pass|fail|softfail|neutral|none|temperror|permerror)\b", re.IGNORECASE
-)
-RE_DKIM_STATUS = re.compile(
-    r"\bdkim=(pass|fail|softfail|neutral|none|temperror|permerror)\b", re.IGNORECASE
-)
-RE_DMARC_STATUS = re.compile(
-    r"\bdmarc=(pass|fail|softfail|neutral|none|temperror|permerror)\b", re.IGNORECASE
-)
-RE_RECEIVED_SPF = re.compile(
-    r"^(pass|fail|softfail|neutral|none|temperror|permerror)", re.IGNORECASE
-)
-
 # Email address extraction inside display names
 RE_EMAIL_IN_NAME = re.compile(r"[\w\.-]+@[\w\.-]+\.\w+")
-
 
 # Explicit RFC 1918, loopback, and link-local subnets
 RFC1918_NETWORKS = [
@@ -61,8 +50,13 @@ RFC1918_NETWORKS = [
 class HeaderForensicsService:
     """Forensic email transmission and header authentication analysis engine."""
 
-    def __init__(self, parser_service: ParserService | None = None) -> None:
+    def __init__(
+        self,
+        parser_service: ParserService | None = None,
+        auth_analyzer: EmailAuthenticationAnalyzer | None = None,
+    ) -> None:
         self.parser_service = parser_service or get_parser_service()
+        self.auth_analyzer = auth_analyzer or default_auth_analyzer
 
     @classmethod
     def _is_ip_private(cls, ip_str: str) -> bool:
@@ -183,56 +177,30 @@ class HeaderForensicsService:
 
         return candidates, probable
 
-    @classmethod
-    def parse_authentication_results(cls, raw_headers: dict[str, Any]) -> AuthenticationResult:
-        """Extracts SPF, DKIM, and DMARC results from Authentication-Results and Received-SPF headers."""
+    def parse_authentication_results(self, raw_headers: dict[str, Any]) -> AuthenticationResult:
+        """Extracts SPF, DKIM, and DMARC results using EmailAuthenticationAnalyzer."""
+        normalized = self.auth_analyzer.analyze_authentication(raw_headers)
+
+        spf_status_val = AuthenticationStatus(normalized.spf.status.value)
+        dkim_status_val = AuthenticationStatus(normalized.dkim.status.value)
+        dmarc_status_val = AuthenticationStatus(normalized.dmarc.status.value)
+
         auth_hdr_raw = None
-        spf_status = AuthenticationStatus.UNKNOWN
-        spf_details = None
-        dkim_status = AuthenticationStatus.UNKNOWN
-        dkim_details = None
-        dmarc_status = AuthenticationStatus.UNKNOWN
-        dmarc_details = None
-
-        # Search for Authentication-Results header
-        for k, v in raw_headers.items():
-            if k.lower() in ("authentication-results", "x-authentication-results"):
-                auth_val = v if isinstance(v, str) else (v[0] if isinstance(v, list) else str(v))
-                auth_hdr_raw = auth_val
-
-                spf_match = RE_SPF_STATUS.search(auth_val)
-                if spf_match:
-                    spf_status = AuthenticationStatus(spf_match.group(1).lower())
-                    spf_details = f"Auth-Results: {spf_match.group(0)}"
-
-                dkim_match = RE_DKIM_STATUS.search(auth_val)
-                if dkim_match:
-                    dkim_status = AuthenticationStatus(dkim_match.group(1).lower())
-                    dkim_details = f"Auth-Results: {dkim_match.group(0)}"
-
-                dmarc_match = RE_DMARC_STATUS.search(auth_val)
-                if dmarc_match:
-                    dmarc_status = AuthenticationStatus(dmarc_match.group(1).lower())
-                    dmarc_details = f"Auth-Results: {dmarc_match.group(0)}"
-
-            elif k.lower() == "received-spf" and spf_status == AuthenticationStatus.UNKNOWN:
-                spf_val = v if isinstance(v, str) else (v[0] if isinstance(v, list) else str(v))
-                spf_match = RE_RECEIVED_SPF.search(spf_val.strip())
-                if spf_match:
-                    status_str = spf_match.group(1).lower()
-                    try:
-                        spf_status = AuthenticationStatus(status_str)
-                        spf_details = f"Received-SPF: {spf_val.split(';')[0].strip()}"
-                    except ValueError:
-                        pass
+        for k in ("authentication-results", "arc-authentication-results", "received-spf"):
+            if k in raw_headers:
+                val = raw_headers[k]
+                auth_hdr_raw = (
+                    val if isinstance(val, str) else (val[0] if isinstance(val, list) else str(val))
+                )
+                break
 
         return AuthenticationResult(
-            spf_status=spf_status,
-            spf_details=spf_details,
-            dkim_status=dkim_status,
-            dkim_details=dkim_details,
-            dmarc_status=dmarc_status,
-            dmarc_details=dmarc_details,
+            spf_status=spf_status_val,
+            spf_details=normalized.spf.explanation,
+            dkim_status=dkim_status_val,
+            dkim_details=normalized.dkim.explanation,
+            dmarc_status=dmarc_status_val,
+            dmarc_details=normalized.dmarc.explanation,
             raw_auth_results=auth_hdr_raw,
         )
 

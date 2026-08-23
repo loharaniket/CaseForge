@@ -1,0 +1,14 @@
+Received: from mx.target.com by store.target.com with ESMTPS; Sun, 23 Aug 2026 12:00:00 +0000
+Authentication-Results: mx.target.com;
+ spf=neutral (sender IP is 198.51.100.4) smtp.mailfrom=neutral-domain.org;
+ dkim=none;
+ dmarc=none (p=none) header.from=neutral-domain.org
+From: "Neutral Source" <info@neutral-domain.org>
+To: analyst@target.com
+Subject: Neutral Policy Test Communication
+Date: Sun, 23 Aug 2026 11:59:50 +0000
+Message-ID: <neutral-auth-1234@neutral-domain.org>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+
+This domain publishes a neutral SPF record.

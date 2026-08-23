@@ -1,0 +1,12 @@
+Received: from malformed-mta.com by store.com with SMTP; Sun, 23 Aug 2026 14:00:00 +0000
+Authentication-Results: broken-auth-gateway; spf=garbage_not_a_valid_state; dkim=???; dmarc=invalid_token;;;;;
+Received-SPF: ??? broken formatting ???;
+From: "Test User" <test@example.com>
+To: target@example.com
+Subject: Malformed Auth Header Test
+Date: Sun, 23 Aug 2026 13:59:50 +0000
+Message-ID: <malformed-auth-001@example.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+
+Test payload for malformed authentication header handling.

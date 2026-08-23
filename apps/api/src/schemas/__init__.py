@@ -6,6 +6,7 @@ from src.schemas.error import ErrorDetail, ErrorResponse
 from src.schemas.forensics import (
     AuthenticationResultSchema,
     HeaderForensicsResponse,
+    ProtocolAuthDetailSchema,
     RelayHopSchema,
 )
 from src.schemas.health import DatabaseStatus, HealthResponse, HealthStatus, LivenessResponse
@@ -28,6 +29,7 @@ __all__ = [
     "LivenessResponse",
     "LoginRequest",
     "ParsedEmailResponse",
+    "ProtocolAuthDetailSchema",
     "ReadyResponse",
     "ReadyStatus",
     "RelayHopSchema",

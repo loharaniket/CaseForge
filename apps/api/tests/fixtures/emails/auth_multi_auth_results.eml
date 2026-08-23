@@ -1,0 +1,18 @@
+Received: from mx-inbound-01.corp.com (198.51.100.1) by mailbox.corp.com with ESMTPS; Sun, 23 Aug 2026 13:00:10 +0000
+Authentication-Results: mx-inbound-01.corp.com;
+ spf=pass (sender IP is 192.0.2.88) smtp.mailfrom=trusted-vendor.com;
+ dkim=pass (signature ok) header.d=trusted-vendor.com header.s=s2026;
+ dmarc=pass (p=reject) header.from=trusted-vendor.com
+Received: from upstream-proxy.relay.org by mx-inbound-01.corp.com with ESMTP; Sun, 23 Aug 2026 13:00:00 +0000
+Authentication-Results: upstream-proxy.relay.org;
+ spf=pass (client-ip=192.0.2.88);
+ dkim=pass header.i=@trusted-vendor.com
+From: "Trusted Vendor Sales" <billing@trusted-vendor.com>
+To: target@corp.com
+Subject: Final Signed Order Form
+Date: Sun, 23 Aug 2026 12:59:50 +0000
+Message-ID: <multi-auth-7711@trusted-vendor.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+
+Thank you for your business.
