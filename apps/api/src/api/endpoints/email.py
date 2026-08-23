@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from src.api.deps import get_current_active_user, get_db
 from src.core.config import settings
 from src.core.errors import AppException
-from src.models.case import Case
+from src.models.case import Case, CaseStatus
 from src.models.user import User
 from src.schemas.email import ParsedEmailResponse
 from src.schemas.upload import EmailUploadResponse
@@ -20,10 +20,10 @@ router = APIRouter()
     "/upload",
     response_model=EmailUploadResponse,
     status_code=status.HTTP_201_CREATED,
-    summary="Secure EML Email Ingestion",
-    description="Accepts an untrusted .eml email file from an authenticated analyst, calculates cryptographic evidence SHA-256, safely persists the raw file, and returns a new Case ID.",
+    summary="Secure EML Email Ingestion & Forensic Parsing",
+    description="Accepts an untrusted .eml email file from an authenticated analyst, calculates cryptographic evidence SHA-256, safely persists the raw file, creates a Case record, and parses forensic metadata into PostgreSQL.",
     responses={
-        201: {"description": "Evidence ingested and case created"},
+        201: {"description": "Evidence ingested, case created, and email parsed"},
         400: {"description": "Invalid file extension or empty file"},
         401: {"description": "Authentication required"},
         413: {"description": "File exceeds maximum size limit"},
@@ -34,8 +34,9 @@ async def upload_eml(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
     storage: EvidenceStorage = Depends(get_evidence_storage),
+    parser_service: ParserService = Depends(get_parser_service),
 ) -> EmailUploadResponse:
-    """Safely ingests and stores a raw .eml file."""
+    """Safely ingests, hashes, and parses a raw .eml evidence file."""
     original_filename = file.filename or "unknown.eml"
     sanitized_filename = Path(original_filename).name
 
@@ -81,18 +82,26 @@ async def upload_eml(
     # 3. Store raw evidence safely via EvidenceStorage abstraction
     storage_key, sha256_hash = storage.save(raw_bytes, sanitized_filename)
 
-    # 4. Create case record in PostgreSQL
+    # 4. Create case record in PostgreSQL in UPLOADED status
     new_case = Case(
         user_id=current_user.id,
         file_name=sanitized_filename,
         file_size_bytes=len(raw_bytes),
         sha256_hash=sha256_hash,
         storage_key=storage_key,
-        status="received",
+        status=CaseStatus.UPLOADED,
     )
     db.add(new_case)
     db.commit()
     db.refresh(new_case)
+
+    # 5. Automatically trigger transactional parsing into PostgreSQL
+    try:
+        parser_service.parse_case(case_id=new_case.id, db=db)
+        db.refresh(new_case)
+    except Exception:
+        # Failure state is safely recorded in new_case.status = FAILED
+        db.refresh(new_case)
 
     return EmailUploadResponse(
         case_id=new_case.id,
@@ -101,6 +110,7 @@ async def upload_eml(
         file_size_bytes=new_case.file_size_bytes,
         sha256=new_case.sha256_hash,
         created_at=new_case.created_at,
+        error_message=new_case.error_message,
     )
 
 

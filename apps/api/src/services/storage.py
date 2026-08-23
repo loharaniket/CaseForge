@@ -29,8 +29,12 @@ class EvidenceStorage(ABC):
 class LocalEvidenceStorage(EvidenceStorage):
     """Local filesystem evidence storage provider."""
 
-    def __init__(self, base_dir: str | Path | None = None) -> None:
-        self.base_dir = Path(base_dir or settings.STORAGE_DIR).resolve()
+    def __init__(
+        self,
+        base_dir: str | Path | None = None,
+        storage_dir: str | Path | None = None,
+    ) -> None:
+        self.base_dir = Path(storage_dir or base_dir or settings.STORAGE_DIR).resolve()
         self.base_dir.mkdir(parents=True, exist_ok=True)
 
     def calculate_sha256(self, data: bytes) -> str:

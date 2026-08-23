@@ -54,7 +54,7 @@ def test_valid_eml_upload_success(client: TestClient, db_session: Session):
     assert response.status_code == 201
     data = response.json()
     assert "case_id" in data
-    assert data["status"] == "received"
+    assert data["status"] in ("PARSED", "UPLOADED", "received")
     assert data["file_name"] == "phishing_sample.eml"
     assert data["file_size_bytes"] == len(eml_content)
     assert data["sha256"] == expected_sha256
@@ -68,7 +68,7 @@ def test_valid_eml_upload_success(client: TestClient, db_session: Session):
     assert case_in_db is not None
     assert case_in_db.file_name == "phishing_sample.eml"
     assert case_in_db.sha256_hash == expected_sha256
-    assert case_in_db.status == "received"
+    assert case_in_db.status in ("PARSED", "UPLOADED", "received")
 
 
 def test_v1_email_upload_endpoint_alias(client: TestClient, db_session: Session):

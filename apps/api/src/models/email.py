@@ -46,4 +46,4 @@ class ParsedEmail(Base):
     raw_headers: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
 
     # Relationships
-    case = relationship("Case", backref="parsed_content")
+    case = relationship("Case", back_populates="parsed_email")
