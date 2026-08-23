@@ -35,6 +35,11 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 8  # 8 hours
 
+    # Evidence Storage & Upload Limits
+    MAX_UPLOAD_SIZE_BYTES: int = 10 * 1024 * 1024  # 10 MB limit
+    STORAGE_DIR: str = "storage/evidence"
+    ALLOWED_EMAIL_EXTENSIONS: list[str] = [".eml"]
+
     # Database Configuration
     POSTGRES_SERVER: str = "localhost"
     POSTGRES_PORT: int = 5432

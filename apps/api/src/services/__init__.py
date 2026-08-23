@@ -1,5 +1,9 @@
-"""Service layer package."""
+"""Service layer abstractions and provider implementations."""
 
-from src.services.base import BaseService
+from src.services.storage import EvidenceStorage, LocalEvidenceStorage, get_evidence_storage
 
-__all__ = ["BaseService"]
+__all__ = [
+    "EvidenceStorage",
+    "LocalEvidenceStorage",
+    "get_evidence_storage",
+]

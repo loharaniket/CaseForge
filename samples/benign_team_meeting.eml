@@ -1,0 +1,26 @@
+From: "Alice Smith" <alice@trusted-corp.com>
+To: "Bob Jones" <bob@trusted-corp.com>
+Subject: Engineering Sync Agenda & Sprint 42 Planning
+Date: Sun, 23 Aug 2026 11:00:00 +0000
+Message-ID: <agenda-sync-20260823@trusted-corp.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+Received: from mail.trusted-corp.com (192.0.2.10) by mx.trusted-corp.com; Sun, 23 Aug 2026 11:00:01 +0000
+Authentication-Results: mx.trusted-corp.com;
+  spf=pass (sender IP 192.0.2.10 is permitted);
+  dkim=pass header.d=trusted-corp.com;
+  dmarc=pass (p=reject) header.from=trusted-corp.com
+
+Hi Bob,
+
+Here is the agenda for our engineering sync tomorrow at 10:00 AM:
+1. ThreatTrace AI architecture review
+2. EML ingestion validation benchmarks
+3. Sprint 42 backlog grooming
+
+Let me know if you would like to add any items to the discussion.
+
+Best,
+Alice Smith
+Staff Security Engineer
+Trusted Corp

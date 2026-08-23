@@ -1,0 +1,28 @@
+From: "Financial Accounts" <billing-security@suspicious-bank-alert.com>
+To: "Finance Team" <victim@organization.com>
+Subject: URGENT: Overdue Invoice #INV-2026-8891 - Immediate Wire Action Required
+Date: Sun, 23 Aug 2026 09:30:00 +0000
+Message-ID: <20260823093000.8891@suspicious-bank-alert.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Received: from mail.suspicious-bank-alert.com (198.51.100.45) by mx.organization.com with ESMTP; Sun, 23 Aug 2026 09:30:02 +0000
+Authentication-Results: mx.organization.com;
+  spf=fail (sender IP 198.51.100.45 is not permitted by domain suspicious-bank-alert.com);
+  dkim=fail header.d=suspicious-bank-alert.com;
+  dmarc=fail (p=reject) action=none header.from=suspicious-bank-alert.com
+
+Attention Finance Department,
+
+Our automated audit indicates that Invoice #INV-2026-8891 for $42,500.00 is currently overdue.
+Please review the remittance instructions below and execute the wire transfer immediately to prevent legal collections:
+
+Beneficiary Account: 8829-1092-4412
+Swift Code: EVILUS33
+Payment Portal: http://portal.suspicious-bank-alert.com/remit?token=9f823a1c
+
+Failure to confirm settlement within 24 hours will result in immediate service termination.
+
+Regards,
+Financial Controller
+Suspicious Bank Alert Services

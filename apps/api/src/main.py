@@ -5,6 +5,7 @@ from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
+from src.api.endpoints.email import router as email_router
 from src.api.endpoints.health_ready import router as health_ready_router
 from src.api.v1.endpoints.health import get_health
 from src.api.v1.router import api_router
@@ -66,6 +67,9 @@ def create_app(settings_override: Settings | None = None) -> FastAPI:
     # 4. Mount top-level API routers
     # Mount /api/health and /api/ready
     app.include_router(health_ready_router, prefix="/api")
+
+    # Mount /api/email for direct email ingestion
+    app.include_router(email_router, prefix="/api/email", tags=["Email Ingestion"])
 
     # Mount /api/v1 versioned endpoints
     app.include_router(api_router, prefix=app_settings.API_V1_STR)
