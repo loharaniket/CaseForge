@@ -51,3 +51,6 @@ class Case(Base):
     risk_assessment = relationship(
         "RiskAssessment", back_populates="case", uselist=False, cascade="all, delete-orphan"
     )
+    header_forensics = relationship(
+        "HeaderForensics", back_populates="case", uselist=False, cascade="all, delete-orphan"
+    )

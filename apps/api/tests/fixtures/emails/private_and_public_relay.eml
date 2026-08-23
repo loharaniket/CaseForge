@@ -1,0 +1,14 @@
+Received: from boundary-inbound.enterprise.com (198.51.100.2) by mailbox-store.enterprise.com with ESMTPS; Sun, 23 Aug 2026 17:00:20 +0000
+Received: from external-gateway.partner.com (203.0.113.88) by boundary-inbound.enterprise.com with ESMTPS id 112; Sun, 23 Aug 2026 17:00:10 +0000
+Received: from internal-router.local (192.168.1.50) by external-gateway.partner.com with ESMTP id 111; Sun, 23 Aug 2026 17:00:05 +0000
+Received: from workstation-client.local (10.0.0.15) by internal-router.local with SMTP id 110; Sun, 23 Aug 2026 17:00:00 +0000
+Authentication-Results: boundary-inbound.enterprise.com; spf=pass; dkim=pass; dmarc=pass
+From: "Partner Rep" <rep@partner.com>
+To: target@enterprise.com
+Subject: Meeting Agenda
+Date: Sun, 23 Aug 2026 16:59:50 +0000
+Message-ID: <priv-pub-8812@workstation-client.local>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+
+Here is the meeting agenda for tomorrow.

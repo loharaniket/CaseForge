@@ -3,10 +3,12 @@ from sqlalchemy.orm import Session
 
 from src.core.errors import AppException, NotFoundError
 from src.models.case import Case, CaseStatus
+from src.models.forensics import HeaderForensics
 from src.models.risk import RiskAssessment
 from src.models.threat import ThreatAssessment
 from src.services.detection_service import DetectionService, get_detection_service
 from src.services.detector.types import ThreatCategory
+from src.services.forensics.service import HeaderForensicsService, get_forensics_service
 from src.services.risk.types import RiskCalculationResult, RiskScoreBreakdown, RiskSeverity
 
 
@@ -29,8 +31,13 @@ class RiskScoringService:
     WEIGHT_IP_REPUTATION = 0.10
     WEIGHT_URL_ANALYSIS = 0.10
 
-    def __init__(self, detection_service: DetectionService | None = None) -> None:
+    def __init__(
+        self,
+        detection_service: DetectionService | None = None,
+        forensics_service: HeaderForensicsService | None = None,
+    ) -> None:
         self.detection_service = detection_service or get_detection_service()
+        self.forensics_service = forensics_service or get_forensics_service()
 
     @classmethod
     def get_weights(cls) -> dict[str, float]:
@@ -171,10 +178,23 @@ class RiskScoringService:
         elif threat.classification == ThreatCategory.NORMAL:
             ai_score = (1.0 - threat.confidence) * 20.0
 
-        # Calculate using exact weighted formula (currently pending header/domain/ip/url components default to 0.0 with missing transparency)
+        # 3. Retrieve header forensics
+        forensics = db.execute(
+            select(HeaderForensics).where(HeaderForensics.case_id == case_id)
+        ).scalar_one_or_none()
+
+        if not forensics:
+            try:
+                forensics = self.forensics_service.get_case_forensics(case_id=case_id, db=db)
+            except Exception:
+                forensics = None
+
+        header_score = forensics.forensics_risk_score if forensics else None
+
+        # Calculate using exact weighted formula (domain, ip, url default to 0.0 with missing audit)
         calc_result = self.calculate_score(
             ai_score=ai_score,
-            header_score=None,
+            header_score=header_score,
             domain_score=None,
             ip_score=None,
             url_score=None,

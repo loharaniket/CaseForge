@@ -1,0 +1,17 @@
+Received: from mx.victim-corp.com (198.51.100.10) by internal.victim-corp.com with ESMTPS; Sun, 23 Aug 2026 15:30:00 +0000
+Received: from suspicious-relay-node.attacker-c2.net (203.0.113.199) by mx.victim-corp.com with ESMTP id 66201; Sun, 23 Aug 2026 15:29:50 +0000
+Authentication-Results: mx.victim-corp.com;
+ spf=softfail (sender IP 203.0.113.199 is not authorized);
+ dkim=none;
+ dmarc=fail (p=none) header.from=legitimate-brand.com
+From: "Billing Security Center" <support@legitimate-brand.com>
+To: victim.user@victim-corp.com
+Reply-To: phish-collector@covert-attacker.org
+Return-Path: <bounce-handler@attacker-c2.net>
+Subject: Verification Required for Vendor Account
+Date: Sun, 23 Aug 2026 15:29:45 +0000
+Message-ID: <spoof-rp-88219@attacker-c2.net>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+
+Please verify your credentials immediately to avoid suspension.

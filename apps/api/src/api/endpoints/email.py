@@ -9,10 +9,12 @@ from src.core.errors import AppException
 from src.models.case import Case, CaseStatus
 from src.models.user import User
 from src.schemas.email import ParsedEmailResponse
+from src.schemas.forensics import HeaderForensicsResponse
 from src.schemas.risk import RiskAssessmentResponse
 from src.schemas.threat import ThreatAssessmentResponse
 from src.schemas.upload import EmailUploadResponse
 from src.services.detection_service import DetectionService, get_detection_service
+from src.services.forensics.service import HeaderForensicsService, get_forensics_service
 from src.services.parser_service import ParserService, get_parser_service
 from src.services.risk.service import RiskScoringService, get_risk_service
 from src.services.storage import EvidenceStorage, get_evidence_storage
@@ -210,6 +212,54 @@ def get_email_threat(
     """Retrieves or generates on demand the threat assessment."""
     assessment = detection_service.get_assessment(case_id=case_id, db=db)
     return ThreatAssessmentResponse.model_validate(assessment)
+
+
+@router.post(
+    "/{case_id}/header-forensics",
+    response_model=HeaderForensicsResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Execute Header Forensic & Relay Analysis",
+    description="Reconstructs the Received relay chain, identifies candidate origin IPs, extracts SPF/DKIM/DMARC status, and checks for spoofing.",
+    responses={
+        200: {"description": "Header forensics analysis completed"},
+        400: {"description": "Case processing failed"},
+        401: {"description": "Authentication required"},
+        404: {"description": "Case not found"},
+    },
+)
+def analyze_header_forensics(
+    case_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    forensics_service: HeaderForensicsService = Depends(get_forensics_service),
+) -> HeaderForensicsResponse:
+    """Analyzes email relay headers and sender authentication."""
+    assessment = forensics_service.analyze_case(case_id=case_id, db=db)
+    return HeaderForensicsResponse.model_validate(assessment)
+
+
+@router.get(
+    "/{case_id}/header-forensics",
+    response_model=HeaderForensicsResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get Header Forensic Result",
+    description="Retrieves or executes on-demand header forensic relay analysis for a case.",
+    responses={
+        200: {"description": "Header forensics data"},
+        400: {"description": "Case processing failed"},
+        401: {"description": "Authentication required"},
+        404: {"description": "Case not found"},
+    },
+)
+def get_header_forensics(
+    case_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    forensics_service: HeaderForensicsService = Depends(get_forensics_service),
+) -> HeaderForensicsResponse:
+    """Retrieves or generates on-demand header forensics."""
+    assessment = forensics_service.get_case_forensics(case_id=case_id, db=db)
+    return HeaderForensicsResponse.model_validate(assessment)
 
 
 @router.post(

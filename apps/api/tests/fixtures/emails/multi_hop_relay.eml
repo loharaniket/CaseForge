@@ -1,0 +1,22 @@
+Received: from mail-gateway-02.victim-corp.com (198.51.100.90) by internal-mail.victim-corp.com with ESMTPS id 99124; Sun, 23 Aug 2026 14:02:10 +0000
+Received: from mx1.upstream-relay.net (203.0.113.45) by mail-gateway-02.victim-corp.com with ESMTP id 88123; Sun, 23 Aug 2026 14:02:02 +0000
+Received: from outbound-mta.sender-domain.com (192.0.2.15) by mx1.upstream-relay.net with ESMTPA id 77100; Sun, 23 Aug 2026 14:01:55 +0000
+Authentication-Results: mail-gateway-02.victim-corp.com;
+ spf=pass (sender IP is 192.0.2.15) smtp.mailfrom=sender-domain.com;
+ dkim=pass (signature was verified) header.d=sender-domain.com;
+ dmarc=pass (p=reject sp=reject) header.from=sender-domain.com
+From: "Official Partner" <contact@sender-domain.com>
+To: target.user@victim-corp.com
+Subject: Standard Project Synchronization Notes
+Date: Sun, 23 Aug 2026 14:01:50 +0000
+Message-ID: <multi-hop-rel-9918@sender-domain.com>
+Return-Path: <contact@sender-domain.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+
+Hi team,
+
+Attached are the status notes from our engineering sync earlier today.
+
+Best regards,
+Official Partner

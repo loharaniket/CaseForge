@@ -1,0 +1,16 @@
+Received: from boundary-inbound.enterprise.com (198.51.100.2) by mailbox-store.enterprise.com with ESMTPS; Sun, 23 Aug 2026 16:00:10 +0000
+Received: from fake-server.rogue-host.org (192.0.2.222) by boundary-inbound.enterprise.com with SMTP id fail99; Sun, 23 Aug 2026 16:00:00 +0000
+Authentication-Results: boundary-inbound.enterprise.com;
+ spf=fail (mailfrom forged);
+ dkim=fail (signature mismatch body hash);
+ dmarc=fail (p=reject) header.from=executive-leadership.com
+From: "Executive President" <ceo@executive-leadership.com>
+To: accountant@enterprise.com
+Subject: Urgent Payment Request
+Date: Sun, 23 Aug 2026 15:59:50 +0000
+Message-ID: <auth-fail-7721@rogue-host.org>
+Return-Path: <spoof@rogue-host.org>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+
+Please wire funds immediately.
