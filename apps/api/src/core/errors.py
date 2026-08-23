@@ -3,6 +3,7 @@ from typing import Any
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from sqlalchemy.exc import SQLAlchemyError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from src.core.logging import logger
@@ -148,6 +149,20 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException) 
     )
 
 
+async def sqlalchemy_exception_handler(request: Request, exc: SQLAlchemyError) -> JSONResponse:
+    """Handler for database connectivity and query errors."""
+    logger.error(
+        f"Database error processing {request.method} {request.url.path}: {exc}",
+        exc_info=True,
+    )
+    return create_error_response(
+        code="DATABASE_ERROR",
+        message="Database connectivity error. Please ensure the PostgreSQL service is running.",
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        details={"hint": "Database connection failed or timed out."},
+    )
+
+
 async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """Catch-all handler for unhandled exceptions, preventing secret or internal leak."""
     logger.error(
@@ -166,4 +181,5 @@ def setup_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(AppException, app_exception_handler)
     app.add_exception_handler(RequestValidationError, validation_exception_handler)
     app.add_exception_handler(StarletteHTTPException, http_exception_handler)
+    app.add_exception_handler(SQLAlchemyError, sqlalchemy_exception_handler)
     app.add_exception_handler(Exception, unhandled_exception_handler)

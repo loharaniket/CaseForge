@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { SystemStatusCard } from "@/components/dashboard/SystemStatusCard";
 import { EmailUploadZone } from "@/components/investigation/EmailUploadZone";
-import { EmailForensicsInspector } from "@/components/investigation/EmailForensicsInspector";
+import { InvestigationDashboard } from "@/components/dashboard/InvestigationDashboard";
 import { EmailUploadResponse } from "@/types";
 import {
   Search,
@@ -28,30 +28,30 @@ export default function HomePage() {
     {
       icon: Fingerprint,
       title: "Authentication Forensics",
-      description: "Automated SPF, DKIM, and DMARC alignment and cryptographic signature verification.",
-      status: "Planned",
-      highlight: false,
+      description: "Automated SPF, DKIM, and DMARC alignment, selector extraction, and spoofing detection.",
+      status: "Live & Active",
+      highlight: true,
     },
     {
       icon: Cpu,
-      title: "AI Threat Engine & Explainability",
-      description: "Multi-class threat categorization with confidence metrics and explainable risk factors.",
-      status: "Planned",
-      highlight: false,
+      title: "AI Threat Detection & Risk Scoring",
+      description: "Multi-class threat categorization, explainable heuristic reasons, and deterministic 0-100 risk scoring.",
+      status: "Live & Active",
+      highlight: true,
     },
     {
       icon: Globe2,
       title: "Threat Intel & Geo Infrastructure",
-      description: "Reputation correlation and infrastructure origin resolution via decoupled adapters.",
-      status: "Planned",
-      highlight: false,
+      description: "IP and Domain reputation adapters (AbuseIPDB, VirusTotal) and Probable Infrastructure Origin resolution.",
+      status: "Live & Active",
+      highlight: true,
     },
     {
       icon: Share2,
-      title: "Threat Graph & IOC Correlation",
-      description: "Visual topology of extracted IOCs, senders, domains, hashes, and relay pathways.",
-      status: "Planned",
-      highlight: false,
+      title: "IOC Extraction & Telemetry",
+      description: "Deterministic normalization and deduplication across 6 IOC types (IPv4, IPv6, Domain, URL, Email, SHA-256).",
+      status: "Live & Active",
+      highlight: true,
     },
     {
       icon: FileText,
@@ -88,10 +88,10 @@ export default function HomePage() {
         <EmailUploadZone onUploadSuccess={handleUploadSuccess} />
       </section>
 
-      {/* Live Forensic Case Inspector */}
+      {/* Live Analyst Investigation Dashboard */}
       {selectedCaseId && (
-        <section id="forensics-zone">
-          <EmailForensicsInspector caseId={selectedCaseId} />
+        <section id="investigation-zone">
+          <InvestigationDashboard caseId={selectedCaseId} />
         </section>
       )}
 

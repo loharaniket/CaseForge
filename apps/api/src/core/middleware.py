@@ -64,9 +64,20 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             duration_ms = (time.perf_counter() - start_time) * 1000.0
             logger.error(
                 f"{method} {path} - FAILED ({duration_ms:.2f}ms) "
-                f"[client: {client_ip}] [req_id: {request_id}]: {exc}"
+                f"[client: {client_ip}] [req_id: {request_id}]: {exc}",
+                exc_info=True,
             )
-            raise exc
+            from src.core.errors import create_error_response
+
+            err_response = create_error_response(
+                code="INTERNAL_SERVER_ERROR",
+                message="An unexpected server error occurred processing your request.",
+                status_code=500,
+                details={"hint": str(exc)},
+            )
+            err_response.headers["X-Request-ID"] = request_id
+            err_response.headers["X-Response-Time"] = f"{duration_ms:.2f}ms"
+            return err_response
 
 
 def setup_middleware(app: FastAPI) -> None:

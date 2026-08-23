@@ -14,6 +14,7 @@ from src.core.config import settings as global_settings
 from src.core.errors import setup_exception_handlers
 from src.core.logging import logger
 from src.core.middleware import setup_middleware
+from src.db.init_db import init_db
 from src.db.session import get_db
 from src.schemas.health import HealthResponse
 
@@ -26,6 +27,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         f"Starting {active_settings.PROJECT_NAME} v{active_settings.VERSION} "
         f"[{active_settings.ENVIRONMENT}]"
     )
+    # Ensure database schema is initialized and seeded for local development
+    init_db()
     yield
     logger.info(f"Shutting down {active_settings.PROJECT_NAME}")
 
@@ -54,15 +57,20 @@ def create_app(settings_override: Settings | None = None) -> FastAPI:
     setup_middleware(app)
 
     # 3. Configure CORS middleware
-    if app_settings.BACKEND_CORS_ORIGINS:
-        origins = [str(origin).rstrip("/") for origin in app_settings.BACKEND_CORS_ORIGINS]
-        app.add_middleware(
-            CORSMiddleware,
-            allow_origins=origins,
-            allow_credentials=True,
-            allow_methods=["*"],
-            allow_headers=["*"],
-        )
+    origins = (
+        [str(origin).rstrip("/") for origin in app_settings.BACKEND_CORS_ORIGINS]
+        if app_settings.BACKEND_CORS_ORIGINS
+        else ["http://localhost:3000", "http://127.0.0.1:3000"]
+    )
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+        expose_headers=["*"],
+    )
 
     # 4. Mount top-level API routers
     # Mount /api/health and /api/ready

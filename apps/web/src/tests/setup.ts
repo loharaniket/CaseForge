@@ -7,12 +7,17 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-// Mock ResizeObserver for JSDOM
-global.ResizeObserver = vi.fn().mockImplementation(() => ({
-  observe: vi.fn(),
-  unobserve: vi.fn(),
-  disconnect: vi.fn(),
-}));
+// Mock ResizeObserver for JSDOM and Material UI
+class MockResizeObserver {
+  observe = vi.fn();
+  unobserve = vi.fn();
+  disconnect = vi.fn();
+}
+
+global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
+if (typeof window !== "undefined") {
+  window.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
+}
 
 // Mock window.matchMedia for Material UI responsive queries
 Object.defineProperty(window, "matchMedia", {
