@@ -12,6 +12,8 @@ from src.schemas.email import ParsedEmailResponse
 from src.schemas.evidence import (
     CaseEvidenceListResponse,
     CaseEvidenceVerificationResponse,
+    EvidenceRecordSchema,
+    EvidenceVerificationResultSchema,
 )
 from src.schemas.forensics import HeaderForensicsResponse
 from src.schemas.geo import CaseGeoInfrastructureResponse, GeoLocationResultSchema
@@ -657,7 +659,7 @@ def get_case_evidence_records(
     return CaseEvidenceListResponse(
         case_id=case_id,
         total_evidence_records=len(records),
-        records=[r.to_dict() for r in records],
+        records=[EvidenceRecordSchema.model_validate(r.to_dict()) for r in records],
     )
 
 
@@ -686,5 +688,5 @@ def verify_case_evidence(
         case_id=case_id,
         total_verified=len(results),
         all_valid=all_valid,
-        results=[r.to_dict() for r in results],
+        results=[EvidenceVerificationResultSchema.model_validate(r.to_dict()) for r in results],
     )
