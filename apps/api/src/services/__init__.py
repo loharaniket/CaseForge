@@ -1,5 +1,10 @@
 """Service layer abstractions and provider implementations."""
 
+from src.services.auth import (
+    CaseAccessService,
+    default_case_access_service,
+    get_case_access_service,
+)
 from src.services.detection_service import (
     DetectionService,
     default_detection_service,
@@ -123,6 +128,7 @@ __all__ = [
     "AuthStatus",
     "AuthenticationResult",
     "AuthenticationStatus",
+    "CaseAccessService",
     "DataQuality",
     "DetectionService",
     "DomainReputationProvider",
@@ -180,6 +186,7 @@ __all__ = [
     "TimestampQuality",
     "VirusTotalDomainProvider",
     "default_auth_analyzer",
+    "default_case_access_service",
     "default_detection_service",
     "default_eml_parser",
     "default_evidence_service",
@@ -194,6 +201,7 @@ __all__ = [
     "default_rule_detector",
     "default_timeline_service",
     "extract_urls",
+    "get_case_access_service",
     "get_detection_service",
     "get_evidence_integrity_service",
     "get_evidence_storage",

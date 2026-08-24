@@ -24,6 +24,7 @@ from src.schemas.risk import RiskAssessmentResponse
 from src.schemas.threat import ThreatAssessmentResponse
 from src.schemas.timeline import ForensicTimelineResponse
 from src.schemas.upload import EmailUploadResponse
+from src.services.auth.case_access import CaseAccessService, get_case_access_service
 from src.services.detection_service import DetectionService, get_detection_service
 from src.services.evidence.service import (
     EvidenceIntegrityService,
@@ -169,9 +170,11 @@ def parse_email_case(
     case_id: str,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
+    case_access: CaseAccessService = Depends(get_case_access_service),
     parser_service: ParserService = Depends(get_parser_service),
 ) -> ParsedEmailResponse:
     """Triggers forensic parsing of an ingested email."""
+    case_access.assert_can_modify_case(case_id=case_id, user=current_user, db=db)
     parsed_record = parser_service.parse_case(case_id=case_id, db=db)
     return ParsedEmailResponse.model_validate(parsed_record)
 
@@ -192,9 +195,11 @@ def get_parsed_email_case(
     case_id: str,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
+    case_access: CaseAccessService = Depends(get_case_access_service),
     parser_service: ParserService = Depends(get_parser_service),
 ) -> ParsedEmailResponse:
     """Retrieves or parses on demand the structured forensic data."""
+    case_access.assert_can_view_case(case_id=case_id, user=current_user, db=db)
     parsed_record = parser_service.get_parsed_case(case_id=case_id, db=db)
     return ParsedEmailResponse.model_validate(parsed_record)
 
@@ -216,9 +221,11 @@ def analyze_email_threat(
     case_id: str,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
+    case_access: CaseAccessService = Depends(get_case_access_service),
     detection_service: DetectionService = Depends(get_detection_service),
 ) -> ThreatAssessmentResponse:
     """Triggers threat detection evaluation on an email case."""
+    case_access.assert_can_modify_case(case_id=case_id, user=current_user, db=db)
     assessment = detection_service.analyze_case(case_id=case_id, db=db)
     return ThreatAssessmentResponse.model_validate(assessment)
 
@@ -240,9 +247,11 @@ def get_email_threat(
     case_id: str,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
+    case_access: CaseAccessService = Depends(get_case_access_service),
     detection_service: DetectionService = Depends(get_detection_service),
 ) -> ThreatAssessmentResponse:
     """Retrieves or generates on demand the threat assessment."""
+    case_access.assert_can_view_case(case_id=case_id, user=current_user, db=db)
     assessment = detection_service.get_assessment(case_id=case_id, db=db)
     return ThreatAssessmentResponse.model_validate(assessment)
 
@@ -264,9 +273,11 @@ def analyze_header_forensics(
     case_id: str,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
+    case_access: CaseAccessService = Depends(get_case_access_service),
     forensics_service: HeaderForensicsService = Depends(get_forensics_service),
 ) -> HeaderForensicsResponse:
     """Analyzes email relay headers and sender authentication."""
+    case_access.assert_can_modify_case(case_id=case_id, user=current_user, db=db)
     assessment = forensics_service.analyze_case(case_id=case_id, db=db)
     return HeaderForensicsResponse.model_validate(assessment)
 
@@ -288,9 +299,11 @@ def get_header_forensics(
     case_id: str,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
+    case_access: CaseAccessService = Depends(get_case_access_service),
     forensics_service: HeaderForensicsService = Depends(get_forensics_service),
 ) -> HeaderForensicsResponse:
     """Retrieves or generates on-demand header forensics."""
+    case_access.assert_can_view_case(case_id=case_id, user=current_user, db=db)
     assessment = forensics_service.get_case_forensics(case_id=case_id, db=db)
     return HeaderForensicsResponse.model_validate(assessment)
 
@@ -312,9 +325,11 @@ def extract_case_iocs(
     case_id: str,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
+    case_access: CaseAccessService = Depends(get_case_access_service),
     ioc_service: IOCService = Depends(get_ioc_service),
 ) -> CaseIOCListResponse:
     """Extracts, normalizes, deduplicates, and persists IOCs for a case."""
+    case_access.assert_can_modify_case(case_id=case_id, user=current_user, db=db)
     records = ioc_service.extract_case_iocs(case_id=case_id, db=db)
     ioc_schemas = [IOCRecordSchema.model_validate(r) for r in records]
 
@@ -347,9 +362,11 @@ def get_case_iocs(
     case_id: str,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
+    case_access: CaseAccessService = Depends(get_case_access_service),
     ioc_service: IOCService = Depends(get_ioc_service),
 ) -> CaseIOCListResponse:
     """Retrieves or extracts on demand IOCs for a case."""
+    case_access.assert_can_view_case(case_id=case_id, user=current_user, db=db)
     records = ioc_service.get_case_iocs(case_id=case_id, db=db)
     ioc_schemas = [IOCRecordSchema.model_validate(r) for r in records]
 
@@ -382,9 +399,11 @@ async def query_case_threat_intel(
     case_id: str,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
+    case_access: CaseAccessService = Depends(get_case_access_service),
     intel_service: ThreatIntelService = Depends(get_intel_service),
 ) -> CaseThreatIntelResponse:
     """Queries threat intelligence providers for all case IPs and domains."""
+    case_access.assert_can_modify_case(case_id=case_id, user=current_user, db=db)
     result = await intel_service.analyze_case_indicators(case_id=case_id, db=db)
 
     ip_schemas = [ReputationResultSchema.model_validate(r) for r in result["ip_results"]]
@@ -424,11 +443,17 @@ async def get_case_threat_intel(
     case_id: str,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
+    case_access: CaseAccessService = Depends(get_case_access_service),
     intel_service: ThreatIntelService = Depends(get_intel_service),
 ) -> CaseThreatIntelResponse:
     """Retrieves threat intelligence for a case."""
+    case_access.assert_can_view_case(case_id=case_id, user=current_user, db=db)
     return await query_case_threat_intel(
-        case_id=case_id, current_user=current_user, db=db, intel_service=intel_service
+        case_id=case_id,
+        current_user=current_user,
+        db=db,
+        case_access=case_access,
+        intel_service=intel_service,
     )
 
 
@@ -449,9 +474,11 @@ def enrich_case_geo_infrastructure(
     case_id: str,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
+    case_access: CaseAccessService = Depends(get_case_access_service),
     geoip_service: GeoIPService = Depends(get_geoip_service),
 ) -> CaseGeoInfrastructureResponse:
     """Enriches all case IP infrastructure with GeoIP and ASN intelligence."""
+    case_access.assert_can_modify_case(case_id=case_id, user=current_user, db=db)
     result = geoip_service.analyze_case_infrastructure(case_id=case_id, db=db)
     ip_schemas = [GeoLocationResultSchema.model_validate(r) for r in result["ip_infrastructure"]]
 
@@ -487,11 +514,17 @@ def get_case_geo_infrastructure(
     case_id: str,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
+    case_access: CaseAccessService = Depends(get_case_access_service),
     geoip_service: GeoIPService = Depends(get_geoip_service),
 ) -> CaseGeoInfrastructureResponse:
     """Retrieves GeoIP infrastructure for a case."""
+    case_access.assert_can_view_case(case_id=case_id, user=current_user, db=db)
     return enrich_case_geo_infrastructure(
-        case_id=case_id, current_user=current_user, db=db, geoip_service=geoip_service
+        case_id=case_id,
+        current_user=current_user,
+        db=db,
+        case_access=case_access,
+        geoip_service=geoip_service,
     )
 
 
@@ -512,9 +545,11 @@ def compute_case_risk(
     case_id: str,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
+    case_access: CaseAccessService = Depends(get_case_access_service),
     risk_service: RiskScoringService = Depends(get_risk_service),
 ) -> RiskAssessmentResponse:
     """Calculates and persists deterministic risk score for a case."""
+    case_access.assert_can_modify_case(case_id=case_id, user=current_user, db=db)
     assessment = risk_service.calculate_case_risk(case_id=case_id, db=db)
     return RiskAssessmentResponse.model_validate(assessment)
 
@@ -536,9 +571,11 @@ def get_case_risk(
     case_id: str,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
+    case_access: CaseAccessService = Depends(get_case_access_service),
     risk_service: RiskScoringService = Depends(get_risk_service),
 ) -> RiskAssessmentResponse:
     """Retrieves or generates on-demand the risk assessment."""
+    case_access.assert_can_view_case(case_id=case_id, user=current_user, db=db)
     assessment = risk_service.get_case_risk(case_id=case_id, db=db)
     return RiskAssessmentResponse.model_validate(assessment)
 
@@ -559,9 +596,11 @@ def get_case_timeline(
     case_id: str,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
+    case_access: CaseAccessService = Depends(get_case_access_service),
     timeline_service: ForensicTimelineService = Depends(get_timeline_service),
 ) -> ForensicTimelineResponse:
     """Retrieves chronological investigation timeline for a case."""
+    case_access.assert_can_view_case(case_id=case_id, user=current_user, db=db)
     timeline = timeline_service.build_case_timeline(case_id=case_id, db=db)
     return ForensicTimelineResponse.model_validate(timeline.to_dict())
 
@@ -584,11 +623,13 @@ def download_case_pdf_report(
     case_id: str,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
+    case_access: CaseAccessService = Depends(get_case_access_service),
     storage: EvidenceStorage = Depends(get_evidence_storage),
     report_service: InvestigationReportService = Depends(get_report_service),
     evidence_service: EvidenceIntegrityService = Depends(get_evidence_integrity_service),
 ) -> Response:
     """Streams a generated PDF investigation report and records its cryptographic SHA-256 hash."""
+    case_access.assert_can_view_case(case_id=case_id, user=current_user, db=db)
     pdf_bytes, filename = report_service.generate_case_pdf(case_id=case_id, db=db)
 
     # Persist report file bytes in storage vault
@@ -629,9 +670,11 @@ def get_case_report_data(
     case_id: str,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
+    case_access: CaseAccessService = Depends(get_case_access_service),
     report_service: InvestigationReportService = Depends(get_report_service),
 ) -> InvestigationReportDataResponse:
     """Retrieves structured report data for a case."""
+    case_access.assert_can_view_case(case_id=case_id, user=current_user, db=db)
     report_data = report_service.build_report_data(case_id=case_id, db=db)
     return InvestigationReportDataResponse.model_validate(report_data.to_dict())
 
@@ -652,9 +695,11 @@ def get_case_evidence_records(
     case_id: str,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
+    case_access: CaseAccessService = Depends(get_case_access_service),
     evidence_service: EvidenceIntegrityService = Depends(get_evidence_integrity_service),
 ) -> CaseEvidenceListResponse:
     """Retrieves all stored evidence records for a case."""
+    case_access.assert_can_view_case(case_id=case_id, user=current_user, db=db)
     records = evidence_service.get_case_evidence_records(case_id=case_id, db=db)
     return CaseEvidenceListResponse(
         case_id=case_id,
@@ -679,9 +724,11 @@ def verify_case_evidence(
     case_id: str,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
+    case_access: CaseAccessService = Depends(get_case_access_service),
     evidence_service: EvidenceIntegrityService = Depends(get_evidence_integrity_service),
 ) -> CaseEvidenceVerificationResponse:
     """Cryptographically verifies all case evidence."""
+    case_access.assert_can_modify_case(case_id=case_id, user=current_user, db=db)
     results = evidence_service.verify_all_case_evidence(case_id=case_id, db=db)
     all_valid = all(r.is_valid for r in results) if results else False
     return CaseEvidenceVerificationResponse(
