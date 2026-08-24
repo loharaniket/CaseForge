@@ -37,6 +37,7 @@ import {
   Check,
   Clock,
   FileDown,
+  FileCheck2,
 } from "lucide-react";
 import {
   downloadInvestigationReport,
@@ -55,6 +56,7 @@ import { RelayHopsTimelineWidget } from "./RelayHopsTimelineWidget";
 import { ThreatIntelGeoWidget } from "./ThreatIntelGeoWidget";
 import { IOCTableWidget } from "./IOCTableWidget";
 import { ForensicTimelineWidget } from "./ForensicTimelineWidget";
+import { EvidenceIntegrityWidget } from "./EvidenceIntegrityWidget";
 import {
   CaseGeoInfrastructureResponse,
   CaseIOCListResponse,
@@ -363,7 +365,7 @@ export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ 
             iconPosition="start"
             label={`Forensic Timeline (${timeline?.total_events || 0})`}
           />
-          <Tab value={5} icon={<FileText size={16} />} iconPosition="start" label="Evidence & Body Preview" />
+          <Tab value={5} icon={<FileCheck2 size={16} />} iconPosition="start" label="Evidence & Custody Integrity" />
         </Tabs>
       </Box>
 
@@ -421,7 +423,7 @@ export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ 
                     <Box>
                       <Typography variant="caption" color="text.secondary">Probable Infrastructure Origin</Typography>
                       <Typography variant="body2" fontWeight={600} color="text.primary">
-                        {geo?.probable_infrastructure_origin || "Pending / Local Network"}
+                        {geo?.probable_infrastructure_origin || "Pending investigation"}
                       </Typography>
                     </Box>
                     <Box>
@@ -431,11 +433,23 @@ export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ 
                       </Typography>
                     </Box>
                     <Box>
-                      <Typography variant="caption" color="text.secondary">Authentication Posture</Typography>
+                      <Typography variant="caption" color="text.secondary">Authentication Result</Typography>
                       <Stack direction="row" spacing={1} mt={0.5}>
-                        <Chip label={`SPF: ${forensics?.spf_status || "NONE"}`} size="small" variant="outlined" />
-                        <Chip label={`DKIM: ${forensics?.dkim_status || "NONE"}`} size="small" variant="outlined" />
-                        <Chip label={`DMARC: ${forensics?.dmarc_status || "NONE"}`} size="small" variant="outlined" />
+                        <Chip
+                          label={`SPF: ${forensics?.spf_status?.toUpperCase() || "N/A"}`}
+                          size="small"
+                          color={forensics?.spf_status === "pass" ? "success" : "default"}
+                        />
+                        <Chip
+                          label={`DKIM: ${forensics?.dkim_status?.toUpperCase() || "N/A"}`}
+                          size="small"
+                          color={forensics?.dkim_status === "pass" ? "success" : "default"}
+                        />
+                        <Chip
+                          label={`DMARC: ${forensics?.dmarc_status?.toUpperCase() || "N/A"}`}
+                          size="small"
+                          color={forensics?.dmarc_status === "pass" ? "success" : "default"}
+                        />
                       </Stack>
                     </Box>
                     <Box>
@@ -460,7 +474,7 @@ export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ 
         </Stack>
       )}
 
-      {/* Tab 2: Threat Intel & Geo */}
+      {/* Tab 2: Threat Intelligence & Geolocation */}
       {activeTab === 2 && (
         <ThreatIntelGeoWidget intel={intel} geo={geo} isLoading={isIntelLoading || isGeoLoading} />
       )}
@@ -475,9 +489,11 @@ export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ 
         <ForensicTimelineWidget timeline={timeline} isLoading={isTimelineLoading} />
       )}
 
-      {/* Tab 5: Evidence & Body Preview */}
+      {/* Tab 5: Evidence & Custody Integrity */}
       {activeTab === 5 && (
-        <Card sx={{ bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 2 }}>
+        <Stack spacing={3}>
+          <EvidenceIntegrityWidget caseId={caseId} />
+          <Card sx={{ bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 2 }}>
           <CardContent sx={{ p: 3 }}>
             <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
               <Typography variant="h6" fontWeight={700} color="text.primary">
@@ -570,7 +586,8 @@ export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ 
             )}
           </CardContent>
         </Card>
-      )}
-    </Stack>
-  );
+      </Stack>
+    )}
+  </Stack>
+);
 };

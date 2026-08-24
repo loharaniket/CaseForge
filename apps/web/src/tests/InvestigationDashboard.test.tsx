@@ -16,6 +16,8 @@ vi.mock("@/lib/api/email", () => ({
   getCaseGeoInfrastructure: vi.fn(),
   getCaseTimeline: vi.fn(),
   downloadInvestigationReport: vi.fn(),
+  getCaseEvidence: vi.fn(),
+  verifyCaseEvidence: vi.fn(),
 }));
 
 const mockParsed = {
@@ -257,6 +259,22 @@ describe("InvestigationDashboard", () => {
     vi.mocked(emailApi.getCaseThreatIntel).mockResolvedValue(mockIntel);
     vi.mocked(emailApi.getCaseGeoInfrastructure).mockResolvedValue(mockGeo);
     vi.mocked(emailApi.getCaseTimeline).mockResolvedValue(mockTimeline);
+    vi.mocked(emailApi.getCaseEvidence).mockResolvedValue({
+      case_id: "case-uuid-1234",
+      total_evidence_records: 1,
+      records: [
+        {
+          id: "rec-1",
+          case_id: "case-uuid-1234",
+          evidence_type: "ORIGINAL_EMAIL",
+          sha256_hash: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          file_name: "credential_phishing.eml",
+          file_size_bytes: 4096,
+          calculated_at_iso: "2026-08-24T00:00:00Z",
+          metadata: {},
+        },
+      ],
+    });
   });
 
   it("renders loading state when initial case data is resolving", () => {
@@ -375,6 +393,38 @@ describe("InvestigationDashboard", () => {
     fireEvent.click(exportBtn);
 
     expect(emailApi.downloadInvestigationReport).toHaveBeenCalledWith("case-uuid-1234");
+  });
+
+  it("switches to Evidence & Custody Integrity tab and renders evidence widget", async () => {
+    vi.mocked(emailApi.getCaseEvidence).mockResolvedValue({
+      case_id: "case-uuid-1234",
+      total_evidence_records: 1,
+      records: [
+        {
+          id: "rec-1",
+          case_id: "case-uuid-1234",
+          evidence_type: "ORIGINAL_EMAIL",
+          sha256_hash: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          file_name: "test_email.eml",
+          file_size_bytes: 1024,
+          calculated_at_iso: "2026-08-24T00:00:00Z",
+          metadata: {},
+        },
+      ],
+    });
+    renderDashboard();
+
+    await waitFor(() => {
+      expect(screen.getByText("Case Investigation Console")).toBeInTheDocument();
+    });
+
+    const evidenceTab = screen.getByRole("tab", { name: /Evidence & Custody Integrity/i });
+    fireEvent.click(evidenceTab);
+
+    await waitFor(() => {
+      expect(screen.getByText("Cryptographic Evidence & Chain of Custody")).toBeInTheDocument();
+      expect(screen.getByText("test_email.eml")).toBeInTheDocument();
+    });
   });
 
   it("renders error state when case fails to load", async () => {

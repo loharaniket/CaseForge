@@ -9,6 +9,10 @@ from src.core.errors import AppException
 from src.models.case import Case, CaseStatus
 from src.models.user import User
 from src.schemas.email import ParsedEmailResponse
+from src.schemas.evidence import (
+    CaseEvidenceListResponse,
+    CaseEvidenceVerificationResponse,
+)
 from src.schemas.forensics import HeaderForensicsResponse
 from src.schemas.geo import CaseGeoInfrastructureResponse, GeoLocationResultSchema
 from src.schemas.intel import CaseThreatIntelResponse, ReputationResultSchema
@@ -19,6 +23,11 @@ from src.schemas.threat import ThreatAssessmentResponse
 from src.schemas.timeline import ForensicTimelineResponse
 from src.schemas.upload import EmailUploadResponse
 from src.services.detection_service import DetectionService, get_detection_service
+from src.services.evidence.service import (
+    EvidenceIntegrityService,
+    get_evidence_integrity_service,
+)
+from src.services.evidence.types import EvidenceType
 from src.services.forensics.service import HeaderForensicsService, get_forensics_service
 from src.services.geo.service import GeoIPService, get_geoip_service
 from src.services.intel.service import ThreatIntelService, get_intel_service
@@ -51,6 +60,7 @@ async def upload_eml(
     db: Session = Depends(get_db),
     storage: EvidenceStorage = Depends(get_evidence_storage),
     parser_service: ParserService = Depends(get_parser_service),
+    evidence_service: EvidenceIntegrityService = Depends(get_evidence_integrity_service),
 ) -> EmailUploadResponse:
     """Safely ingests, hashes, and parses a raw .eml evidence file."""
     original_filename = file.filename or "unknown.eml"
@@ -111,7 +121,18 @@ async def upload_eml(
     db.commit()
     db.refresh(new_case)
 
-    # 5. Automatically trigger transactional parsing into PostgreSQL
+    # 5. Persist baseline cryptographic evidence record
+    evidence_service.record_evidence_hash(
+        case_id=new_case.id,
+        evidence_type=EvidenceType.ORIGINAL_EMAIL,
+        data=raw_bytes,
+        file_name=sanitized_filename,
+        metadata={"storage_key": storage_key},
+        db=db,
+    )
+    db.commit()
+
+    # 6. Automatically trigger transactional parsing into PostgreSQL
     try:
         parser_service.parse_case(case_id=new_case.id, db=db)
         db.refresh(new_case)
@@ -561,10 +582,27 @@ def download_case_pdf_report(
     case_id: str,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
+    storage: EvidenceStorage = Depends(get_evidence_storage),
     report_service: InvestigationReportService = Depends(get_report_service),
+    evidence_service: EvidenceIntegrityService = Depends(get_evidence_integrity_service),
 ) -> Response:
-    """Streams a generated PDF investigation report."""
+    """Streams a generated PDF investigation report and records its cryptographic SHA-256 hash."""
     pdf_bytes, filename = report_service.generate_case_pdf(case_id=case_id, db=db)
+
+    # Persist report file bytes in storage vault
+    storage_key, _ = storage.save(pdf_bytes, filename)
+
+    # Persist cryptographic report hash record for integrity verification
+    evidence_service.record_evidence_hash(
+        case_id=case_id,
+        evidence_type=EvidenceType.INVESTIGATION_REPORT,
+        data=pdf_bytes,
+        file_name=filename,
+        metadata={"report_version": "1.0.0", "storage_key": storage_key},
+        db=db,
+    )
+    db.commit()
+
     headers = {
         "Content-Disposition": f'attachment; filename="{filename}"',
         "Content-Type": "application/pdf",
@@ -594,3 +632,59 @@ def get_case_report_data(
     """Retrieves structured report data for a case."""
     report_data = report_service.build_report_data(case_id=case_id, db=db)
     return InvestigationReportDataResponse.model_validate(report_data.to_dict())
+
+
+@router.get(
+    "/{case_id}/evidence",
+    response_model=CaseEvidenceListResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get Case Evidence Integrity Records",
+    description="Retrieves all registered cryptographic SHA-256 evidence records for an investigation case.",
+    responses={
+        200: {"description": "List of cryptographic evidence records"},
+        401: {"description": "Authentication required"},
+        404: {"description": "Case not found"},
+    },
+)
+def get_case_evidence_records(
+    case_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    evidence_service: EvidenceIntegrityService = Depends(get_evidence_integrity_service),
+) -> CaseEvidenceListResponse:
+    """Retrieves all stored evidence records for a case."""
+    records = evidence_service.get_case_evidence_records(case_id=case_id, db=db)
+    return CaseEvidenceListResponse(
+        case_id=case_id,
+        total_evidence_records=len(records),
+        records=[r.to_dict() for r in records],
+    )
+
+
+@router.post(
+    "/{case_id}/evidence/verify",
+    response_model=CaseEvidenceVerificationResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Verify Case Evidence Cryptographic Integrity",
+    description="Performs real-time SHA-256 verification across all registered evidence artifacts (original email, reports) against baseline records.",
+    responses={
+        200: {"description": "Cryptographic verification results"},
+        401: {"description": "Authentication required"},
+        404: {"description": "Case not found"},
+    },
+)
+def verify_case_evidence(
+    case_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    evidence_service: EvidenceIntegrityService = Depends(get_evidence_integrity_service),
+) -> CaseEvidenceVerificationResponse:
+    """Cryptographically verifies all case evidence."""
+    results = evidence_service.verify_all_case_evidence(case_id=case_id, db=db)
+    all_valid = all(r.is_valid for r in results) if results else False
+    return CaseEvidenceVerificationResponse(
+        case_id=case_id,
+        total_verified=len(results),
+        all_valid=all_valid,
+        results=[r.to_dict() for r in results],
+    )

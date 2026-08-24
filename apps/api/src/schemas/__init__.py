@@ -3,6 +3,12 @@
 from src.schemas.auth import LoginRequest, TokenResponse
 from src.schemas.email import AttachmentMetadataResponse, ParsedEmailResponse
 from src.schemas.error import ErrorDetail, ErrorResponse
+from src.schemas.evidence import (
+    CaseEvidenceListResponse,
+    CaseEvidenceVerificationResponse,
+    EvidenceRecordSchema,
+    EvidenceVerificationResultSchema,
+)
 from src.schemas.forensics import (
     AuthenticationResultSchema,
     HeaderForensicsResponse,
@@ -24,6 +30,8 @@ from src.schemas.user import UserCreate, UserResponse, UserRole
 __all__ = [
     "AttachmentMetadataResponse",
     "AuthenticationResultSchema",
+    "CaseEvidenceListResponse",
+    "CaseEvidenceVerificationResponse",
     "CaseGeoInfrastructureResponse",
     "CaseIOCListResponse",
     "CaseThreatIntelResponse",
@@ -31,6 +39,8 @@ __all__ = [
     "EmailUploadResponse",
     "ErrorDetail",
     "ErrorResponse",
+    "EvidenceRecordSchema",
+    "EvidenceVerificationResultSchema",
     "ForensicTimelineResponse",
     "GeoLocationResultSchema",
     "HeaderForensicsResponse",

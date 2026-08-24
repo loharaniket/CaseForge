@@ -3,6 +3,7 @@
 from src.db.base import Base
 from src.models.case import Case, CaseStatus
 from src.models.email import ParsedEmail
+from src.models.evidence import EvidenceRecord
 from src.models.forensics import HeaderForensics
 from src.models.ioc import CaseIOC
 from src.models.risk import RiskAssessment
@@ -14,6 +15,7 @@ __all__ = [
     "Case",
     "CaseIOC",
     "CaseStatus",
+    "EvidenceRecord",
     "HeaderForensics",
     "ParsedEmail",
     "RiskAssessment",

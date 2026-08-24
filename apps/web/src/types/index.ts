@@ -351,4 +351,48 @@ export interface InvestigationReportData {
   custody_verification: string;
 }
 
+export type EvidenceType =
+  | "ORIGINAL_EMAIL"
+  | "INVESTIGATION_REPORT"
+  | "ATTACHMENT";
+
+export type EvidenceIntegrityStatus = "VERIFIED" | "CORRUPTED" | "MISSING";
+
+export interface EvidenceRecord {
+  id: string;
+  case_id: string;
+  evidence_type: EvidenceType | string;
+  sha256_hash: string;
+  file_name: string | null;
+  file_size_bytes: number;
+  calculated_at_iso: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface CaseEvidenceListResponse {
+  case_id: string;
+  total_evidence_records: number;
+  records: EvidenceRecord[];
+}
+
+export interface EvidenceVerificationResult {
+  case_id: string;
+  evidence_type: string;
+  status: EvidenceIntegrityStatus | string;
+  is_valid: boolean;
+  expected_sha256: string | null;
+  actual_sha256: string | null;
+  file_name: string | null;
+  verified_at_iso: string;
+  details?: Record<string, unknown>;
+}
+
+export interface CaseEvidenceVerificationResponse {
+  case_id: string;
+  total_verified: number;
+  all_valid: boolean;
+  results: EvidenceVerificationResult[];
+}
+
+
 
