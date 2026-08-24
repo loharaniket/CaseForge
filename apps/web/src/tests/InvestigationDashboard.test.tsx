@@ -18,6 +18,7 @@ vi.mock("@/lib/api/email", () => ({
   downloadInvestigationReport: vi.fn(),
   getCaseEvidence: vi.fn(),
   verifyCaseEvidence: vi.fn(),
+  getCaseThreatGraph: vi.fn(),
 }));
 
 const mockParsed = {
@@ -275,6 +276,24 @@ describe("InvestigationDashboard", () => {
         },
       ],
     });
+    vi.mocked(emailApi.getCaseThreatGraph).mockResolvedValue({
+      case_id: "case-uuid-1234",
+      status: "available",
+      total_nodes: 3,
+      total_relationships: 2,
+      node_counts: { Email: 1, Domain: 1, IP: 1 },
+      relationship_counts: { USES_DOMAIN: 1, RESOLVES_TO: 1 },
+      nodes: [
+        { id: "email:1", label: "Phish Email", type: "Email" },
+        { id: "domain:evil.com", label: "evil.com", type: "Domain" },
+        { id: "ip:1.2.3.4", label: "1.2.3.4", type: "IP" },
+      ],
+      relationships: [
+        { id: "r1", source: "email:1", target: "domain:evil.com", type: "USES_DOMAIN" },
+        { id: "r2", source: "domain:evil.com", target: "ip:1.2.3.4", type: "RESOLVES_TO" },
+      ],
+      error_message: null,
+    });
   });
 
   it("renders loading state when initial case data is resolving", () => {
@@ -424,6 +443,23 @@ describe("InvestigationDashboard", () => {
     await waitFor(() => {
       expect(screen.getByText("Cryptographic Evidence & Chain of Custody")).toBeInTheDocument();
       expect(screen.getByText("test_email.eml")).toBeInTheDocument();
+    });
+  });
+
+  it("switches to Threat Graph tab and renders relationship graph", async () => {
+    renderDashboard();
+
+    await waitFor(() => {
+      expect(screen.getByText("Case Investigation Console")).toBeInTheDocument();
+    });
+
+    const graphTab = screen.getByRole("tab", { name: /Threat Graph/i });
+    fireEvent.click(graphTab);
+
+    await waitFor(() => {
+      expect(screen.getByText("Investigation Threat Relationship Graph")).toBeInTheDocument();
+      expect(screen.getByText("3 Nodes")).toBeInTheDocument();
+      expect(screen.getByText("2 Relationships")).toBeInTheDocument();
     });
   });
 

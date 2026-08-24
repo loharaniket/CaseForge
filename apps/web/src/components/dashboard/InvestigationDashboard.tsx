@@ -24,7 +24,6 @@ import {
   Shield,
   Radio,
   Fingerprint,
-  FileText,
   RefreshCw,
   AlertTriangle,
   Mail,
@@ -38,12 +37,14 @@ import {
   Clock,
   FileDown,
   FileCheck2,
+  Share2,
 } from "lucide-react";
 import {
   downloadInvestigationReport,
   getCaseGeoInfrastructure,
   getCaseIOCs,
   getCaseRisk,
+  getCaseThreatGraph,
   getCaseThreatIntel,
   getCaseTimeline,
   getHeaderForensics,
@@ -57,9 +58,11 @@ import { ThreatIntelGeoWidget } from "./ThreatIntelGeoWidget";
 import { IOCTableWidget } from "./IOCTableWidget";
 import { ForensicTimelineWidget } from "./ForensicTimelineWidget";
 import { EvidenceIntegrityWidget } from "./EvidenceIntegrityWidget";
+import { ThreatGraphWidget } from "./ThreatGraphWidget";
 import {
   CaseGeoInfrastructureResponse,
   CaseIOCListResponse,
+  CaseThreatGraphResponse,
   CaseThreatIntelResponse,
   ForensicTimelineResponse,
   HeaderForensicsResponse,
@@ -172,6 +175,16 @@ export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ 
     enabled: !!caseId,
   });
 
+  const {
+    data: graphData,
+    isLoading: isGraphLoading,
+    refetch: refetchGraph,
+  } = useQuery<CaseThreatGraphResponse, Error>({
+    queryKey: ["case_graph", caseId],
+    queryFn: () => getCaseThreatGraph(caseId),
+    enabled: !!caseId,
+  });
+
   const handleRefetchAll = () => {
     refetchParsed();
     refetchRisk();
@@ -181,6 +194,7 @@ export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ 
     refetchIntel();
     refetchGeo();
     refetchTimeline();
+    refetchGraph();
   };
 
   const handleCopy = (text: string) => {
@@ -197,7 +211,8 @@ export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ 
     isIocLoading ||
     isIntelLoading ||
     isGeoLoading ||
-    isTimelineLoading;
+    isTimelineLoading ||
+    isGraphLoading;
 
   if (isParsedLoading && !parsed) {
     return (
@@ -366,6 +381,12 @@ export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ 
             label={`Forensic Timeline (${timeline?.total_events || 0})`}
           />
           <Tab value={5} icon={<FileCheck2 size={16} />} iconPosition="start" label="Evidence & Custody Integrity" />
+          <Tab
+            value={6}
+            icon={<Share2 size={16} />}
+            iconPosition="start"
+            label={`Threat Graph (${graphData?.total_nodes || 0})`}
+          />
         </Tabs>
       </Box>
 
@@ -588,6 +609,16 @@ export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ 
         </Card>
       </Stack>
     )}
+
+    {/* Tab 6: Threat Relationship Graph */}
+    {activeTab === 6 && (
+      <ThreatGraphWidget
+        graph={graphData}
+        isLoading={isGraphLoading}
+        onRefresh={refetchGraph}
+      />
+    )}
   </Stack>
 );
 };
+

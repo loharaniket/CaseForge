@@ -17,6 +17,7 @@ from src.schemas.evidence import (
 )
 from src.schemas.forensics import HeaderForensicsResponse
 from src.schemas.geo import CaseGeoInfrastructureResponse, GeoLocationResultSchema
+from src.schemas.graph import CaseThreatGraphResponse
 from src.schemas.intel import CaseThreatIntelResponse, ReputationResultSchema
 from src.schemas.ioc import CaseIOCListResponse, IOCRecordSchema
 from src.schemas.report import InvestigationReportDataResponse
@@ -33,6 +34,7 @@ from src.services.evidence.service import (
 from src.services.evidence.types import EvidenceType
 from src.services.forensics.service import HeaderForensicsService, get_forensics_service
 from src.services.geo.service import GeoIPService, get_geoip_service
+from src.services.graph.service import ThreatGraphService, get_graph_service
 from src.services.intel.service import ThreatIntelService, get_intel_service
 from src.services.ioc.service import IOCService, get_ioc_service
 from src.services.parser_service import ParserService, get_parser_service
@@ -737,3 +739,28 @@ def verify_case_evidence(
         all_valid=all_valid,
         results=[EvidenceVerificationResultSchema.model_validate(r.to_dict()) for r in results],
     )
+
+
+@router.get(
+    "/{case_id}/graph",
+    response_model=CaseThreatGraphResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get Investigation Threat Relationship Graph",
+    description="Constructs and returns the minimal 6-node case-scoped threat relationship graph (Email, EmailAddress, Domain, IP, Country, AttachmentHash).",
+    responses={
+        200: {"description": "Case threat relationship graph payload"},
+        401: {"description": "Authentication required"},
+        404: {"description": "Case not found"},
+    },
+)
+def get_case_threat_graph(
+    case_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    case_access: CaseAccessService = Depends(get_case_access_service),
+    graph_service: ThreatGraphService = Depends(get_graph_service),
+) -> CaseThreatGraphResponse:
+    """Retrieves or builds on-demand the investigation threat relationship graph."""
+    case_access.assert_can_view_case(case_id=case_id, user=current_user, db=db)
+    result = graph_service.get_case_graph(case_id=case_id, db=db)
+    return CaseThreatGraphResponse.model_validate(result.to_dict())

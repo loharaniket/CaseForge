@@ -16,6 +16,11 @@ from src.schemas.forensics import (
     RelayHopSchema,
 )
 from src.schemas.geo import CaseGeoInfrastructureResponse, GeoLocationResultSchema
+from src.schemas.graph import (
+    CaseThreatGraphResponse,
+    GraphNodeSchema,
+    GraphRelationshipSchema,
+)
 from src.schemas.health import DatabaseStatus, HealthResponse, HealthStatus, LivenessResponse
 from src.schemas.intel import CaseThreatIntelResponse, ReputationResultSchema
 from src.schemas.ioc import CaseIOCListResponse, IOCRecordSchema
@@ -39,6 +44,7 @@ __all__ = [
     "CaseEvidenceVerificationResponse",
     "CaseGeoInfrastructureResponse",
     "CaseIOCListResponse",
+    "CaseThreatGraphResponse",
     "CaseThreatIntelResponse",
     "DatabaseStatus",
     "EmailUploadResponse",
@@ -48,6 +54,8 @@ __all__ = [
     "EvidenceVerificationResultSchema",
     "ForensicTimelineResponse",
     "GeoLocationResultSchema",
+    "GraphNodeSchema",
+    "GraphRelationshipSchema",
     "HeaderForensicsResponse",
     "HealthResponse",
     "HealthStatus",

@@ -250,46 +250,6 @@ export interface ForensicTimelineResponse {
   events: TimelineEvent[];
 }
 
-export type GraphNodeType =
-  | "Email"
-  | "Domain"
-  | "IP"
-  | "Country"
-  | "EmailAddress"
-  | "AttachmentHash";
-
-export type GraphRelType =
-  | "USES"
-  | "RESOLVES_TO"
-  | "LOCATED_IN"
-  | "SENT_FROM"
-  | "CONTAINS";
-
-export interface GraphNode {
-  id: string;
-  node_type: GraphNodeType | string;
-  label: string;
-  properties?: Record<string, unknown>;
-}
-
-export interface GraphEdge {
-  id: string;
-  source: string;
-  target: string;
-  rel_type: GraphRelType | string;
-  properties?: Record<string, unknown>;
-}
-
-export interface InvestigationGraphResponse {
-  case_id: string;
-  provider: string;
-  status: string;
-  total_nodes: number;
-  total_edges: number;
-  nodes: GraphNode[];
-  edges: GraphEdge[];
-}
-
 export interface InvestigationReportData {
   report_title: string;
   system_name: string;
@@ -394,5 +354,48 @@ export interface CaseEvidenceVerificationResponse {
   results: EvidenceVerificationResult[];
 }
 
+export type GraphNodeType =
+  | "Email"
+  | "EmailAddress"
+  | "Domain"
+  | "IP"
+  | "Country"
+  | "AttachmentHash";
 
+export type GraphRelationshipType =
+  | "SENT_FROM"
+  | "USES_DOMAIN"
+  | "RESOLVES_TO"
+  | "LOCATED_IN"
+  | "CONTAINS_HASH";
 
+export interface GraphNode {
+  id: string;
+  label: string;
+  type: GraphNodeType | string;
+  node_type?: GraphNodeType | string;
+  properties?: Record<string, unknown>;
+}
+
+export interface GraphRelationship {
+  id: string;
+  source: string;
+  target: string;
+  type: GraphRelationshipType | string;
+  rel_type?: GraphRelationshipType | string;
+  properties?: Record<string, unknown>;
+}
+
+export interface CaseThreatGraphResponse {
+  case_id: string;
+  status: "available" | "unavailable" | string;
+  total_nodes: number;
+  total_relationships: number;
+  node_counts: Record<string, number>;
+  relationship_counts: Record<string, number>;
+  nodes: GraphNode[];
+  relationships: GraphRelationship[];
+  error_message: string | null;
+}
+
+export type InvestigationGraphResponse = CaseThreatGraphResponse;

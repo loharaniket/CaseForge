@@ -66,6 +66,12 @@ class Settings(BaseSettings):
     GEOIP_CITY_DB_PATH: str | None = None
     GEOIP_ASN_DB_PATH: str | None = None
 
+    # Neo4j Graph Database
+    NEO4J_URI: str = "bolt://localhost:7687"
+    NEO4J_USER: str = "neo4j"
+    NEO4J_PASSWORD: str = "threattrace_graph_password"
+    NEO4J_DATABASE: str = "neo4j"
+
     @field_validator("LOG_LEVEL")
     @classmethod
     def validate_log_level(cls, v: str) -> str:
