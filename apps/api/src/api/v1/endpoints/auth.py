@@ -5,9 +5,9 @@ from sqlalchemy.orm import Session
 from src.api.deps import get_current_active_user, get_db, require_admin
 from src.core.errors import AppException
 from src.core.security import create_access_token, hash_password, verify_password
-from src.models.user import User
+from src.models.user import User, UserRole
 from src.schemas.auth import LoginRequest, TokenResponse
-from src.schemas.user import UserCreate, UserResponse
+from src.schemas.user import UserCreate, UserRegistrationRequest, UserResponse
 
 router = APIRouter()
 
@@ -79,15 +79,58 @@ def get_me(
     "/register",
     response_model=UserResponse,
     status_code=status.HTTP_201_CREATED,
-    summary="Register User",
-    description="Provisions a new analyst account.",
+    summary="Register Analyst Account",
+    description="Provisions a new analyst account. Always creates UserRole.ANALYST to prevent privilege escalation.",
 )
 def register(
-    payload: UserCreate,
+    payload: UserRegistrationRequest,
     db: Session = Depends(get_db),
 ) -> UserResponse:
-    """Registers a new user."""
+    """Registers a new user with analyst privileges."""
     # Check for existing email
+    query = select(User).where(User.email == payload.email.lower())
+    existing = db.execute(query).scalar_one_or_none()
+    if existing:
+        raise AppException(
+            message="An account with this email address already exists.",
+            code="EMAIL_ALREADY_REGISTERED",
+            status_code=status.HTTP_400_BAD_REQUEST,
+            details={"email": payload.email},
+        )
+
+    new_user = User(
+        email=payload.email.lower(),
+        hashed_password=hash_password(payload.password),
+        full_name=payload.full_name,
+        role=UserRole.ANALYST,
+        is_active=True,
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    return UserResponse.model_validate(new_user)
+
+
+@router.post(
+    "/admin/users",
+    response_model=UserResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Provision User (Admin Only)",
+    description="Protected endpoint for administrators to provision analysts or fellow administrators.",
+    responses={
+        201: {"description": "User account provisioned successfully"},
+        400: {"description": "Email already registered or invalid payload"},
+        401: {"description": "Authentication required"},
+        403: {"description": "Administrator privileges required"},
+    },
+)
+def admin_create_user(
+    payload: UserCreate,
+    admin_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+) -> UserResponse:
+    """Provisions a user with the requested role (restricted to administrators)."""
     query = select(User).where(User.email == payload.email.lower())
     existing = db.execute(query).scalar_one_or_none()
     if existing:

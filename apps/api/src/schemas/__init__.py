@@ -25,7 +25,12 @@ from src.schemas.risk import RiskAssessmentResponse, RiskBreakdownSchema
 from src.schemas.threat import ThreatAssessmentResponse
 from src.schemas.timeline import ForensicTimelineResponse, TimelineEventSchema
 from src.schemas.upload import EmailUploadResponse
-from src.schemas.user import UserCreate, UserResponse, UserRole
+from src.schemas.user import (
+    UserCreate,
+    UserRegistrationRequest,
+    UserResponse,
+    UserRole,
+)
 
 __all__ = [
     "AttachmentMetadataResponse",
@@ -62,6 +67,7 @@ __all__ = [
     "TimelineEventSchema",
     "TokenResponse",
     "UserCreate",
+    "UserRegistrationRequest",
     "UserResponse",
     "UserRole",
 ]

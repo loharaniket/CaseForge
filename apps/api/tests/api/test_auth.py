@@ -6,12 +6,11 @@ from src.models.user import User, UserRole
 
 
 def test_user_registration(client: TestClient):
-    """Test user registration endpoint persists account and returns sanitized user."""
+    """Test public user registration endpoint persists account with analyst role."""
     payload = {
         "email": "new.analyst@threattrace.io",
         "password": "StrongPassword2026!",
         "full_name": "Junior Analyst",
-        "role": "analyst",
     }
     response = client.post("/api/v1/auth/register", json=payload)
     assert response.status_code == 201
@@ -26,13 +25,132 @@ def test_user_registration(client: TestClient):
     assert "hashed_password" not in data
 
 
+def test_security_prevent_privilege_escalation_public_registration(client: TestClient):
+    """Security Test: Attempting to register with role='admin' MUST NOT grant admin privileges.
+
+    The registration endpoint must ignore or strip any requested role and force UserRole.ANALYST.
+    """
+    payload = {
+        "email": "attacker@example.com",
+        "full_name": "Attacker",
+        "password": "StrongPassword123!",
+        "role": "admin",
+    }
+    response = client.post("/api/v1/auth/register", json=payload)
+    assert response.status_code == 201
+    data = response.json()
+
+    # Verify returned role is strictly 'analyst', NOT 'admin'
+    assert data["role"] == "analyst"
+    assert data["role"] != "admin"
+
+    # Login as this attacker to verify actual JWT claims and permissions
+    login_res = client.post(
+        "/api/v1/auth/login",
+        json={"email": "attacker@example.com", "password": "StrongPassword123!"},
+    )
+    assert login_res.status_code == 200
+    token = login_res.json()["access_token"]
+
+    # Verify /auth/me returns analyst
+    me_res = client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"})
+    assert me_res.status_code == 200
+    assert me_res.json()["role"] == "analyst"
+
+    # Verify attacker CANNOT access admin-only route (403 Forbidden)
+    admin_probe = client.get(
+        "/api/v1/auth/admin-only",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert admin_probe.status_code == 403
+    assert admin_probe.json()["error"]["code"] == "FORBIDDEN"
+
+
+def test_admin_provisioning_endpoint_by_admin(client: TestClient, db_session: Session):
+    """Test protected /admin/users endpoint allows authenticated administrator to provision admin/analyst."""
+    admin = User(
+        email="root.admin@threattrace.io",
+        hashed_password=hash_password("RootAdminPass123!"),
+        full_name="Root Admin",
+        role=UserRole.ADMIN,
+        is_active=True,
+    )
+    db_session.add(admin)
+    db_session.commit()
+
+    admin_login = client.post(
+        "/api/v1/auth/login",
+        json={"email": "root.admin@threattrace.io", "password": "RootAdminPass123!"},
+    )
+    admin_token = admin_login.json()["access_token"]
+
+    # Admin provisions another admin
+    provision_payload = {
+        "email": "deputy.admin@threattrace.io",
+        "password": "DeputyPass123!",
+        "full_name": "Deputy Admin",
+        "role": "admin",
+    }
+    create_res = client.post(
+        "/api/v1/auth/admin/users",
+        json=provision_payload,
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    assert create_res.status_code == 201
+    assert create_res.json()["role"] == "admin"
+
+    # Verify deputy admin can access admin-only route
+    deputy_login = client.post(
+        "/api/v1/auth/login",
+        json={"email": "deputy.admin@threattrace.io", "password": "DeputyPass123!"},
+    )
+    deputy_token = deputy_login.json()["access_token"]
+    deputy_probe = client.get(
+        "/api/v1/auth/admin-only",
+        headers={"Authorization": f"Bearer {deputy_token}"},
+    )
+    assert deputy_probe.status_code == 200
+
+
+def test_admin_provisioning_endpoint_blocked_for_analyst(client: TestClient, db_session: Session):
+    """Test /admin/users endpoint rejects requests from regular analysts with 403."""
+    analyst = User(
+        email="regular.analyst@threattrace.io",
+        hashed_password=hash_password("AnalystPass123!"),
+        full_name="Regular Analyst",
+        role=UserRole.ANALYST,
+        is_active=True,
+    )
+    db_session.add(analyst)
+    db_session.commit()
+
+    login_res = client.post(
+        "/api/v1/auth/login",
+        json={"email": "regular.analyst@threattrace.io", "password": "AnalystPass123!"},
+    )
+    analyst_token = login_res.json()["access_token"]
+
+    payload = {
+        "email": "rogue.admin@threattrace.io",
+        "password": "RoguePassword123!",
+        "full_name": "Rogue Admin",
+        "role": "admin",
+    }
+    create_res = client.post(
+        "/api/v1/auth/admin/users",
+        json=payload,
+        headers={"Authorization": f"Bearer {analyst_token}"},
+    )
+    assert create_res.status_code == 403
+    assert create_res.json()["error"]["code"] == "FORBIDDEN"
+
+
 def test_duplicate_registration_fails(client: TestClient):
     """Test registering an already-registered email returns 400 Bad Request."""
     payload = {
         "email": "duplicate@threattrace.io",
         "password": "Password123!",
         "full_name": "Test Duplicate",
-        "role": "analyst",
     }
     res1 = client.post("/api/v1/auth/register", json=payload)
     assert res1.status_code == 201

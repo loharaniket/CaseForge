@@ -13,8 +13,27 @@ class UserBase(BaseModel):
     role: UserRole = Field(default=UserRole.ANALYST, description="Authorization role")
 
 
+class UserRegistrationRequest(BaseModel):
+    """Public analyst account registration request schema.
+
+    Strict security guarantee: Does not expose role field to prevent privilege escalation.
+    Any extraneous role fields passed in public payloads are ignored and stripped.
+    """
+
+    email: EmailStr = Field(..., description="Analyst email address")
+    full_name: str = Field(..., min_length=1, max_length=255, description="Full legal name")
+    password: str = Field(
+        ...,
+        min_length=8,
+        max_length=128,
+        description="Plaintext password (hashed before database persistence)",
+    )
+
+    model_config = ConfigDict(extra="ignore")
+
+
 class UserCreate(UserBase):
-    """User account registration schema."""
+    """User account provisioning schema for protected administrator operations."""
 
     password: str = Field(
         ...,
