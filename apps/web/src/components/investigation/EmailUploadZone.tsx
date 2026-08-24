@@ -8,14 +8,14 @@ import {
   AlertCircle,
   Hash,
   ArrowRight,
-  RefreshCw,
+  Loader2,
   Lock,
 } from "lucide-react";
 import { uploadEmailFile } from "@/lib/api/email";
 import { EmailUploadResponse } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { ApiError } from "@/lib/api/client";
-import { Box, Typography, Button, Paper, CircularProgress, Chip } from "@mui/material";
+import { Button, Badge } from "@/components/ui";
 
 interface EmailUploadZoneProps {
   onUploadSuccess?: (response: EmailUploadResponse) => void;
@@ -93,134 +93,119 @@ export const EmailUploadZone: React.FC<EmailUploadZoneProps> = ({ onUploadSucces
   };
 
   return (
-    <Box>
+    <div className="flex flex-col gap-6">
       {!isAuthenticated ? (
-        <Paper 
-          elevation={0}
-          sx={{ 
-            p: 4, 
-            textAlign: "center", 
-            border: "1px dashed #D9E0E7", 
-            bgcolor: "#F5F7FA" 
-          }}
-        >
-          <Box sx={{ width: 48, height: 48, borderRadius: "50%", bgcolor: "#EAF2F8", display: "flex", alignItems: "center", justifyContent: "center", mx: "auto", mb: 2 }}>
-            <Lock size={24} color="#1F4E79" />
-          </Box>
-          <Typography variant="subtitle1" gutterBottom>Analyst Authentication Required</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 400, mx: "auto", mb: 3 }}>
+        <div className="flex flex-col items-center text-center p-8 border border-dashed border-border rounded-[8px] bg-bg-page">
+          <div className="w-12 h-12 rounded-full bg-primary-soft flex items-center justify-center mb-4">
+            <Lock className="w-6 h-6 text-primary" />
+          </div>
+          <h3 className="text-[15px] font-[650] text-text-primary mb-2">Analyst Authentication Required</h3>
+          <p className="text-sm text-text-secondary max-w-[400px] mx-auto mb-6">
             In compliance with SOC chain-of-custody protocols, evidence ingestion requires an active analyst session.
-          </Typography>
-          <Link href="/login" passHref style={{ textDecoration: "none" }}>
-            <Button variant="contained" color="primary" endIcon={<ArrowRight size={16} />}>
-              Sign In as Analyst
+          </p>
+          <Link href="/login" className="no-underline">
+            <Button variant="primary" className="gap-2">
+              <span>Sign In as Analyst</span>
+              <ArrowRight className="w-4 h-4" />
             </Button>
           </Link>
-        </Paper>
+        </div>
       ) : (
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+        <div className="flex flex-col gap-6">
           <input
             ref={fileInputRef}
             type="file"
             accept=".eml"
             onChange={handleFileChange}
-            style={{ display: "none" }}
+            className="hidden"
             aria-label="Upload suspicious EML file"
           />
 
-          <Paper
-            elevation={0}
+          <div
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
             onClick={() => !isUploading && fileInputRef.current?.click()}
-            sx={{
-              p: 6,
-              textAlign: "center",
-              cursor: isUploading ? "default" : "pointer",
-              border: isDragging ? "2px dashed #1F4E79" : "2px dashed #D9E0E7",
-              bgcolor: isDragging ? "#EAF2F8" : "#F5F7FA",
-              transition: "all 0.2s ease"
-            }}
+            className={`flex flex-col items-center justify-center p-12 text-center rounded-[8px] transition-all duration-200 ${isUploading ? "cursor-default border-2 border-dashed border-border bg-bg-page" : "cursor-pointer"} ${isDragging ? "border-2 border-dashed border-primary bg-primary-soft" : "border-2 border-dashed border-border bg-bg-page hover:bg-bg-panel-subtle"}`}
             role="button"
             tabIndex={0}
           >
             {isUploading ? (
-              <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-                <CircularProgress size={32} thickness={4} sx={{ color: "#1F4E79" }} />
-                <Typography variant="subtitle2">Ingesting Evidence & Hashing...</Typography>
-                <Typography variant="caption" color="text.secondary" sx={{ fontFamily: "monospace" }}>
-                  Computing SHA-256 evidence fingerprint
-                </Typography>
-              </Box>
+              <div className="flex flex-col items-center gap-4">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                <div className="flex flex-col">
+                  <span className="text-[14px] font-[650] text-text-primary">Ingesting Evidence & Hashing...</span>
+                  <span className="text-[12px] text-text-secondary font-mono mt-1">Computing SHA-256 evidence fingerprint</span>
+                </div>
+              </div>
             ) : (
-              <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-                <Box sx={{ p: 2, borderRadius: "50%", bgcolor: "#FFFFFF", boxShadow: "0 1px 3px rgba(16,24,40,0.06)" }}>
-                  <UploadCloud size={28} color="#1F4E79" />
-                </Box>
-                <Typography variant="subtitle2">
-                  Drag & Drop suspicious <span style={{ fontFamily: "monospace", color: "#1F4E79" }}>.eml</span> evidence here
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
+              <div className="flex flex-col items-center gap-3">
+                <div className="p-3 rounded-full bg-white shadow-sm mb-2">
+                  <UploadCloud className="w-7 h-7 text-primary" />
+                </div>
+                <div className="text-[14px] font-[600] text-text-primary">
+                  Drag & Drop suspicious <span className="font-mono text-primary bg-primary-soft px-1 rounded">.eml</span> evidence here
+                </div>
+                <div className="text-[13px] text-text-secondary">
                   or click to browse your local filesystem
-                </Typography>
-                <Box sx={{ display: "flex", gap: 1, mt: 1 }}>
-                  <Chip label="Max 10 MB" size="small" variant="outlined" />
-                  <Chip label="SHA-256 Verified" size="small" variant="outlined" />
-                </Box>
-              </Box>
+                </div>
+                <div className="flex gap-2 mt-3">
+                  <Badge variant="neutral">Max 10 MB</Badge>
+                  <Badge variant="neutral">SHA-256 Verified</Badge>
+                </div>
+              </div>
             )}
-          </Paper>
+          </div>
 
           {errorMsg && (
-            <Box sx={{ p: 2, display: "flex", alignItems: "center", gap: 1, bgcolor: "#FDECEC", border: "1px solid #C53030", borderRadius: 1 }}>
-              <AlertCircle size={16} color="#C53030" />
-              <Typography variant="body2" sx={{ color: "#9B1C1C", fontWeight: 500 }}>{errorMsg}</Typography>
-            </Box>
+            <div className="flex items-center gap-2 p-4 bg-danger-bg border border-danger rounded-[8px]">
+              <AlertCircle className="w-4 h-4 text-danger shrink-0" />
+              <span className="text-[13px] font-[500] text-critical">{errorMsg}</span>
+            </div>
           )}
 
           {lastUploaded && (
-            <Paper elevation={0} sx={{ p: 3, border: "1px solid #237A57", bgcolor: "#E8F5EF" }}>
-              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2, pb: 2, borderBottom: "1px solid rgba(35,122,87,0.2)" }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <FileCheck size={16} color="#18533B" />
-                  <Typography variant="subtitle2" sx={{ color: "#18533B" }}>Evidence Ingested Successfully</Typography>
-                </Box>
-                <Chip label="RECEIVED" size="small" sx={{ bgcolor: "#237A57", color: "white", fontWeight: 600, fontSize: "10px" }} />
-              </Box>
+            <div className="p-6 border border-success bg-success-bg rounded-[8px]">
+              <div className="flex justify-between items-center pb-4 mb-4 border-b border-[#237A57]/20">
+                <div className="flex items-center gap-2">
+                  <FileCheck className="w-4 h-4 text-[#18533B]" />
+                  <span className="text-[14px] font-[650] text-[#18533B]">Evidence Ingested Successfully</span>
+                </div>
+                <Badge variant="success" className="bg-success text-white border-success tracking-wide px-2 py-0.5">RECEIVED</Badge>
+              </div>
               
-              <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, mb: 3 }}>
-                <Box>
-                  <Typography variant="caption" sx={{ color: "#18533B", opacity: 0.8 }}>Case Identifier</Typography>
-                  <Typography variant="body2" sx={{ fontFamily: "monospace", fontWeight: 600, color: "#18533B" }}>{lastUploaded.case_id}</Typography>
-                </Box>
-                <Box>
-                  <Typography variant="caption" sx={{ color: "#18533B", opacity: 0.8 }}>Original Filename</Typography>
-                  <Typography variant="body2" sx={{ fontFamily: "monospace", color: "#18533B" }}>{lastUploaded.file_name}</Typography>
-                </Box>
-                <Box>
-                  <Typography variant="caption" sx={{ color: "#18533B", opacity: 0.8 }}>Evidence Size</Typography>
-                  <Typography variant="body2" sx={{ fontFamily: "monospace", color: "#18533B" }}>{(lastUploaded.file_size_bytes / 1024).toFixed(1)} KB</Typography>
-                </Box>
-                <Box>
-                  <Typography variant="caption" sx={{ color: "#18533B", opacity: 0.8 }}>Ingestion Timestamp</Typography>
-                  <Typography variant="body2" sx={{ fontFamily: "monospace", color: "#18533B" }}>{new Date(lastUploaded.created_at).toLocaleTimeString()}</Typography>
-                </Box>
-              </Box>
+              <div className="grid grid-cols-2 gap-4 mb-5">
+                <div className="flex flex-col">
+                  <span className="text-[11px] text-[#18533B] opacity-80 uppercase tracking-wider font-semibold">Case Identifier</span>
+                  <span className="font-mono font-[600] text-[13px] text-[#18533B]">{lastUploaded.case_id}</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[11px] text-[#18533B] opacity-80 uppercase tracking-wider font-semibold">Original Filename</span>
+                  <span className="font-mono text-[13px] text-[#18533B] truncate" title={lastUploaded.file_name}>{lastUploaded.file_name}</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[11px] text-[#18533B] opacity-80 uppercase tracking-wider font-semibold">Evidence Size</span>
+                  <span className="font-mono text-[13px] text-[#18533B]">{(lastUploaded.file_size_bytes / 1024).toFixed(1)} KB</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[11px] text-[#18533B] opacity-80 uppercase tracking-wider font-semibold">Ingestion Timestamp</span>
+                  <span className="font-mono text-[13px] text-[#18533B]">{new Date(lastUploaded.created_at).toLocaleTimeString()}</span>
+                </div>
+              </div>
 
-              <Box sx={{ bgcolor: "rgba(255,255,255,0.7)", p: 2, borderRadius: 1 }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
-                  <Hash size={14} color="#18533B" />
-                  <Typography variant="caption" sx={{ fontWeight: 700, color: "#18533B" }}>SHA-256 Evidence Fingerprint</Typography>
-                </Box>
-                <Typography variant="body2" sx={{ fontFamily: "monospace", wordBreak: "break-all", userSelect: "all", color: "#18533B" }}>
+              <div className="bg-white/70 p-4 rounded-[6px]">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Hash className="w-3.5 h-3.5 text-[#18533B]" />
+                  <span className="text-[12px] font-[700] text-[#18533B]">SHA-256 Evidence Fingerprint</span>
+                </div>
+                <span className="font-mono text-[13px] break-all select-all text-[#18533B]">
                   {lastUploaded.sha256}
-                </Typography>
-              </Box>
-            </Paper>
+                </span>
+              </div>
+            </div>
           )}
-        </Box>
+        </div>
       )}
-    </Box>
+    </div>
   );
 };

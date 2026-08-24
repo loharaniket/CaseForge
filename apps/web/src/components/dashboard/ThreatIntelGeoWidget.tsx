@@ -2,15 +2,6 @@
 
 import React from "react";
 import {
-  Box,
-  Card,
-  CardContent,
-  Chip,
-  Grid,
-  Stack,
-  Typography,
-} from "@mui/material";
-import {
   Globe2,
   Building2,
   Radio,
@@ -20,6 +11,7 @@ import {
   Info,
 } from "lucide-react";
 import { CaseGeoInfrastructureResponse, CaseThreatIntelResponse } from "@/types";
+import { Card, CardContent, Badge, Table, Thead, Tbody, Tr, Th, Td } from "@/components/ui";
 
 interface ThreatIntelGeoWidgetProps {
   intel: CaseThreatIntelResponse | undefined;
@@ -44,265 +36,193 @@ export const ThreatIntelGeoWidget: React.FC<ThreatIntelGeoWidgetProps> = ({
   };
 
   return (
-    <Card
-      sx={{
-        bgcolor: "background.paper",
-        border: "1px solid #D9E0E7",
-        borderRadius: 2,
-        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.4)",
-        overflow: "hidden",
-      }}
-    >
-      <CardContent sx={{ p: 3 }}>
+    <Card>
+      <CardContent className="p-6">
         {/* SECTION G: GEO INFRASTRUCTURE */}
-        <Box mb={4}>
-          <Stack direction="row" alignItems="center" spacing={1.5} mb={2}>
-            <MapPin className="w-5 h-5 text-[#1F4E79]" />
-            <Typography variant="h6" fontWeight={700} color="text.primary">
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-4">
+            <MapPin className="w-5 h-5 text-primary" />
+            <h3 className="text-[16px] font-[700] text-text-primary">
               Geo Infrastructure Information
-            </Typography>
-          </Stack>
+            </h3>
+          </div>
 
           {geo ? (
-            <Box
-              sx={{
-                p: 2.5,
-                borderRadius: 1.5,
-                bgcolor: "rgba(15, 23, 42, 0.9)",
-                border: "1px solid #D9E0E7",
-              }}
-            >
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", fontWeight: 600 }}>
+            <div className="p-5 rounded-[8px] bg-bg-page border border-border">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="flex flex-col">
+                  <span className="text-[11px] font-[600] text-text-muted uppercase tracking-wider">
                     Probable Infrastructure Origin
-                  </Typography>
-                  <Typography variant="body1" fontWeight={700} color="text.primary" sx={{ mt: 0.5 }}>
+                  </span>
+                  <span className="text-[14px] font-[700] text-text-primary mt-1">
                     {geo.probable_infrastructure_origin || "Unknown Origin"}
-                  </Typography>
-                </Grid>
+                  </span>
+                </div>
 
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", fontWeight: 600 }}>
+                <div className="flex flex-col">
+                  <span className="text-[11px] font-[600] text-text-muted uppercase tracking-wider">
                     Origin Country
-                  </Typography>
-                  <Typography variant="body1" fontWeight={700} color="text.primary" sx={{ mt: 0.5 }}>
+                  </span>
+                  <span className="text-[14px] font-[700] text-text-primary mt-1">
                     {geo.origin_country || "Not available"} {geo.origin_country_code ? `(${geo.origin_country_code})` : ""}
-                  </Typography>
-                </Grid>
+                  </span>
+                </div>
 
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", fontWeight: 600 }}>
+                <div className="flex flex-col">
+                  <span className="text-[11px] font-[600] text-text-muted uppercase tracking-wider">
                     Autonomous System Number (ASN)
-                  </Typography>
-                  <Typography variant="body2" fontFamily="monospace" color="#1F4E79" sx={{ mt: 0.5 }}>
+                  </span>
+                  <span className="text-[13px] font-mono text-primary mt-1 bg-primary-soft px-1.5 py-0.5 rounded w-fit">
                     {geo.origin_asn ? `AS${geo.origin_asn}` : "N/A"}
-                  </Typography>
-                </Grid>
+                  </span>
+                </div>
 
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", fontWeight: 600 }}>
+                <div className="flex flex-col">
+                  <span className="text-[11px] font-[600] text-text-muted uppercase tracking-wider">
                     Network Provider / ISP & Org
-                  </Typography>
-                  <Typography variant="body2" color="text.primary" sx={{ mt: 0.5 }}>
+                  </span>
+                  <span className="text-[13px] text-text-primary mt-1">
                     {geo.origin_isp || "N/A"}
-                  </Typography>
-                </Grid>
-              </Grid>
+                  </span>
+                </div>
+              </div>
 
               {/* Mandatory Rule 14 Disclaimer */}
-              <Box
-                sx={{
-                  mt: 2,
-                  pt: 1.5,
-                  borderTop: "1px solid #D9E0E7",
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: 1,
-                }}
-              >
-                <Info size={14} className="text-gray-400 mt-0.5 flex-shrink-0" />
-                <Typography variant="caption" sx={{ color: "text.secondary", fontStyle: "italic", lineHeight: 1.4 }}>
+              <div className="mt-4 pt-3 border-t border-border flex items-start gap-2">
+                <Info className="w-3.5 h-3.5 text-text-muted mt-0.5 shrink-0" />
+                <span className="text-[11px] text-text-muted italic leading-relaxed">
                   {geo.disclaimer || "Geolocation describes network infrastructure and does not establish the physical location or identity of an attacker."}
-                </Typography>
-              </Box>
-            </Box>
+                </span>
+              </div>
+            </div>
           ) : (
-            <Typography variant="body2" color="text.secondary">
+            <p className="text-sm text-text-secondary">
               No GeoIP infrastructure data resolved for this case.
-            </Typography>
+            </p>
           )}
-        </Box>
+        </div>
 
         {/* SECTION F: THREAT INTELLIGENCE */}
-        <Box>
-          <Stack direction="row" alignItems="center" spacing={1.5} mb={2}>
-            <Globe2 className="w-5 h-5 text-[#1F4E79]" />
-            <Typography variant="h6" fontWeight={700} color="text.primary">
+        <div>
+          <div className="flex items-center gap-3 mb-4">
+            <Globe2 className="w-5 h-5 text-primary" />
+            <h3 className="text-[16px] font-[700] text-text-primary">
               Threat Intelligence
-            </Typography>
-          </Stack>
+            </h3>
+          </div>
 
-          <Grid container spacing={3}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* IP Reputation Table */}
-            <Grid item xs={12} md={6}>
-              <Typography variant="subtitle2" fontWeight={700} color="text.primary" mb={1.5} display="flex" alignItems="center" gap={1}>
-                <Radio size={15} /> IP Reputation ({ipResults.length})
-              </Typography>
-
+            <div className="flex flex-col">
+              <h4 className="text-[13px] font-[700] text-text-primary mb-3 flex items-center gap-2">
+                <Radio className="w-4 h-4" /> IP Reputation ({ipResults.length})
+              </h4>
               {ipResults.length === 0 ? (
-                <Typography variant="caption" color="text.secondary">
-                  No external IP indicators queried.
-                </Typography>
+                <p className="text-sm text-text-muted">No external IP reputation results.</p>
               ) : (
-                <Stack spacing={1.5}>
-                  {ipResults.map((r, idx) => (
-                    <Box
-                      key={idx}
-                      sx={{
-                        p: 1.5,
-                        borderRadius: 1.5,
-                        bgcolor: "rgba(30, 41, 59, 0.4)",
-                        border: "1px solid #D9E0E7",
-                      }}
-                    >
-                      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
-                        <Typography variant="body2" fontWeight={700} sx={{ fontFamily: "monospace", color: "#1F4E79" }}>
-                          {r.indicator}
-                        </Typography>
-                        <Stack direction="row" spacing={0.5} alignItems="center">
-                          {isMockProvider(r.provider_name) ? (
-                            <Chip
-                              label="DEVELOPMENT MOCK"
-                              size="small"
-                              sx={{
-                                bgcolor: "#FFF7E6",
-                                color: "#B7791F",
-                                border: "1px solid #975A16",
-                                fontSize: "0.65rem",
-                                fontWeight: 700,
-                                height: 20,
-                              }}
-                            />
-                          ) : (
-                            <Chip
-                              label="LIVE"
-                              size="small"
-                              sx={{
-                                bgcolor: "#E8F5EF",
-                                color: "#237A57",
-                                border: "1px solid #18533B",
-                                fontSize: "0.65rem",
-                                fontWeight: 700,
-                                height: 20,
-                              }}
-                            />
-                          )}
-                          <Chip
-                            icon={r.is_malicious ? <ShieldAlert size={12} /> : <ShieldCheck size={12} />}
-                            label={r.is_malicious ? "Malicious" : "Clean"}
-                            size="small"
-                            color={r.is_malicious ? "error" : "success"}
-                            sx={{ fontWeight: 700, fontSize: "0.7rem", height: 20 }}
-                          />
-                        </Stack>
-                      </Stack>
-                      <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
-                        Provider: {r.provider_name} • Score: {r.reputation_score !== null ? r.reputation_score : "N/A"}
-                      </Typography>
-                      {r.threat_tags && r.threat_tags.length > 0 && (
-                        <Stack direction="row" spacing={0.5} mt={0.75} flexWrap="wrap">
-                          {r.threat_tags.map((tag, tIdx) => (
-                            <Chip key={tIdx} label={tag} size="small" sx={{ fontSize: "0.65rem", height: 18, bgcolor: "#D9E0E7", color: "#cbd5e1" }} />
-                          ))}
-                        </Stack>
-                      )}
-                    </Box>
-                  ))}
-                </Stack>
+                <div className="border border-border rounded-[6px] overflow-hidden">
+                  <Table className="border-none rounded-none">
+                    <Thead>
+                      <Tr className="bg-bg-panel-subtle border-b border-border">
+                        <Th className="text-[10px]">IP / PROVIDER</Th>
+                        <Th className="text-[10px] text-right">VERDICT</Th>
+                      </Tr>
+                    </Thead>
+                    <Tbody>
+                      {ipResults.map((r, i) => (
+                        <Tr key={i}>
+                          <Td>
+                            <div className="flex flex-col gap-1">
+                              <span className="font-mono text-[12px] font-[600] text-primary break-all">
+                                {r.indicator}
+                              </span>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-[10px] text-text-secondary">
+                                  {r.provider_name}
+                                </span>
+                                {isMockProvider(r.provider_name) && (
+                                  <Badge variant="warning" className="text-[9px] px-1 py-0 uppercase">MOCK</Badge>
+                                )}
+                              </div>
+                            </div>
+                          </Td>
+                          <Td className="text-right">
+                            {r.is_malicious ? (
+                              <Badge variant="danger" className="gap-1 text-[10px] px-1.5 py-0.5 justify-end">
+                                <ShieldAlert className="w-3 h-3" />
+                                MALICIOUS
+                              </Badge>
+                            ) : (
+                              <Badge variant="success" className="gap-1 text-[10px] px-1.5 py-0.5 justify-end">
+                                <ShieldCheck className="w-3 h-3" />
+                                CLEAN
+                              </Badge>
+                            )}
+                          </Td>
+                        </Tr>
+                      ))}
+                    </Tbody>
+                  </Table>
+                </div>
               )}
-            </Grid>
+            </div>
 
             {/* Domain Reputation Table */}
-            <Grid item xs={12} md={6}>
-              <Typography variant="subtitle2" fontWeight={700} color="text.primary" mb={1.5} display="flex" alignItems="center" gap={1}>
-                <Building2 size={15} /> Domain Reputation ({domainResults.length})
-              </Typography>
-
+            <div className="flex flex-col">
+              <h4 className="text-[13px] font-[700] text-text-primary mb-3 flex items-center gap-2">
+                <Building2 className="w-4 h-4" /> Domain Reputation ({domainResults.length})
+              </h4>
               {domainResults.length === 0 ? (
-                <Typography variant="caption" color="text.secondary">
-                  No domain indicators queried.
-                </Typography>
+                <p className="text-sm text-text-muted">No external Domain reputation results.</p>
               ) : (
-                <Stack spacing={1.5}>
-                  {domainResults.map((r, idx) => (
-                    <Box
-                      key={idx}
-                      sx={{
-                        p: 1.5,
-                        borderRadius: 1.5,
-                        bgcolor: "rgba(30, 41, 59, 0.4)",
-                        border: "1px solid #D9E0E7",
-                      }}
-                    >
-                      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
-                        <Typography variant="body2" fontWeight={700} sx={{ fontFamily: "monospace", color: "#1F4E79" }}>
-                          {r.indicator}
-                        </Typography>
-                        <Stack direction="row" spacing={0.5} alignItems="center">
-                          {isMockProvider(r.provider_name) ? (
-                            <Chip
-                              label="DEVELOPMENT MOCK"
-                              size="small"
-                              sx={{
-                                bgcolor: "#FFF7E6",
-                                color: "#B7791F",
-                                border: "1px solid #975A16",
-                                fontSize: "0.65rem",
-                                fontWeight: 700,
-                                height: 20,
-                              }}
-                            />
-                          ) : (
-                            <Chip
-                              label="LIVE"
-                              size="small"
-                              sx={{
-                                bgcolor: "#E8F5EF",
-                                color: "#237A57",
-                                border: "1px solid #18533B",
-                                fontSize: "0.65rem",
-                                fontWeight: 700,
-                                height: 20,
-                              }}
-                            />
-                          )}
-                          <Chip
-                            icon={r.is_malicious ? <ShieldAlert size={12} /> : <ShieldCheck size={12} />}
-                            label={r.is_malicious ? "Malicious" : "Clean"}
-                            size="small"
-                            color={r.is_malicious ? "error" : "success"}
-                            sx={{ fontWeight: 700, fontSize: "0.7rem", height: 20 }}
-                          />
-                        </Stack>
-                      </Stack>
-                      <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
-                        Provider: {r.provider_name} • Score: {r.reputation_score !== null ? r.reputation_score : "N/A"}
-                      </Typography>
-                      {r.threat_tags && r.threat_tags.length > 0 && (
-                        <Stack direction="row" spacing={0.5} mt={0.75} flexWrap="wrap">
-                          {r.threat_tags.map((tag, tIdx) => (
-                            <Chip key={tIdx} label={tag} size="small" sx={{ fontSize: "0.65rem", height: 18, bgcolor: "#D9E0E7", color: "#cbd5e1" }} />
-                          ))}
-                        </Stack>
-                      )}
-                    </Box>
-                  ))}
-                </Stack>
+                <div className="border border-border rounded-[6px] overflow-hidden">
+                  <Table className="border-none rounded-none">
+                    <Thead>
+                      <Tr className="bg-bg-panel-subtle border-b border-border">
+                        <Th className="text-[10px]">DOMAIN / PROVIDER</Th>
+                        <Th className="text-[10px] text-right">VERDICT</Th>
+                      </Tr>
+                    </Thead>
+                    <Tbody>
+                      {domainResults.map((r, i) => (
+                        <Tr key={i}>
+                          <Td>
+                            <div className="flex flex-col gap-1">
+                              <span className="font-mono text-[12px] font-[600] text-primary break-all">
+                                {r.indicator}
+                              </span>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-[10px] text-text-secondary">
+                                  {r.provider_name}
+                                </span>
+                                {isMockProvider(r.provider_name) && (
+                                  <Badge variant="warning" className="text-[9px] px-1 py-0 uppercase">MOCK</Badge>
+                                )}
+                              </div>
+                            </div>
+                          </Td>
+                          <Td className="text-right">
+                            {r.is_malicious ? (
+                              <Badge variant="danger" className="gap-1 text-[10px] px-1.5 py-0.5 justify-end">
+                                <ShieldAlert className="w-3 h-3" />
+                                MALICIOUS
+                              </Badge>
+                            ) : (
+                              <Badge variant="success" className="gap-1 text-[10px] px-1.5 py-0.5 justify-end">
+                                <ShieldCheck className="w-3 h-3" />
+                                CLEAN
+                              </Badge>
+                            )}
+                          </Td>
+                        </Tr>
+                      ))}
+                    </Tbody>
+                  </Table>
+                </div>
               )}
-            </Grid>
-          </Grid>
-        </Box>
+            </div>
+          </div>
+        </div>
       </CardContent>
     </Card>
   );

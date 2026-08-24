@@ -17,12 +17,12 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
   };
 
   return (
-    <div className="app-shell">
+    <div className="flex flex-col min-h-screen">
       <Header onToggleSidebar={toggleSidebar} />
-      <div className="app-body">
+      <div className="flex flex-1 min-h-[calc(100vh-64px)]">
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <div className="content-viewport">
-          <main className="main-content" role="main">
+        <div className="flex flex-col flex-1 overflow-x-hidden min-w-0">
+          <main className="flex-1 w-full max-w-[1600px] mx-auto p-6 md:p-8" role="main">
             {children}
           </main>
           <Footer />

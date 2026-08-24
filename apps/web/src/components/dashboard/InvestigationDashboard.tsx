@@ -3,18 +3,6 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Box,
-  Card,
-  CardContent,
-  Chip,
-  Grid,
-  Stack,
-  Tab,
-  Tabs,
-  Typography,
-  Alert,
-} from "@mui/material";
-import {
   Shield,
   RefreshCw,
   Mail,
@@ -58,6 +46,7 @@ import { IOCTableWidget } from "./IOCTableWidget";
 import { ForensicTimelineWidget } from "./ForensicTimelineWidget";
 import { EvidenceIntegrityWidget } from "./EvidenceIntegrityWidget";
 import { ThreatGraphWidget } from "./ThreatGraphWidget";
+import { Card, CardContent, Badge, Button } from "@/components/ui";
 
 interface InvestigationDashboardProps {
   caseId: string;
@@ -238,143 +227,113 @@ export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ 
 
   if (isInitialLoading) {
     return (
-      <Card sx={{ bgcolor: "background.paper", border: "1px solid #D9E0E7", p: 6, textAlign: "center" }}>
-        <Stack spacing={2} alignItems="center">
-          <RefreshCw className="w-8 h-8 text-[#1F4E79] animate-spin" />
-          <Typography variant="h6" color="text.primary">
-            Loading Investigation Telemetry...
-          </Typography>
-          <Typography variant="body2" color="text.secondary" fontFamily="monospace">
-            Aggregating case evidence, header forensics, threat intelligence, and risk assessment
-          </Typography>
-        </Stack>
+      <Card className="p-12 text-center flex flex-col items-center justify-center">
+        <RefreshCw className="w-8 h-8 text-primary animate-spin mb-4" />
+        <h3 className="text-[18px] font-[700] text-text-primary mb-2">
+          Loading Investigation Telemetry...
+        </h3>
+        <p className="text-sm font-mono text-text-secondary">
+          Aggregating case evidence, header forensics, threat intelligence, and risk assessment
+        </p>
       </Card>
     );
   }
 
   if (isParsedError || !parsed) {
     return (
-      <Card sx={{ bgcolor: "background.paper", border: "1px solid #D9E0E7", p: 4 }}>
-        <Typography variant="h6" color="#C53030" mb={1}>
+      <Card className="p-8">
+        <h3 className="text-[18px] font-[700] text-danger-dark mb-4">
           Investigation Loading Notice
-        </Typography>
-        <Alert severity="error" sx={{ bgcolor: "rgba(239, 68, 68, 0.1)", color: "#C53030", border: "1px solid #dc2626" }}>
+        </h3>
+        <div className="p-4 bg-danger-bg border border-danger text-danger-dark rounded-[8px] mb-6 text-sm">
           Email parsing failed: {parsedError?.message || "Failed to load case investigation evidence."}
-        </Alert>
-        <Box mt={2} textAlign="center">
-          <button onClick={handleRefreshAll} className="action-btn">
+        </div>
+        <div className="text-center">
+          <Button variant="secondary" onClick={handleRefreshAll} className="gap-2">
             <RefreshCw className="w-4 h-4" />
             <span>Retry Investigation Analysis</span>
-          </button>
-        </Box>
+          </Button>
+        </div>
       </Card>
     );
   }
 
+  const tabs = [
+    "Full Investigation (Continuous View)",
+    "Authentication & Relays",
+    "Threat Intel & Geo",
+    "IOC Indicators",
+    "Forensic Timeline",
+    "Evidence & Custody Integrity",
+    "Threat Graph"
+  ];
+
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+    <div className="flex flex-col gap-6">
       {/* Investigation Top Header Bar */}
-      <Card
-        sx={{
-          bgcolor: "background.paper",
-          border: "1px solid #D9E0E7",
-          borderRadius: 2,
-          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.4)",
-        }}
-      >
-        <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-          <Stack
-            direction={{ xs: "column", md: "row" }}
-            justifyContent="space-between"
-            alignItems={{ xs: "flex-start", md: "center" }}
-            spacing={2}
-          >
-            <div>
-              <Stack direction="row" spacing={1.5} alignItems="center">
-                <Shield className="w-6 h-6 text-[#1F4E79]" />
-                <Typography variant="h5" fontWeight={800} color="text.primary" letterSpacing="-0.01em">
+      <Card className="shadow-md">
+        <CardContent className="p-4 sm:p-6 pb-0">
+          <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4 mb-4">
+            <div className="flex flex-col">
+              <div className="flex items-center gap-3 mb-2">
+                <Shield className="w-6 h-6 text-primary" />
+                <h1 className="text-[20px] font-[800] text-text-primary tracking-tight">
                   Case Investigation Console
-                </Typography>
-                <Chip
-                  label="ACTIVE CASE"
-                  size="small"
-                  sx={{
-                    bgcolor: "#EAF2F8",
-                    color: "#1F4E79",
-                    fontWeight: 700,
-                    fontSize: "0.7rem",
-                    border: "1px solid #1F4E79",
-                  }}
-                />
-              </Stack>
-              <Typography variant="caption" sx={{ color: "text.secondary", fontFamily: "monospace", mt: 0.5, display: "block" }}>
+                </h1>
+                <Badge variant="neutral" className="bg-primary-soft text-primary border-primary font-[700] text-[10px] px-2 py-0.5">
+                  ACTIVE CASE
+                </Badge>
+              </div>
+              <span className="text-[12px] text-text-secondary font-mono">
                 Case ID: {parsed.case_id} • Ingested: {new Date(parsed.created_at).toLocaleString()}
-              </Typography>
+              </span>
             </div>
 
             {/* Refresh Header Control */}
-            <Stack direction="row" spacing={1.5} alignItems="center">
+            <div className="flex items-center">
               <button
                 onClick={handleRefreshAll}
-                className="refresh-button"
+                className="p-2 rounded hover:bg-bg-panel-subtle text-text-secondary hover:text-text-primary transition-colors"
                 title="Refresh all investigation telemetry"
                 aria-label="Refresh telemetry"
               >
-                <RefreshCw className="w-4 h-4 text-gray-600" />
+                <RefreshCw className="w-4 h-4" />
               </button>
-            </Stack>
-          </Stack>
+            </div>
+          </div>
 
           {verifyNotice && (
-            <Box mt={2}>
-              <Alert
-                severity={verifyNotice.startsWith("✓") ? "success" : "warning"}
-                onClose={() => setVerifyNotice(null)}
-                sx={{
-                  bgcolor: verifyNotice.startsWith("✓") ? "#E8F5EF" : "#FFF7E6",
-                  color: verifyNotice.startsWith("✓") ? "#237A57" : "#B7791F",
-                  border: `1px solid ${verifyNotice.startsWith("✓") ? "#18533B" : "#975A16"}`,
-                }}
-              >
-                {verifyNotice}
-              </Alert>
-            </Box>
+            <div className={`mt-4 p-3 rounded-[8px] border text-sm ${
+              verifyNotice.startsWith("✓") 
+                ? "bg-success-bg border-success text-success-dark" 
+                : "bg-warning-bg border-warning text-warning-dark"
+            }`}>
+              <div className="flex items-center justify-between">
+                <span>{verifyNotice}</span>
+                <button onClick={() => setVerifyNotice(null)} className="opacity-70 hover:opacity-100 text-lg leading-none">&times;</button>
+              </div>
+            </div>
           )}
 
           {/* Section Jump Tabs */}
-          <Box sx={{ mt: 3, borderTop: "1px solid #D9E0E7", pt: 1 }}>
-            <Tabs
-              value={activeTab}
-              onChange={(_, val) => setActiveTab(val)}
-              variant="scrollable"
-              scrollButtons="auto"
-              sx={{
-                "& .MuiTab-root": {
-                  color: "text.secondary",
-                  fontWeight: 600,
-                  fontSize: "0.8rem",
-                  textTransform: "none",
-                  minHeight: 40,
-                  py: 1,
-                  "&.Mui-selected": {
-                    color: "#1F4E79",
-                  },
-                },
-                "& .MuiTabs-indicator": {
-                  bgcolor: "#1F4E79",
-                  height: 2,
-                },
-              }}
-            >
-              <Tab label="Full Investigation (Continuous View)" />
-              <Tab label="Authentication & Relays" />
-              <Tab label="Threat Intel & Geo" />
-              <Tab label="IOC Indicators" />
-              <Tab label="Forensic Timeline" />
-              <Tab label="Evidence & Custody Integrity" />
-              <Tab label="Threat Graph" />
-            </Tabs>
-          </Box>
+          <div className="mt-6 border-t border-border pt-1 overflow-x-auto custom-scrollbar">
+            <div className="flex items-center min-w-max">
+              {tabs.map((tab, idx) => (
+                <button
+                  key={idx}
+                  role="tab"
+                  onClick={() => setActiveTab(idx)}
+                  className={`px-4 py-3 text-[13px] font-[600] whitespace-nowrap border-b-2 transition-colors ${
+                    activeTab === idx 
+                      ? "border-primary text-primary" 
+                      : "border-transparent text-text-secondary hover:text-text-primary hover:bg-bg-panel-subtle"
+                  }`}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+          </div>
         </CardContent>
       </Card>
 
@@ -398,180 +357,141 @@ export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ 
       {/* SECTION C: EMAIL SUMMARY & ENVELOPE */}
       {(activeTab === 0) && (
         <section id="section-email-summary">
-          <Card
-            sx={{
-              bgcolor: "background.paper",
-              border: "1px solid #D9E0E7",
-              borderRadius: 2,
-              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.4)",
-              overflow: "hidden",
-            }}
-          >
-            <CardContent sx={{ p: 3 }}>
-              <Stack direction="row" alignItems="center" spacing={1.5} mb={2.5}>
-                <Mail className="w-5 h-5 text-[#1F4E79]" />
-                <Typography variant="h6" fontWeight={700} color="text.primary">
+          <Card className="shadow-md overflow-hidden">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <Mail className="w-5 h-5 text-primary" />
+                <h2 className="text-[16px] font-[700] text-text-primary">
                   Email Envelope & Identity Summary
-                </Typography>
-              </Stack>
+                </h2>
+              </div>
 
               {/* 2-Column Info Grid */}
-              <Box
-                sx={{
-                  p: 2.5,
-                  borderRadius: 1.5,
-                  bgcolor: "#F5F7FA",
-                  border: "1px solid #D9E0E7",
-                  mb: 3,
-                }}
-              >
-                <Grid container spacing={2}>
-                  <Grid item xs={12} md={6}>
-                    <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", fontWeight: 600 }}>
+              <div className="p-5 bg-bg-page border border-border rounded-[8px] mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[11px] font-[600] text-text-secondary uppercase tracking-wider">
                       From (Sender)
-                    </Typography>
-                    <Typography variant="body2" fontWeight={600} color="text.primary" sx={{ mt: 0.5, wordBreak: "break-all" }}>
+                    </span>
+                    <span className="text-[13px] font-[600] text-text-primary break-all">
                       {parsed.from_name ? `${parsed.from_name} <${parsed.from_address || parsed.sender}>` : parsed.sender || "N/A"}
-                    </Typography>
-                  </Grid>
+                    </span>
+                  </div>
 
-                  <Grid item xs={12} md={6}>
-                    <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", fontWeight: 600 }}>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[11px] font-[600] text-text-secondary uppercase tracking-wider">
                       To (Recipients)
-                    </Typography>
-                    <Typography variant="body2" fontWeight={600} color="text.primary" sx={{ mt: 0.5, wordBreak: "break-all" }}>
+                    </span>
+                    <span className="text-[13px] font-[600] text-text-primary break-all">
                       {parsed.recipients && parsed.recipients.length > 0 ? parsed.recipients.join(", ") : "None declared"}
-                    </Typography>
-                  </Grid>
+                    </span>
+                  </div>
 
-                  <Grid item xs={12} md={6}>
-                    <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", fontWeight: 600 }}>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[11px] font-[600] text-text-secondary uppercase tracking-wider">
                       Subject
-                    </Typography>
-                    <Typography variant="body1" fontWeight={700} color="#1F4E79" sx={{ mt: 0.5 }}>
+                    </span>
+                    <span className="text-[14px] font-[700] text-primary">
                       {parsed.subject || "(No Subject Declared)"}
-                    </Typography>
-                  </Grid>
+                    </span>
+                  </div>
 
-                  <Grid item xs={12} md={6}>
-                    <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", fontWeight: 600 }}>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[11px] font-[600] text-text-secondary uppercase tracking-wider">
                       Date Declared
-                    </Typography>
-                    <Typography variant="body2" color="text.primary" sx={{ mt: 0.5 }}>
+                    </span>
+                    <span className="text-[13px] text-text-primary">
                       {parsed.date_parsed ? new Date(parsed.date_parsed).toUTCString() : parsed.date_raw || "Not available"}
-                    </Typography>
-                  </Grid>
+                    </span>
+                  </div>
 
-                  <Grid item xs={12} md={6}>
-                    <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", fontWeight: 600 }}>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[11px] font-[600] text-text-secondary uppercase tracking-wider">
                       Message-ID
-                    </Typography>
-                    <Typography variant="caption" fontFamily="monospace" color="#cbd5e1" sx={{ mt: 0.5, display: "block", wordBreak: "break-all" }}>
+                    </span>
+                    <span className="text-[11px] font-mono text-text-muted break-all">
                       {parsed.message_id || "None declared"}
-                    </Typography>
-                  </Grid>
+                    </span>
+                  </div>
 
-                  <Grid item xs={12} md={6}>
-                    <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", fontWeight: 600 }}>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[11px] font-[600] text-text-secondary uppercase tracking-wider">
                       Reply-To / CC
-                    </Typography>
-                    <Typography variant="body2" color="#cbd5e1" sx={{ mt: 0.5 }}>
+                    </span>
+                    <span className="text-[13px] text-text-muted">
                       {parsed.reply_to && parsed.reply_to.length > 0 ? `Reply-To: ${parsed.reply_to.join(", ")}` : "No Reply-To mismatch"}
-                    </Typography>
-                  </Grid>
-                </Grid>
-              </Box>
+                    </span>
+                  </div>
+                </div>
+              </div>
 
               {/* Body Content Preview */}
-              <Box>
-                <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1.5}>
-                  <Typography variant="subtitle2" fontWeight={700} color="text.primary">
+              <div className="mb-6">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
+                  <h3 className="text-[14px] font-[700] text-text-primary">
                     Email Body Content Preview
-                  </Typography>
-                  <Stack direction="row" spacing={1}>
+                  </h3>
+                  <div className="flex items-center bg-bg-panel-subtle p-1 rounded-[6px] border border-border">
                     <button
                       onClick={() => setBodyFormat("plain")}
-                      className={`format-toggle-btn ${bodyFormat === "plain" ? "active" : ""}`}
+                      className={`px-3 py-1 text-[11px] font-[600] rounded-[4px] transition-colors ${
+                        bodyFormat === "plain" ? "bg-white shadow text-text-primary" : "text-text-secondary hover:text-text-primary"
+                      }`}
                     >
                       Plain Text
                     </button>
                     <button
                       onClick={() => setBodyFormat("html")}
-                      className={`format-toggle-btn ${bodyFormat === "html" ? "active" : ""}`}
+                      className={`px-3 py-1 text-[11px] font-[600] rounded-[4px] transition-colors ${
+                        bodyFormat === "html" ? "bg-white shadow text-text-primary" : "text-text-secondary hover:text-text-primary"
+                      }`}
                     >
                       Safe HTML
                     </button>
-                  </Stack>
-                </Stack>
+                  </div>
+                </div>
 
                 {bodyFormat === "plain" ? (
-                  <Box
-                    sx={{
-                      p: 2,
-                      borderRadius: 1.5,
-                      bgcolor: "rgba(15, 23, 42, 0.9)",
-                      border: "1px solid #D9E0E7",
-                      maxHeight: 220,
-                      overflowY: "auto",
-                      fontFamily: "monospace",
-                      fontSize: "0.82rem",
-                      color: "text.primary",
-                      whiteSpace: "pre-wrap",
-                    }}
-                  >
+                  <div className="p-4 bg-slate-900 rounded-[8px] border border-slate-700 max-h-[220px] overflow-y-auto custom-scrollbar font-mono text-[12px] text-slate-300 whitespace-pre-wrap">
                     {parsed.body_plain || "No plain text content available."}
-                  </Box>
+                  </div>
                 ) : (
-                  <Box
-                    sx={{
-                      p: 2,
-                      borderRadius: 1.5,
-                      bgcolor: "#ffffff",
-                      color: "#F5F7FA",
-                      maxHeight: 220,
-                      overflowY: "auto",
-                      fontSize: "0.85rem",
-                    }}
+                  <div 
+                    className="p-4 bg-white rounded-[8px] border border-border max-h-[220px] overflow-y-auto custom-scrollbar text-[13px] text-slate-800"
                     dangerouslySetInnerHTML={{
                       __html: parsed.body_html || "<p>No HTML body content available.</p>",
                     }}
                   />
                 )}
-              </Box>
+              </div>
 
               {/* Attachments Section */}
               {parsed.attachments_metadata && parsed.attachments_metadata.length > 0 && (
-                <Box mt={3}>
-                  <Typography variant="subtitle2" fontWeight={700} color="text.primary" mb={1.5} display="flex" alignItems="center" gap={1}>
-                    <Paperclip size={16} /> Attached Evidence Files ({parsed.attachments_metadata.length})
-                  </Typography>
-                  <Stack spacing={1}>
+                <div className="mt-6">
+                  <h3 className="text-[14px] font-[700] text-text-primary mb-3 flex items-center gap-2">
+                    <Paperclip className="w-4 h-4" /> Attached Evidence Files ({parsed.attachments_metadata.length})
+                  </h3>
+                  <div className="flex flex-col gap-2">
                     {parsed.attachments_metadata.map((att, idx) => (
-                      <Box
+                      <div
                         key={idx}
-                        sx={{
-                          p: 1.5,
-                          borderRadius: 1.5,
-                          bgcolor: "rgba(30, 41, 59, 0.4)",
-                          border: "1px solid #D9E0E7",
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                        }}
+                        className="p-3 bg-bg-page border border-border rounded-[8px] flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                       >
-                        <div>
-                          <Typography variant="body2" fontWeight={600} color="text.primary">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[13px] font-[600] text-text-primary">
                             {att.filename}
-                          </Typography>
-                          <Typography variant="caption" sx={{ color: "text.secondary", fontFamily: "monospace" }}>
+                          </span>
+                          <span className="text-[11px] text-text-secondary font-mono">
                             Size: {(att.file_size_bytes / 1024).toFixed(1)} KB • SHA-256: {att.sha256}
-                          </Typography>
+                          </span>
                         </div>
-                        <Chip label={att.extension.toUpperCase()} size="small" sx={{ bgcolor: "#D9E0E7", color: "#cbd5e1" }} />
-                      </Box>
+                        <Badge variant="neutral" className="bg-border/50 text-text-muted text-[10px] uppercase w-fit">
+                          {att.extension}
+                        </Badge>
+                      </div>
                     ))}
-                  </Stack>
-                </Box>
+                  </div>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -581,10 +501,10 @@ export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ 
       {/* SECTION D: AUTHENTICATION & SECTION E: HEADER FORENSICS */}
       {(activeTab === 0 || activeTab === 1) && (
         <section id="section-auth-relays">
-          <Stack spacing={3}>
+          <div className="flex flex-col gap-6">
             <AuthenticationForensicsWidget forensics={forensics} isLoading={isForensicsLoading} />
             <RelayHopsTimelineWidget forensics={forensics} isLoading={isForensicsLoading} />
-          </Stack>
+          </div>
         </section>
       )}
 
@@ -628,62 +548,53 @@ export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ 
       )}
 
       {/* SECTION L: BOTTOM ACTIONS TOOLBAR */}
-      <Card
-        sx={{
-          bgcolor: "background.paper",
-          border: "1px solid #D9E0E7",
-          borderRadius: 2,
-          p: 3,
-        }}
-      >
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          justifyContent="space-between"
-          alignItems="center"
-          spacing={2}
-        >
-          <div>
-            <Typography variant="subtitle2" fontWeight={700} color="text.primary">
+      <Card className="p-6">
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+          <div className="flex flex-col gap-1">
+            <h3 className="text-[14px] font-[700] text-text-primary">
               Investigation Actions & Export
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
+            </h3>
+            <span className="text-[12px] text-text-secondary">
               Generate tamper-evident PDF reports, verify cryptographic hash records, or re-run analysis.
-            </Typography>
+            </span>
           </div>
 
-          <Stack direction="row" spacing={1.5} flexWrap="wrap">
-            <button
+          <div className="flex flex-wrap items-center gap-3">
+            <Button
+              variant="secondary"
               onClick={handleDownloadPdf}
               disabled={isDownloadingPdf}
-              className="action-btn"
+              className="gap-2 px-3 py-1.5 h-auto text-xs"
             >
               <FileDown className="w-4 h-4" />
               <span>{isDownloadingPdf ? "Compiling PDF..." : "Export PDF Report"}</span>
-            </button>
+            </Button>
 
-            <button
+            <Button
+              variant="secondary"
               onClick={() => {
                 setActiveTab(6);
                 const el = document.getElementById("section-graph");
                 if (el) el.scrollIntoView({ behavior: "smooth" });
               }}
-              className="action-btn"
+              className="gap-2 px-3 py-1.5 h-auto text-xs"
             >
               <Share2 className="w-4 h-4" />
               <span>View Relationship Graph</span>
-            </button>
+            </Button>
 
-            <button
+            <Button
+              variant="primary"
               onClick={handleVerifyEvidence}
               disabled={isVerifyingEvidence}
-              className="action-btn"
+              className="gap-2 px-3 py-1.5 h-auto text-xs"
             >
               <FileCheck2 className="w-4 h-4" />
               <span>Verify Evidence Integrity</span>
-            </button>
-          </Stack>
-        </Stack>
+            </Button>
+          </div>
+        </div>
       </Card>
-    </Box>
+    </div>
   );
 };

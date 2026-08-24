@@ -2,14 +2,6 @@
 
 import React from "react";
 import {
-  Box,
-  Card,
-  CardContent,
-  Chip,
-  Stack,
-  Typography,
-} from "@mui/material";
-import {
   Network,
   Clock,
   ArrowDown,
@@ -17,6 +9,7 @@ import {
   Lock,
 } from "lucide-react";
 import { HeaderForensicsResponse } from "@/types";
+import { Card, CardContent, Badge } from "@/components/ui";
 
 interface RelayHopsTimelineWidgetProps {
   forensics: HeaderForensicsResponse | undefined;
@@ -35,117 +28,90 @@ export const RelayHopsTimelineWidget: React.FC<RelayHopsTimelineWidgetProps> = (
   const probableOrigin = forensics.probable_origin_ip;
 
   return (
-    <Card
-      sx={{
-        bgcolor: "background.paper",
-        border: "1px solid",
-        borderColor: "divider",
-        borderRadius: 2,
-      }}
-    >
-      <CardContent sx={{ p: 3 }}>
-        <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ xs: "flex-start", sm: "center" }} spacing={1} mb={2}>
-          <Stack direction="row" alignItems="center" spacing={1.5}>
-            <Network className="w-5 h-5 text-[#1F4E79]" />
-            <Typography variant="h6" fontWeight={700} color="text.primary">
+    <Card>
+      <CardContent className="p-6">
+        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 mb-2">
+          <div className="flex items-center gap-3">
+            <Network className="w-5 h-5 text-primary" />
+            <h3 className="text-[16px] font-[700] text-text-primary">
               MTA Relay Pathway Timeline
-            </Typography>
-          </Stack>
+            </h3>
+          </div>
 
-          <Stack direction="row" spacing={1} alignItems="center">
-            <Chip
-              label={`${hops.length} Relay Hops`}
-              size="small"
-              sx={{ bgcolor: "#EAF2F8", color: "#1F4E79", fontWeight: 600 }}
-            />
+          <div className="flex items-center gap-2 shrink-0">
+            <Badge variant="neutral" className="bg-primary-soft text-primary font-[600] border-transparent px-2 py-0.5">
+              {hops.length} Relay Hops
+            </Badge>
             {probableOrigin && (
-              <Chip
-                label={`Origin IP: ${probableOrigin}`}
-                size="small"
-                variant="outlined"
-                color="primary"
-                sx={{ fontWeight: 600, fontFamily: "monospace" }}
-              />
+              <Badge variant="neutral" className="font-[600] font-mono border-primary text-primary bg-transparent px-2 py-0.5">
+                Origin IP: {probableOrigin}
+              </Badge>
             )}
-          </Stack>
-        </Stack>
+          </div>
+        </div>
 
-        <Typography variant="caption" color="text.secondary" display="block" mb={3}>
+        <span className="text-xs text-text-secondary block mb-6">
           Chronological hop sequence from source origin to receiving Mail Transfer Agent (MTA).
-        </Typography>
+        </span>
 
         {hops.length === 0 ? (
-          <Box p={3} textAlign="center">
-            <Typography variant="body2" color="text.secondary">
-              No Received header hops available in this message.
-            </Typography>
-          </Box>
+          <div className="p-6 text-center text-sm text-text-secondary">
+            No Received header hops available in this message.
+          </div>
         ) : (
-          <Stack spacing={2}>
+          <div className="flex flex-col gap-2">
             {hops.map((hop, idx) => (
-              <Box key={idx}>
-                <Box
-                  sx={{
-                    p: 2,
-                    bgcolor: "rgba(255, 255, 255, 0.02)",
-                    borderRadius: 1.5,
-                    border: "1px solid",
-                    borderColor: hop.ip_addresses?.includes(probableOrigin || "")
-                      ? "primary.main"
-                      : "rgba(255, 255, 255, 0.06)",
-                  }}
+              <div key={idx} className="flex flex-col">
+                <div
+                  className={`p-4 bg-bg-panel-subtle rounded-[8px] border ${
+                    hop.ip_addresses?.includes(probableOrigin || "")
+                      ? "border-primary"
+                      : "border-border"
+                  }`}
                 >
-                  <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ xs: "flex-start", sm: "center" }} spacing={1} mb={1}>
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <Chip
-                        label={`Hop #${hop.hop_number}`}
-                        size="small"
-                        sx={{ bgcolor: "rgba(255, 255, 255, 0.1)", fontWeight: 700, fontSize: "0.75rem" }}
-                      />
+                  <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 mb-3">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="neutral" className="bg-text-muted text-white text-[11px] font-[700] px-1.5 py-0">
+                        Hop #{hop.hop_number}
+                      </Badge>
                       {hop.is_private_relay ? (
-                        <Chip
-                          icon={<Lock size={12} />}
-                          label="Private Subnet (RFC1918)"
-                          size="small"
-                          sx={{ bgcolor: "#F5F7FA", color: "#52606D", fontSize: "0.7rem" }}
-                        />
+                        <Badge variant="neutral" className="gap-1 bg-bg-page text-text-secondary text-[11px] px-1.5 py-0">
+                          <Lock className="w-3 h-3" />
+                          Private Subnet (RFC1918)
+                        </Badge>
                       ) : (
-                        <Chip
-                          icon={<Globe size={12} />}
-                          label="Public Gateway"
-                          size="small"
-                          sx={{ bgcolor: "#E8F5EF", color: "#237A57", fontSize: "0.7rem" }}
-                        />
+                        <Badge variant="success" className="gap-1 text-[11px] px-1.5 py-0">
+                          <Globe className="w-3 h-3" />
+                          Public Gateway
+                        </Badge>
                       )}
-                    </Stack>
+                    </div>
 
                     {hop.delay_seconds !== null && hop.delay_seconds > 0 && (
-                      <Stack direction="row" spacing={0.5} alignItems="center" sx={{ color: "text.secondary" }}>
-                        <Clock size={12} />
-                        <Typography variant="caption" sx={{ fontStyle: "italic" }}>
-                          Transit Delay: +{hop.delay_seconds}s
-                        </Typography>
-                      </Stack>
+                      <div className="flex items-center gap-1 text-text-secondary text-[11px] italic">
+                        <Clock className="w-3 h-3" />
+                        <span>Transit Delay: +{hop.delay_seconds}s</span>
+                      </div>
                     )}
-                  </Stack>
+                  </div>
 
                   <GridContainer fromHost={hop.from_host} byHost={hop.by_host} withProto={hop.with_protocol} ips={hop.ip_addresses} />
 
                   {hop.timestamp_raw && (
-                    <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1, fontSize: "0.7rem" }}>
+                    <span className="text-[11px] text-text-secondary block mt-3">
                       Timestamp: {hop.timestamp_iso ? new Date(hop.timestamp_iso).toUTCString() : hop.timestamp_raw}
-                    </Typography>
+                    </span>
                   )}
-                </Box>
+                </div>
 
                 {idx < hops.length - 1 && (
-                  <Box display="flex" justifyContent="center" my={0.5}>
-                    <ArrowDown size={14} color="#7B8794" />
-                  </Box>
+                  <div className="flex justify-center my-1.5">
+                    <ArrowDown className="w-4 h-4 text-text-muted" />
+                  </div>
                 )}
-              </Box>
+              </div>
             ))}
-          </Stack>
+          </div>
         )}
       </CardContent>
     </Card>
@@ -158,22 +124,22 @@ const GridContainer: React.FC<{
   withProto: string | null;
   ips: string[];
 }> = ({ fromHost, byHost, withProto, ips }) => (
-  <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 1, mt: 1 }}>
-    <Typography variant="caption" color="text.secondary" sx={{ fontFamily: "monospace" }}>
-      <strong>From:</strong> {fromHost || "Unknown"}
-    </Typography>
-    <Typography variant="caption" color="text.secondary" sx={{ fontFamily: "monospace" }}>
-      <strong>By:</strong> {byHost || "Unknown"}
-    </Typography>
+  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+    <span className="text-[11px] text-text-secondary font-mono truncate" title={fromHost || "Unknown"}>
+      <strong className="font-semibold mr-1">From:</strong> {fromHost || "Unknown"}
+    </span>
+    <span className="text-[11px] text-text-secondary font-mono truncate" title={byHost || "Unknown"}>
+      <strong className="font-semibold mr-1">By:</strong> {byHost || "Unknown"}
+    </span>
     {withProto && (
-      <Typography variant="caption" color="text.secondary" sx={{ fontFamily: "monospace" }}>
-        <strong>Protocol:</strong> {withProto}
-      </Typography>
+      <span className="text-[11px] text-text-secondary font-mono truncate" title={withProto}>
+        <strong className="font-semibold mr-1">Protocol:</strong> {withProto}
+      </span>
     )}
     {ips && ips.length > 0 && (
-      <Typography variant="caption" color="text.secondary" sx={{ fontFamily: "monospace" }}>
-        <strong>IPs:</strong> {ips.join(", ")}
-      </Typography>
+      <span className="text-[11px] text-text-secondary font-mono truncate" title={ips.join(", ")}>
+        <strong className="font-semibold mr-1">IPs:</strong> {ips.join(", ")}
+      </span>
     )}
-  </Box>
+  </div>
 );

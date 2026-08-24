@@ -2,17 +2,6 @@
 
 import React from "react";
 import {
-  Box,
-  Card,
-  CardContent,
-  Chip,
-  Divider,
-  Grid,
-  Stack,
-  Typography,
-  Alert,
-} from "@mui/material";
-import {
   ShieldCheck,
   ShieldAlert,
   ShieldX,
@@ -21,6 +10,7 @@ import {
   FileCheck,
 } from "lucide-react";
 import { HeaderForensicsResponse } from "@/types";
+import { Card, CardContent, Badge } from "@/components/ui";
 
 interface AuthenticationForensicsWidgetProps {
   forensics: HeaderForensicsResponse | undefined;
@@ -35,46 +25,27 @@ export const AuthenticationForensicsWidget: React.FC<AuthenticationForensicsWidg
     return null;
   }
 
-  const getStatusChip = (protocol: string, statusVal: string) => {
+  const getStatusBadge = (protocol: string, statusVal: string) => {
     const s = (statusVal || "none").toLowerCase();
-    let bg = "rgba(107, 114, 128, 0.15)";
-    let border = "#7B8794";
-    let text = "#52606D";
+    let variant: "success" | "danger" | "warning" | "neutral" = "neutral";
     let Icon = ShieldAlert;
 
     if (s === "pass") {
-      bg = "#E8F5EF";
-      border = "#237A57";
-      text = "#237A57";
+      variant = "success";
       Icon = ShieldCheck;
     } else if (s.includes("fail") || s === "permerror") {
-      bg = "#FDECEC";
-      border = "#C53030";
-      text = "#C53030";
+      variant = "danger";
       Icon = ShieldX;
     } else if (s === "softfail" || s === "neutral" || s === "temperror") {
-      bg = "#FFF7E6";
-      border = "#B7791F";
-      text = "#B7791F";
+      variant = "warning";
       Icon = ShieldAlert;
     }
 
     return (
-      <Chip
-        icon={<Icon size={14} color={text} />}
-        label={`${protocol}: ${statusVal.toUpperCase()}`}
-        size="small"
-        sx={{
-          bgcolor: bg,
-          color: text,
-          borderColor: border,
-          borderWidth: 1,
-          borderStyle: "solid",
-          fontWeight: 700,
-          fontSize: "0.75rem",
-          "& .MuiChip-icon": { color: text },
-        }}
-      />
+      <Badge variant={variant} className="gap-1 px-2 py-1 text-xs">
+        <Icon className="w-3.5 h-3.5" />
+        {protocol}: {statusVal.toUpperCase()}
+      </Badge>
     );
   };
 
@@ -84,127 +55,125 @@ export const AuthenticationForensicsWidget: React.FC<AuthenticationForensicsWidg
   const dmarcDetail = authDetails.dmarc;
 
   return (
-    <Card
-      sx={{
-        bgcolor: "background.paper",
-        border: "1px solid",
-        borderColor: "divider",
-        borderRadius: 2,
-      }}
-    >
-      <CardContent sx={{ p: 3 }}>
+    <Card>
+      <CardContent className="p-6">
         {/* Header */}
-        <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ xs: "flex-start", sm: "center" }} spacing={1} mb={2}>
-          <Stack direction="row" alignItems="center" spacing={1.5}>
-            <FileCheck className="w-5 h-5 text-[#1F4E79]" />
-            <Typography variant="h6" fontWeight={700} color="text.primary">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-4">
+          <div className="flex items-center gap-2">
+            <FileCheck className="w-5 h-5 text-primary" />
+            <h3 className="text-[18px] font-[700] text-text-primary">
               Email Authentication Forensics
-            </Typography>
-          </Stack>
-
-          <Stack direction="row" spacing={1}>
-            {getStatusChip("SPF", forensics.spf_status)}
-            {getStatusChip("DKIM", forensics.dkim_status)}
-            {getStatusChip("DMARC", forensics.dmarc_status)}
-          </Stack>
-        </Stack>
+            </h3>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {getStatusBadge("SPF", forensics.spf_status)}
+            {getStatusBadge("DKIM", forensics.dkim_status)}
+            {getStatusBadge("DMARC", forensics.dmarc_status)}
+          </div>
+        </div>
+        
+        <p className="text-sm text-text-secondary mb-6">
+          Cryptographic verification of sender identity and authorization protocols.
+        </p>
 
         {/* Spoofing Alerts if any */}
         {forensics.spoofing_indicators && forensics.spoofing_indicators.length > 0 && (
-          <Box mb={2}>
+          <div className="mb-6 flex flex-col gap-2">
             {forensics.spoofing_indicators.map((ind, idx) => (
-              <Alert
-                key={idx}
-                severity="error"
-                icon={<AlertOctagon size={16} />}
-                sx={{ mb: 1, py: 0.5, fontSize: "0.82rem" }}
-              >
-                <strong>Spoofing Warning:</strong> {ind}
-              </Alert>
+              <div key={idx} className="flex items-start gap-2 p-3 bg-danger-bg border border-danger rounded-[6px]">
+                <AlertOctagon className="w-4 h-4 text-danger mt-0.5 shrink-0" />
+                <div className="flex flex-col">
+                  <span className="text-[13px] text-critical">
+                    <strong className="font-semibold mr-1">Spoofing Warning:</strong> 
+                    {ind}
+                  </span>
+                </div>
+              </div>
             ))}
-          </Box>
+          </div>
         )}
 
-        <Divider sx={{ my: 2 }} />
+        {/* SPF Panel */}
+        <div className="mb-4 bg-bg-page border border-border rounded-[8px] overflow-hidden">
+          <div className="px-4 py-3 bg-bg-panel-subtle border-b border-border flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <KeyRound className="w-4 h-4 text-text-secondary" />
+              <span className="text-sm font-[650] text-text-primary">SPF (Sender Policy Framework)</span>
+            </div>
+            {getStatusBadge("Result", forensics.spf_status)}
+          </div>
+          <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1">
+              <span className="text-[11px] font-[600] text-text-muted uppercase tracking-wider">Authenticated Domain</span>
+              <span className="font-mono text-[13px] text-text-primary bg-bg-panel-subtle px-2 py-1 rounded inline-block w-fit">
+                {spfDetail?.domain || "N/A"}
+              </span>
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="text-[11px] font-[600] text-text-muted uppercase tracking-wider">Authorized IP</span>
+              <span className="font-mono text-[13px] text-text-primary">
+                {spfDetail?.sender_ip || "N/A"}
+              </span>
+            </div>
+          </div>
+        </div>
 
-        {/* Protocol Details Grid */}
-        <Grid container spacing={2}>
-          {/* SPF */}
-          <Grid item xs={12} md={4}>
-            <Box sx={{ p: 2, bgcolor: "rgba(255, 255, 255, 0.02)", borderRadius: 1.5, border: "1px solid rgba(255, 255, 255, 0.05)" }}>
-              <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
-                <Typography variant="subtitle2" fontWeight={600} color="text.primary">
-                  SPF Analysis
-                </Typography>
-                {getStatusChip("SPF", forensics.spf_status)}
-              </Stack>
-              <Typography variant="body2" color="text.secondary" sx={{ fontSize: "0.8rem", mb: 1 }}>
-                {spfDetail?.explanation || "No SPF record evidence found in email headers."}
-              </Typography>
-              {spfDetail?.domain && (
-                <Typography variant="caption" color="text.secondary" display="block">
-                  <strong>Domain:</strong> {spfDetail.domain}
-                </Typography>
-              )}
-              {spfDetail?.sender_ip && (
-                <Typography variant="caption" color="text.secondary" display="block">
-                  <strong>Sender IP:</strong> {spfDetail.sender_ip}
-                </Typography>
-              )}
-            </Box>
-          </Grid>
+        {/* DKIM Panel */}
+        <div className="mb-4 bg-bg-page border border-border rounded-[8px] overflow-hidden">
+          <div className="px-4 py-3 bg-bg-panel-subtle border-b border-border flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-text-secondary" />
+              <span className="text-sm font-[650] text-text-primary">DKIM (DomainKeys Identified Mail)</span>
+            </div>
+            {getStatusBadge("Result", forensics.dkim_status)}
+          </div>
+          <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1">
+              <span className="text-[11px] font-[600] text-text-muted uppercase tracking-wider">Signing Domain (d=)</span>
+              <span className="font-mono text-[13px] text-text-primary bg-bg-panel-subtle px-2 py-1 rounded inline-block w-fit">
+                {dkimDetail?.domain || "N/A"}
+              </span>
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="text-[11px] font-[600] text-text-muted uppercase tracking-wider">Selector (s=)</span>
+              <span className="font-mono text-[13px] text-text-primary">
+                {dkimDetail?.selector || "N/A"}
+              </span>
+            </div>
+          </div>
+        </div>
 
-          {/* DKIM */}
-          <Grid item xs={12} md={4}>
-            <Box sx={{ p: 2, bgcolor: "rgba(255, 255, 255, 0.02)", borderRadius: 1.5, border: "1px solid rgba(255, 255, 255, 0.05)" }}>
-              <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
-                <Typography variant="subtitle2" fontWeight={600} color="text.primary">
-                  DKIM Signature
-                </Typography>
-                {getStatusChip("DKIM", forensics.dkim_status)}
-              </Stack>
-              <Typography variant="body2" color="text.secondary" sx={{ fontSize: "0.8rem", mb: 1 }}>
-                {dkimDetail?.explanation || "No DKIM signature found or evaluated."}
-              </Typography>
-              {dkimDetail?.domain && (
-                <Typography variant="caption" color="text.secondary" display="block">
-                  <strong>Signing Domain:</strong> {dkimDetail.domain}
-                </Typography>
-              )}
-              {dkimDetail?.selector && (
-                <Typography variant="caption" color="text.secondary" display="block">
-                  <KeyRound size={10} style={{ display: "inline", marginRight: 4 }} />
-                  <strong>Selector:</strong> {dkimDetail.selector}
-                </Typography>
-              )}
-            </Box>
-          </Grid>
-
-          {/* DMARC */}
-          <Grid item xs={12} md={4}>
-            <Box sx={{ p: 2, bgcolor: "rgba(255, 255, 255, 0.02)", borderRadius: 1.5, border: "1px solid rgba(255, 255, 255, 0.05)" }}>
-              <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
-                <Typography variant="subtitle2" fontWeight={600} color="text.primary">
-                  DMARC Policy
-                </Typography>
-                {getStatusChip("DMARC", forensics.dmarc_status)}
-              </Stack>
-              <Typography variant="body2" color="text.secondary" sx={{ fontSize: "0.8rem", mb: 1 }}>
-                {dmarcDetail?.explanation || "No DMARC evaluation clause in headers."}
-              </Typography>
-              {dmarcDetail?.domain && (
-                <Typography variant="caption" color="text.secondary" display="block">
-                  <strong>Policy Domain:</strong> {dmarcDetail.domain}
-                </Typography>
-              )}
-              {dmarcDetail?.matching_clause && (
-                <Typography variant="caption" color="text.secondary" display="block">
-                  <strong>Clause:</strong> {dmarcDetail.matching_clause}
-                </Typography>
-              )}
-            </Box>
-          </Grid>
-        </Grid>
+        {/* DMARC Panel */}
+        <div className="bg-bg-page border border-border rounded-[8px] overflow-hidden">
+          <div className="px-4 py-3 bg-bg-panel-subtle border-b border-border flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <AlertOctagon className="w-4 h-4 text-text-secondary" />
+              <span className="text-sm font-[650] text-text-primary">DMARC (Domain-based Message Authentication)</span>
+            </div>
+            {getStatusBadge("Result", forensics.dmarc_status)}
+          </div>
+          <div className="p-4 flex flex-col gap-3">
+            <div className="flex flex-col gap-1">
+              <span className="text-[11px] font-[600] text-text-muted uppercase tracking-wider">Policy Record</span>
+              <span className="font-mono text-[12px] text-text-primary bg-bg-panel-subtle p-2 rounded block break-all">
+                {dmarcDetail?.source_header || "No DMARC record found"}
+              </span>
+            </div>
+            
+            {(!forensics.dmarc_status || forensics.dmarc_status.toLowerCase() !== "pass") && (
+              <div className="flex items-start gap-2 p-3 bg-warning-bg border border-warning rounded-[6px] mt-2">
+                <AlertOctagon className="w-4 h-4 text-warning mt-0.5 shrink-0" />
+                <div className="flex flex-col">
+                  <span className="text-[13px] font-[650] text-warning-dark">DMARC Alignment Failure</span>
+                  <span className="text-[12px] text-warning-dark opacity-90 mt-1">
+                    The organizational domain in the From header does not align with the SPF or DKIM authenticated domains. 
+                    This is a strong indicator of domain spoofing.
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </CardContent>
     </Card>
   );

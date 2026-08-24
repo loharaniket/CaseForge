@@ -3,26 +3,6 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Chip,
-  Divider,
-  IconButton,
-  LinearProgress,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Tooltip,
-  Typography,
-  Alert,
-} from "@mui/material";
-import {
   Shield,
   ShieldCheck,
   ShieldAlert,
@@ -38,6 +18,7 @@ import {
   CaseEvidenceVerificationResponse,
   EvidenceVerificationResult,
 } from "@/types";
+import { Card, CardContent, CardHeader, Button, Badge, Table, Thead, Tbody, Tr, Th, Td, LoadingState } from "@/components/ui";
 
 interface EvidenceIntegrityWidgetProps {
   caseId: string;
@@ -80,305 +61,200 @@ export const EvidenceIntegrityWidget: React.FC<EvidenceIntegrityWidgetProps> = (
 
   const renderStatusBadge = (verResult?: EvidenceVerificationResult) => {
     if (!verResult) {
-      return (
-        <Chip
-          label="UNVERIFIED (STORED)"
-          size="small"
-          sx={{
-            bgcolor: "rgba(148, 163, 184, 0.1)",
-            color: "text.secondary",
-            fontWeight: 600,
-            fontSize: "0.7rem",
-          }}
-        />
-      );
+      return <Badge variant="neutral" className="text-[10px]">UNVERIFIED (STORED)</Badge>;
     }
 
     if (verResult.status === "VERIFIED") {
       return (
-        <Chip
-          icon={<ShieldCheck size={14} className="text-[#237A57]" />}
-          label="AUTHENTIC &bull; SHA-256 MATCH"
-          size="small"
-          sx={{
-            bgcolor: "rgba(16, 185, 129, 0.12)",
-            color: "#237A57",
-            border: "1px solid rgba(16, 185, 129, 0.3)",
-            fontWeight: 700,
-            fontSize: "0.7rem",
-          }}
-        />
+        <Badge variant="success" className="gap-1 px-2 py-0.5 text-[10px]">
+          <ShieldCheck className="w-3 h-3" />
+          AUTHENTIC &bull; SHA-256 MATCH
+        </Badge>
       );
     }
 
     if (verResult.status === "CORRUPTED") {
       return (
-        <Chip
-          icon={<ShieldAlert size={14} className="text-[#C53030]" />}
-          label="CORRUPTED / TAMPERED"
-          size="small"
-          sx={{
-            bgcolor: "rgba(244, 63, 94, 0.15)",
-            color: "#C53030",
-            border: "1px solid rgba(244, 63, 94, 0.4)",
-            fontWeight: 700,
-            fontSize: "0.7rem",
-          }}
-        />
+        <Badge variant="danger" className="gap-1 px-2 py-0.5 text-[10px]">
+          <ShieldAlert className="w-3 h-3" />
+          CORRUPTED / TAMPERED
+        </Badge>
       );
     }
 
     return (
-      <Chip
-        label="MISSING PAYLOAD"
-        size="small"
-        sx={{
-          bgcolor: "rgba(245, 158, 11, 0.12)",
-          color: "#fbbf24",
-          border: "1px solid rgba(245, 158, 11, 0.3)",
-          fontWeight: 700,
-          fontSize: "0.7rem",
-        }}
-      />
+      <Badge variant="warning" className="gap-1 px-2 py-0.5 text-[10px]">
+        <ShieldAlert className="w-3 h-3" />
+        MISSING PAYLOAD
+      </Badge>
     );
   };
 
   if (isLoading) {
-    return (
-      <Card sx={{ bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 2 }}>
-        <CardContent sx={{ p: 3 }}>
-          <Typography variant="body2" color="text.secondary" mb={1}>
-            Loading cryptographic evidence chain of custody...
-          </Typography>
-          <LinearProgress />
-        </CardContent>
-      </Card>
-    );
+    return <LoadingState message="Loading cryptographic evidence chain of custody..." />;
   }
 
   if (isError) {
     return (
-      <Alert severity="warning" sx={{ borderRadius: 2 }}>
+      <div className="p-4 bg-warning-bg border border-warning rounded-[8px] text-warning-dark text-sm">
         Unable to load evidence integrity records: {error?.message || "Storage service unreachable"}
-      </Alert>
+      </div>
     );
   }
 
   const records = evidenceData?.records || [];
 
   return (
-    <Card
-      sx={{
-        bgcolor: "background.paper",
-        border: "1px solid",
-        borderColor: "divider",
-        borderRadius: 2,
-        boxShadow: 2,
-      }}
-    >
-      <CardContent sx={{ p: 3 }}>
+    <Card>
+      <CardContent className="p-6">
         {/* Header Bar */}
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          justifyContent="space-between"
-          alignItems={{ xs: "flex-start", sm: "center" }}
-          spacing={2}
-          mb={2.5}
-        >
-          <Box display="flex" alignItems="center" gap={1.5}>
-            <Shield className="w-5 h-5 text-[#1F4E79]" />
-            <Box>
-              <Typography variant="h6" fontWeight={700} color="text.primary">
+        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6 pb-4 border-b border-border">
+          <div className="flex items-center gap-3">
+            <Shield className="w-6 h-6 text-primary" />
+            <div className="flex flex-col">
+              <h3 className="text-[16px] font-[700] text-text-primary">
                 Cryptographic Evidence & Chain of Custody
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
+              </h3>
+              <span className="text-[12px] text-text-secondary">
                 Deterministic SHA-256 integrity verification across original files and forensic reports
-              </Typography>
-            </Box>
-          </Box>
+              </span>
+            </div>
+          </div>
 
-          <Stack direction="row" spacing={1} alignItems="center">
+          <div className="flex items-center gap-2">
             <Button
-              variant="contained"
-              color="primary"
-              size="small"
+              variant="primary"
               onClick={() => verifyMutation.mutate()}
               disabled={verifyMutation.isPending}
-              startIcon={<FileCheck2 size={14} className={verifyMutation.isPending ? "animate-spin" : ""} />}
-              sx={{ textTransform: "none", fontWeight: 700, fontSize: "0.75rem" }}
+              className="gap-2 px-3 py-1.5 h-auto text-xs"
             >
-              {verifyMutation.isPending ? "Verifying Hashes..." : "Verify Chain of Custody"}
+              <FileCheck2 className={`w-3.5 h-3.5 ${verifyMutation.isPending ? "animate-spin" : ""}`} />
+              <span>{verifyMutation.isPending ? "Verifying Hashes..." : "Verify Chain of Custody"}</span>
             </Button>
 
-            <Tooltip title="Refresh evidence list">
-              <IconButton onClick={() => refetch()} size="small" sx={{ border: "1px solid", borderColor: "divider" }}>
-                <RefreshCw size={14} className={isLoading ? "animate-spin text-[#1F4E79]" : ""} />
-              </IconButton>
-            </Tooltip>
-          </Stack>
-        </Stack>
+            <Button variant="secondary" onClick={() => refetch()} className="px-2 h-auto py-1.5" title="Refresh evidence list">
+              <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin text-primary" : "text-text-secondary"}`} />
+            </Button>
+          </div>
+        </div>
 
         {/* Verification Summary Banner if performed */}
         {verificationData && (
-          <Box mb={2.5}>
+          <div className="mb-6">
             {verificationData.all_valid ? (
-              <Alert
-                severity="success"
-                icon={<ShieldCheck size={18} />}
-                sx={{
-                  bgcolor: "rgba(16, 185, 129, 0.08)",
-                  border: "1px solid rgba(16, 185, 129, 0.25)",
-                  color: "#237A57",
-                  "& .MuiAlert-icon": { color: "#237A57" },
-                }}
-              >
-                <Typography variant="subtitle2" fontWeight={700}>
-                  Chain of Custody Intact & Verified Authentic
-                </Typography>
-                <Typography variant="caption" display="block">
-                  All {verificationData.total_verified} evidence artifact(s) matched their recorded SHA-256 cryptographic digests byte-for-byte.
-                </Typography>
-              </Alert>
+              <div className="flex items-start gap-3 p-4 bg-success-bg border border-success rounded-[8px]">
+                <ShieldCheck className="w-5 h-5 text-success mt-0.5 shrink-0" />
+                <div className="flex flex-col">
+                  <span className="text-[14px] font-[700] text-success-dark">
+                    Chain of Custody Intact & Verified Authentic
+                  </span>
+                  <span className="text-[12px] text-success-dark opacity-90 mt-1">
+                    All {verificationData.total_verified} evidence artifact(s) matched their recorded SHA-256 cryptographic digests byte-for-byte.
+                  </span>
+                </div>
+              </div>
             ) : (
-              <Alert
-                severity="error"
-                icon={<ShieldAlert size={18} />}
-                sx={{
-                  bgcolor: "rgba(244, 63, 94, 0.1)",
-                  border: "1px solid rgba(244, 63, 94, 0.3)",
-                  color: "#C53030",
-                  "& .MuiAlert-icon": { color: "#C53030" },
-                }}
-              >
-                <Typography variant="subtitle2" fontWeight={700}>
-                  Integrity Verification Failure Detected
-                </Typography>
-                <Typography variant="caption" display="block">
-                  One or more evidence artifacts failed SHA-256 cryptographic verification. Potential data corruption or unauthorized tampering.
-                </Typography>
-              </Alert>
+              <div className="flex items-start gap-3 p-4 bg-danger-bg border border-danger rounded-[8px]">
+                <ShieldAlert className="w-5 h-5 text-danger mt-0.5 shrink-0" />
+                <div className="flex flex-col">
+                  <span className="text-[14px] font-[700] text-critical">
+                    Integrity Verification Failure Detected
+                  </span>
+                  <span className="text-[12px] text-critical opacity-90 mt-1">
+                    One or more evidence artifacts failed SHA-256 cryptographic verification. Potential data corruption or unauthorized tampering.
+                  </span>
+                </div>
+              </div>
             )}
-          </Box>
+          </div>
         )}
-
-        <Divider sx={{ mb: 2 }} />
 
         {/* Evidence Records Table */}
         {records.length === 0 ? (
-          <Typography variant="body2" color="text.secondary" textAlign="center" py={3}>
+          <p className="text-sm text-text-muted text-center py-6">
             No cryptographic evidence records registered for this investigation case yet.
-          </Typography>
+          </p>
         ) : (
-          <TableContainer>
-            <Table size="small">
-              <TableHead>
-                <TableRow sx={{ bgcolor: "rgba(255, 255, 255, 0.02)" }}>
-                  <TableCell sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.75rem" }}>
-                    EVIDENCE ARTIFACT
-                  </TableCell>
-                  <TableCell sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.75rem" }}>
-                    ALGORITHM
-                  </TableCell>
-                  <TableCell sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.75rem" }}>
-                    SHA-256 CRYPTOGRAPHIC DIGEST
-                  </TableCell>
-                  <TableCell sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.75rem" }}>
-                    SIZE / TIMESTAMP
-                  </TableCell>
-                  <TableCell align="right" sx={{ color: "text.secondary", fontWeight: 700, fontSize: "0.75rem" }}>
-                    CUSTODY STATUS
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
+          <div className="border border-border rounded-[8px] overflow-hidden">
+            <Table className="border-none rounded-none">
+              <Thead>
+                <Tr className="bg-bg-panel-subtle border-b border-border">
+                  <Th className="text-[10px]">EVIDENCE ARTIFACT</Th>
+                  <Th className="text-[10px]">ALGORITHM</Th>
+                  <Th className="text-[10px]">SHA-256 CRYPTOGRAPHIC DIGEST</Th>
+                  <Th className="text-[10px]">SIZE / TIMESTAMP</Th>
+                  <Th className="text-[10px] text-right">CUSTODY STATUS</Th>
+                </Tr>
+              </Thead>
+              <Tbody>
                 {records.map((rec) => {
                   const verResult = getVerificationStatusForResult(rec.evidence_type);
                   return (
-                    <TableRow
-                      key={rec.id}
-                      hover
-                      sx={{
-                        "&:hover": { bgcolor: "rgba(255, 255, 255, 0.02)" },
-                        transition: "background-color 0.15s ease",
-                      }}
-                    >
+                    <Tr key={rec.id}>
                       {/* Evidence Artifact Name & Type */}
-                      <TableCell>
-                        <Typography variant="body2" fontWeight={600} color="text.primary">
-                          {rec.file_name || rec.evidence_type}
-                        </Typography>
-                        <Chip
-                          label={rec.evidence_type}
-                          size="small"
-                          sx={{
-                            height: 18,
-                            fontSize: "0.65rem",
-                            fontWeight: 700,
-                            bgcolor: "rgba(6, 182, 212, 0.1)",
-                            color: "#1F4E79",
-                            mt: 0.5,
-                          }}
-                        />
-                      </TableCell>
+                      <Td className="align-top">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[13px] font-[600] text-text-primary">
+                            {rec.file_name || rec.evidence_type}
+                          </span>
+                          <span className="text-[10px] font-[700] text-primary bg-primary-soft px-1.5 py-0.5 rounded w-fit">
+                            {rec.evidence_type}
+                          </span>
+                        </div>
+                      </Td>
 
                       {/* Algorithm */}
-                      <TableCell>
-                        <Stack direction="row" alignItems="center" spacing={0.5}>
-                          <Lock size={12} className="text-[#1F4E79]" />
-                          <Typography variant="caption" fontWeight={600} color="text.secondary">
-                            SHA-256
-                          </Typography>
-                        </Stack>
-                      </TableCell>
+                      <Td className="align-top">
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <Lock className="w-3 h-3 text-primary" />
+                          <span className="text-[11px] font-[650] text-text-secondary">SHA-256</span>
+                        </div>
+                      </Td>
 
                       {/* SHA-256 Hash with Copy */}
-                      <TableCell>
-                        <Box display="flex" alignItems="center" gap={1}>
-                          <Typography
-                            variant="caption"
-                            sx={{
-                              fontFamily: "monospace",
-                              bgcolor: "rgba(0, 0, 0, 0.3)",
-                              p: 0.5,
-                              borderRadius: 1,
-                              border: "1px solid rgba(255, 255, 255, 0.05)",
-                              color: "cyan.300",
-                              wordBreak: "break-all",
-                              maxWidth: 320,
-                            }}
-                          >
+                      <Td className="align-top">
+                        <div className="flex items-start gap-2">
+                          <span className="text-[11px] font-mono bg-bg-panel-subtle px-2 py-1 rounded border border-border text-info break-all max-w-[320px]">
                             {rec.sha256_hash}
-                          </Typography>
-                          <Tooltip title={copiedHash === rec.sha256_hash ? "Copied!" : "Copy SHA-256"}>
-                            <IconButton size="small" onClick={() => handleCopy(rec.sha256_hash)}>
-                              {copiedHash === rec.sha256_hash ? (
-                                <Check size={14} className="text-[#237A57]" />
-                              ) : (
-                                <Copy size={14} className="text-slate-400 hover:text-white" />
-                              )}
-                            </IconButton>
-                          </Tooltip>
-                        </Box>
-                      </TableCell>
+                          </span>
+                          <button 
+                            onClick={() => handleCopy(rec.sha256_hash)}
+                            className="p-1 hover:bg-bg-panel-subtle rounded text-text-secondary hover:text-text-primary transition-colors"
+                            title={copiedHash === rec.sha256_hash ? "Copied!" : "Copy SHA-256"}
+                          >
+                            {copiedHash === rec.sha256_hash ? (
+                              <Check className="w-3.5 h-3.5 text-success" />
+                            ) : (
+                              <Copy className="w-3.5 h-3.5" />
+                            )}
+                          </button>
+                        </div>
+                      </Td>
 
                       {/* Size & Timestamp */}
-                      <TableCell>
-                        <Typography variant="caption" color="text.primary" display="block">
-                          {(rec.file_size_bytes / 1024).toFixed(1)} KB ({rec.file_size_bytes} B)
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary" display="block">
-                          {new Date(rec.calculated_at_iso).toUTCString()}
-                        </Typography>
-                      </TableCell>
+                      <Td className="align-top">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-[11px] text-text-primary font-mono">
+                            {(rec.file_size_bytes / 1024).toFixed(1)} KB <span className="text-text-muted">({rec.file_size_bytes} B)</span>
+                          </span>
+                          <span className="text-[10px] text-text-secondary mt-1">
+                            {new Date(rec.calculated_at_iso).toUTCString()}
+                          </span>
+                        </div>
+                      </Td>
 
                       {/* Custody Status */}
-                      <TableCell align="right">{renderStatusBadge(verResult)}</TableCell>
-                    </TableRow>
+                      <Td className="align-top text-right">
+                        <div className="flex justify-end mt-0.5">
+                          {renderStatusBadge(verResult)}
+                        </div>
+                      </Td>
+                    </Tr>
                   );
                 })}
-              </TableBody>
+              </Tbody>
             </Table>
-          </TableContainer>
+          </div>
         )}
       </CardContent>
     </Card>

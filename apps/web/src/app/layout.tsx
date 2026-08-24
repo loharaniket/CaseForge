@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { ThemeRegistry } from "@/theme/ThemeRegistry";
+
 import { QueryProvider } from "@/providers/QueryProvider";
 import { AuthProvider } from "@/context/AuthContext";
 import { AppShell } from "@/components/layout/AppShell";
@@ -18,14 +18,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>
-        <ThemeRegistry>
-          <QueryProvider>
-            <AuthProvider>
-              <AppShell>{children}</AppShell>
-            </AuthProvider>
-          </QueryProvider>
-        </ThemeRegistry>
+      <body className="bg-bg-page text-text-primary font-sans min-h-screen flex flex-col">
+        <QueryProvider>
+          <AuthProvider>
+            <AppShell>{children}</AppShell>
+          </AuthProvider>
+        </QueryProvider>
       </body>
     </html>
   );

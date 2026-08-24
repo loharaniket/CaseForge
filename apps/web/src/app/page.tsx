@@ -10,19 +10,20 @@ import {
   History,
   Eye,
 } from "lucide-react";
-import { 
-  Box, 
-  Button, 
-  Typography, 
-  Paper, 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableContainer, 
-  TableHead, 
-  TableRow,
-  Chip
-} from "@mui/material";
+import {
+  Button,
+  Badge,
+  Card,
+  Table,
+  Thead,
+  Tbody,
+  Tr,
+  Th,
+  Td,
+  SectionHeader,
+  CardHeader,
+  CardContent,
+} from "@/components/ui";
 
 interface RecentCaseItem {
   case_id: string;
@@ -93,145 +94,131 @@ export default function HomePage() {
   };
 
   const renderSeverityBadge = (sev?: string) => {
-    let bg = "#F5F7FA";
-    let color = "#52606D";
-    let label = "ANALYZED";
     switch (sev?.toLowerCase()) {
       case "critical":
+        return <Badge variant="critical">CRITICAL</Badge>;
       case "high":
-        bg = "#FDECEC";
-        color = "#C53030";
-        label = sev.toUpperCase();
-        break;
+        return <Badge variant="danger">HIGH</Badge>;
       case "medium":
-        bg = "#FFF7E6";
-        color = "#975A16";
-        label = "MEDIUM";
-        break;
+        return <Badge variant="warning">MEDIUM</Badge>;
       case "low":
-        bg = "#E8F5EF";
-        color = "#18533B";
-        label = "LOW";
-        break;
+        return <Badge variant="success">LOW</Badge>;
+      default:
+        return <Badge variant="neutral">ANALYZED</Badge>;
     }
-    return <Chip label={label} size="small" style={{ backgroundColor: bg, color: color, fontWeight: 650 }} />;
   };
 
   return (
-    <Box sx={{ p: 3, maxWidth: 1440, mx: "auto", display: "flex", flexDirection: "column", gap: 4 }}>
-      
+    <div className="flex flex-col gap-8">
       {/* 1. Header Area */}
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
-        <Box>
-          <Typography variant="h1" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            Investigations
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Recent Threat Analysis Cases
-          </Typography>
-        </Box>
-        <Box sx={{ display: "flex", gap: 2 }}>
-          <Button 
-            variant="contained" 
-            color="primary" 
-            startIcon={<FileSearch size={16} />}
-            onClick={() => setIsCreatingNew(true)}
-          >
-            New Case
-          </Button>
-        </Box>
-      </Box>
+      <div className="flex justify-between items-center">
+        <SectionHeader 
+          title="Investigations" 
+          description="Recent Threat Analysis Cases"
+          className="mb-0" 
+        />
+        <Button 
+          variant="primary" 
+          onClick={() => setIsCreatingNew(true)}
+          className="gap-2"
+        >
+          <FileSearch className="w-4 h-4" />
+          <span>New Case</span>
+        </Button>
+      </div>
 
       {/* 2. New Investigation Dropzone */}
       {isCreatingNew && !selectedCaseId && (
-        <Box sx={{ mb: 4 }}>
-          <Paper elevation={0} sx={{ p: 4 }}>
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
-              <Typography variant="h2" sx={{ fontSize: "18px" }}>Upload Evidence</Typography>
-              <Button size="small" onClick={() => setIsCreatingNew(false)}>Cancel</Button>
-            </Box>
+        <Card>
+          <CardHeader className="flex flex-row justify-between items-center">
+            <h2 className="text-[16px] font-[650] text-text-primary">Upload Evidence</h2>
+            <Button variant="secondary" onClick={() => setIsCreatingNew(false)}>Cancel</Button>
+          </CardHeader>
+          <CardContent>
             <EmailUploadZone onUploadSuccess={handleUploadSuccess} />
-          </Paper>
-        </Box>
+          </CardContent>
+        </Card>
       )}
 
       {/* 3. Live Investigation console */}
       {selectedCaseId && (
-        <Box sx={{ mb: 4 }}>
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-            <Typography variant="h2" sx={{ fontSize: "18px", display: "flex", alignItems: "center", gap: 1 }}>
-              <Shield size={18} color="#1F4E79" /> Live Investigation: {selectedCaseId.slice(0,8)}...
-            </Typography>
-            <Button size="small" onClick={() => setSelectedCaseId(null)}>Close View</Button>
-          </Box>
+        <div className="flex flex-col gap-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-[18px] font-[650] text-text-primary flex items-center gap-2">
+              <Shield className="w-5 h-5 text-primary" /> 
+              Live Investigation: <span className="font-mono text-text-secondary">{selectedCaseId.slice(0,8)}...</span>
+            </h2>
+            <Button variant="secondary" onClick={() => setSelectedCaseId(null)}>Close View</Button>
+          </div>
           <InvestigationDashboard caseId={selectedCaseId} />
-        </Box>
+        </div>
       )}
 
       {/* 4. Recent Investigations table */}
       {!selectedCaseId && !isCreatingNew && (
-        <Paper elevation={0}>
-          <Box sx={{ p: 2, display: "flex", alignItems: "center", gap: 1, borderBottom: "1px solid #D9E0E7" }}>
-            <History size={18} color="#52606D" />
-            <Typography variant="subtitle1">Investigation History</Typography>
-          </Box>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Case ID</TableCell>
-                  <TableCell>Subject / File</TableCell>
-                  <TableCell>Risk Score</TableCell>
-                  <TableCell>Severity</TableCell>
-                  <TableCell>Upload Time</TableCell>
-                  <TableCell align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {recentCases.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} align="center" sx={{ py: 4, color: "text.secondary" }}>
-                      No investigation cases recorded.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  recentCases.map((item) => (
-                    <TableRow key={item.case_id}>
-                      <TableCell sx={{ fontFamily: "monospace", color: "#1F4E79", fontWeight: 600 }}>
-                        {item.case_id.slice(0, 12)}...
-                      </TableCell>
-                      <TableCell sx={{ maxWidth: 300, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {item.subject || item.file_name}
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2" sx={{ fontFamily: "monospace" }}>
-                          {item.risk_score !== undefined ? `${item.risk_score} / 100` : "—"}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>{renderSeverityBadge(item.severity)}</TableCell>
-                      <TableCell>
-                        <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                          {new Date(item.created_at).toLocaleDateString()} {new Date(item.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                        </Typography>
-                      </TableCell>
-                      <TableCell align="right">
-                        <Button 
-                          variant="outlined" 
-                          size="small"
-                          onClick={() => setSelectedCaseId(item.case_id)}
-                          startIcon={<Eye size={14} />}
-                        >
-                          Inspect
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Paper>
+        <Card>
+          <CardHeader className="flex flex-row items-center gap-2 py-3 bg-bg-panel-subtle">
+            <History className="w-4 h-4 text-text-secondary" />
+            <h3 className="text-sm font-[650] text-text-primary">Investigation History</h3>
+          </CardHeader>
+          <Table className="border-none rounded-none rounded-b-[8px]">
+            <Thead>
+              <Tr>
+                <Th>Case ID</Th>
+                <Th>Subject / File</Th>
+                <Th>Risk Score</Th>
+                <Th>Severity</Th>
+                <Th>Upload Time</Th>
+                <Th className="text-right">Actions</Th>
+              </Tr>
+            </Thead>
+            <Tbody>
+              {recentCases.length === 0 ? (
+                <Tr>
+                  <Td colSpan={6} className="text-center py-8 text-text-muted">
+                    No investigation cases recorded.
+                  </Td>
+                </Tr>
+              ) : (
+                recentCases.map((item) => (
+                  <Tr key={item.case_id}>
+                    <Td className="font-mono text-info font-semibold">
+                      {item.case_id.slice(0, 12)}...
+                    </Td>
+                    <Td className="max-w-[300px] truncate" title={item.subject || item.file_name}>
+                      {item.subject || item.file_name}
+                    </Td>
+                    <Td>
+                      <span className="font-mono font-medium">
+                        {item.risk_score !== undefined ? `${item.risk_score} / 100` : "—"}
+                      </span>
+                    </Td>
+                    <Td>{renderSeverityBadge(item.severity)}</Td>
+                    <Td>
+                      <span className="text-text-secondary text-xs block">
+                        {new Date(item.created_at).toLocaleDateString()}
+                      </span>
+                      <span className="text-text-muted text-[11px] block mt-0.5">
+                        {new Date(item.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    </Td>
+                    <Td className="text-right">
+                      <Button 
+                        variant="secondary" 
+                        onClick={() => setSelectedCaseId(item.case_id)}
+                        className="h-7 px-3 text-xs gap-1.5"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>Inspect</span>
+                      </Button>
+                    </Td>
+                  </Tr>
+                ))
+              )}
+            </Tbody>
+          </Table>
+        </Card>
       )}
-    </Box>
+    </div>
   );
 }

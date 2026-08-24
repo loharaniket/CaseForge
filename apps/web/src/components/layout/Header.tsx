@@ -22,24 +22,24 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
   };
 
   return (
-    <header className="header">
-      <div className="header-container">
+    <header className="h-16 bg-nav-bg border-b border-[#334E68] flex items-center shrink-0 z-50">
+      <div className="w-full flex justify-between items-center px-4 lg:px-6">
         <div className="flex items-center gap-4">
           {onToggleSidebar && (
             <button
               onClick={onToggleSidebar}
-              className="text-gray-300 hover:text-white"
+              className="text-[#9FB3C8] hover:text-white transition-colors"
               aria-label="Toggle navigation drawer"
             >
               <Menu className="w-5 h-5" />
             </button>
           )}
 
-          <Link href="/" className="logo-group">
-            <Shield className="w-6 h-6 text-cyan-500" />
-            <div>
-              <h1 className="logo-title">ThreatTrace AI</h1>
-              <p className="logo-subtitle">Enterprise SOC Platform</p>
+          <Link href="/" className="flex items-center gap-3 no-underline">
+            <Shield className="w-6 h-6 text-info" />
+            <div className="flex flex-col">
+              <h1 className="text-[15px] font-[750] text-white leading-tight tracking-wide">ThreatTrace AI</h1>
+              <p className="text-[11px] font-[600] text-[#9FB3C8] uppercase tracking-wider">Enterprise SOC Platform</p>
             </div>
           </Link>
           
@@ -48,28 +48,31 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
           </div>
         </div>
 
-        <div className="header-actions">
-          {/* Auth State Control */}
+        <div className="flex items-center gap-4">
           {isAuthenticated && user ? (
             <div className="flex items-center gap-4">
-              <div className="user-profile-badge">
-                <UserCheck className="w-4 h-4 text-gray-300" />
+              <div className="flex items-center gap-3 bg-[#243B53] px-3 py-1.5 rounded-[6px] border border-[#334E68]">
+                <UserCheck className="w-4 h-4 text-[#9FB3C8]" />
                 <div className="flex flex-col">
                   <span className="text-xs font-semibold text-white leading-tight">{user.full_name}</span>
-                  <span className="text-[10px] text-gray-400">{user.role}</span>
+                  <span className="text-[10px] text-[#9FB3C8] uppercase">{user.role}</span>
                 </div>
               </div>
+              
               <button
                 onClick={logout}
-                className="text-gray-400 hover:text-white transition-colors"
-                title="Sign out"
-                aria-label="Sign out"
+                className="flex items-center gap-2 text-xs font-semibold text-[#9FB3C8] hover:text-white transition-colors px-2 py-1.5"
+                title="Disconnect from SOC Console"
               >
                 <LogOut className="w-4 h-4" />
+                <span className="hidden sm:inline">Logout</span>
               </button>
             </div>
           ) : (
-            <Link href="/login" className="login-btn">
+            <Link
+              href="/login"
+              className="flex items-center gap-2 text-xs font-semibold text-[#9FB3C8] hover:text-white bg-[#243B53] hover:bg-[#334E68] px-3 py-2 rounded-[6px] transition-colors"
+            >
               <LogIn className="w-4 h-4" />
               <span>Analyst Login</span>
             </Link>

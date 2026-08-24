@@ -2,20 +2,6 @@
 
 import React, { useState, useMemo } from "react";
 import {
-  Box,
-  Card,
-  CardContent,
-  Chip,
-  Divider,
-  Grid,
-  IconButton,
-  LinearProgress,
-  Stack,
-  Tooltip,
-  Typography,
-  Alert,
-} from "@mui/material";
-import {
   Mail,
   User,
   Globe,
@@ -28,6 +14,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { CaseThreatGraphResponse } from "@/types";
+import { Card, CardContent, Badge, Button, LoadingState } from "@/components/ui";
 
 interface ThreatGraphWidgetProps {
   graph?: CaseThreatGraphResponse;
@@ -47,19 +34,19 @@ const NODE_COLORS: Record<string, { bg: string; border: string; text: string; ic
 function getNodeIcon(type: string) {
   switch (type) {
     case "Email":
-      return <Mail size={16} />;
+      return <Mail className="w-4 h-4" />;
     case "EmailAddress":
-      return <User size={16} />;
+      return <User className="w-4 h-4" />;
     case "Domain":
-      return <Globe size={16} />;
+      return <Globe className="w-4 h-4" />;
     case "IP":
-      return <Radio size={16} />;
+      return <Radio className="w-4 h-4" />;
     case "Country":
-      return <MapPin size={16} />;
+      return <MapPin className="w-4 h-4" />;
     case "AttachmentHash":
-      return <Paperclip size={16} />;
+      return <Paperclip className="w-4 h-4" />;
     default:
-      return <Info size={16} />;
+      return <Info className="w-4 h-4" />;
   }
 }
 
@@ -158,132 +145,96 @@ export const ThreatGraphWidget: React.FC<ThreatGraphWidgetProps> = ({
   }, [relationships, selectedNodeId]);
 
   return (
-    <Card sx={{ bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 2 }}>
-      {isLoading && <LinearProgress sx={{ height: 2 }} />}
+    <Card className="overflow-hidden">
+      {isLoading && (
+        <div className="w-full h-1 bg-border overflow-hidden">
+          <div className="h-full bg-primary animate-pulse w-1/3 rounded"></div>
+        </div>
+      )}
 
-      <CardContent sx={{ p: 3 }}>
+      <CardContent className="p-6">
         {/* Header */}
-        <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2.5}>
-          <Box display="flex" alignItems="center" gap={1.5}>
-            <Box
-              sx={{
-                width: 36,
-                height: 36,
-                borderRadius: 1.5,
-                bgcolor: "rgba(168, 85, 247, 0.15)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#1F4E79",
-              }}
-            >
-              <Share2 size={20} />
-            </Box>
-            <Box>
-              <Typography variant="h6" fontWeight={700} color="text.primary">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-[8px] bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-700">
+              <Share2 className="w-5 h-5" />
+            </div>
+            <div className="flex flex-col">
+              <h3 className="text-[16px] font-[700] text-text-primary">
                 Investigation Threat Relationship Graph
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
+              </h3>
+              <span className="text-[12px] text-text-secondary">
                 Case-scoped graph of email origin, infrastructure indicators, domain resolutions, and attachment hashes
-              </Typography>
-            </Box>
-          </Box>
+              </span>
+            </div>
+          </div>
 
-          <Stack direction="row" alignItems="center" spacing={1}>
-            <Chip
-              size="small"
-              label={`${graph?.total_nodes || 0} Nodes`}
-              sx={{ bgcolor: "rgba(255,255,255,0.06)", fontWeight: 600, fontSize: "0.75rem" }}
-            />
-            <Chip
-              size="small"
-              label={`${graph?.total_relationships || 0} Relationships`}
-              sx={{ bgcolor: "rgba(255,255,255,0.06)", fontWeight: 600, fontSize: "0.75rem" }}
-            />
+          <div className="flex items-center gap-2">
+            <Badge variant="neutral" className="bg-bg-panel-subtle text-text-secondary border-border font-[600] px-2 py-0.5">
+              {graph?.total_nodes || 0} Nodes
+            </Badge>
+            <Badge variant="neutral" className="bg-bg-panel-subtle text-text-secondary border-border font-[600] px-2 py-0.5">
+              {graph?.total_relationships || 0} Relationships
+            </Badge>
             {onRefresh && (
-              <Tooltip title="Refresh Graph">
-                <IconButton size="small" onClick={onRefresh} sx={{ color: "text.secondary" }}>
-                  <RefreshCw size={16} />
-                </IconButton>
-              </Tooltip>
+              <button 
+                onClick={onRefresh} 
+                className="p-1.5 rounded-[6px] text-text-secondary hover:bg-bg-panel-subtle hover:text-text-primary transition-colors border border-transparent hover:border-border"
+                title="Refresh Graph"
+              >
+                <RefreshCw className="w-4 h-4" />
+              </button>
             )}
-          </Stack>
-        </Stack>
+          </div>
+        </div>
 
         {/* Legend */}
-        <Box
-          sx={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 1,
-            p: 1.5,
-            mb: 2.5,
-            bgcolor: "rgba(0, 0, 0, 0.2)",
-            borderRadius: 1.5,
-            border: "1px solid",
-            borderColor: "divider",
-          }}
-        >
+        <div className="flex flex-wrap gap-2 p-3 mb-6 bg-bg-panel border border-border rounded-[8px]">
           {Object.entries(NODE_COLORS).map(([type, colors]) => (
-            <Chip
+            <div
               key={type}
-              size="small"
-              icon={<Box sx={{ color: colors.iconColor, display: "flex", ml: 0.5 }}>{getNodeIcon(type)}</Box>}
-              label={`${type} (${graph?.node_counts?.[type] || 0})`}
-              sx={{
-                bgcolor: colors.bg,
+              className="flex items-center gap-1.5 px-2 py-1 rounded-[6px] text-[11px] font-[600] border"
+              style={{
+                backgroundColor: colors.bg,
                 borderColor: colors.border,
-                border: "1px solid",
                 color: colors.text,
-                fontWeight: 600,
-                fontSize: "0.72rem",
               }}
-            />
+            >
+              <div style={{ color: colors.iconColor }} className="flex items-center">
+                {getNodeIcon(type)}
+              </div>
+              <span>{type} ({graph?.node_counts?.[type] || 0})</span>
+            </div>
           ))}
-        </Box>
+        </div>
 
         {/* Fallback Notice if unavailable */}
         {graph?.status === "unavailable" && (
-          <Alert severity="warning" icon={<AlertCircle size={16} />} sx={{ mb: 2 }}>
-            {graph.error_message || "Graph database is currently unavailable. Displaying local telemetry fallback."}
-          </Alert>
+          <div className="flex items-start gap-2 p-3 bg-warning-bg border border-warning rounded-[6px] mb-4 text-warning-dark text-xs">
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+            <span>
+              {graph.error_message || "Graph database is currently unavailable. Displaying local telemetry fallback."}
+            </span>
+          </div>
         )}
 
-        <Grid container spacing={2.5}>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Main 2D SVG Graph Canvas */}
-          <Grid item xs={12} lg={selectedNode ? 8 : 12}>
-            <Box
-              sx={{
-                width: "100%",
-                height: 480,
-                bgcolor: "#F8FAFC",
-                borderRadius: 2,
-                border: "1px solid",
-                borderColor: "divider",
-                position: "relative",
-                overflow: "hidden",
-              }}
-            >
+          <div className={`col-span-1 ${selectedNode ? "lg:col-span-8" : "lg:col-span-12"}`}>
+            <div className="w-full h-[480px] bg-slate-50 rounded-[8px] border border-border relative overflow-hidden">
               {nodes.length === 0 ? (
-                <Box
-                  display="flex"
-                  flexDirection="column"
-                  alignItems="center"
-                  justifyContent="center"
-                  height="100%"
-                  gap={1}
-                >
-                  <Share2 size={36} color="#7B8794" />
-                  <Typography variant="body2" color="text.secondary">
+                <div className="flex flex-col items-center justify-center h-full gap-3 text-text-secondary">
+                  <Share2 className="w-10 h-10 text-text-muted" />
+                  <span className="text-sm font-[500]">
                     No graph relationships recorded for this investigation case.
-                  </Typography>
-                </Box>
+                  </span>
+                </div>
               ) : (
                 <svg
                   width="100%"
                   height="100%"
                   viewBox="0 0 800 480"
-                  style={{ display: "block" }}
+                  className="block"
                 >
                   <defs>
                     <marker
@@ -295,7 +246,7 @@ export const ThreatGraphWidget: React.FC<ThreatGraphWidgetProps> = ({
                       markerHeight="6"
                       orient="auto-start-reverse"
                     >
-                      <path d="M 0 1 L 10 5 L 0 9 z" fill="#7B8794" />
+                      <path d="M 0 1 L 10 5 L 0 9 z" fill="#94a3b8" />
                     </marker>
                     <marker
                       id="arrow-active"
@@ -330,7 +281,7 @@ export const ThreatGraphWidget: React.FC<ThreatGraphWidgetProps> = ({
                           y1={src.y}
                           x2={tgt.x}
                           y2={tgt.y}
-                          stroke={isConnected ? "#1F4E79" : "#D9E0E7"}
+                          stroke={isConnected ? "#1F4E79" : "#e2e8f0"}
                           strokeWidth={isConnected ? 2.5 : 1.5}
                           strokeDasharray={rel.type === "RESOLVES_TO" ? "4 4" : undefined}
                           markerEnd={isConnected ? "url(#arrow-active)" : "url(#arrow)"}
@@ -342,8 +293,8 @@ export const ThreatGraphWidget: React.FC<ThreatGraphWidgetProps> = ({
                           width={76}
                           height={18}
                           rx={9}
-                          fill="#F5F7FA"
-                          stroke={isConnected ? "#1F4E79" : "#F8FAFC"}
+                          fill="#f8fafc"
+                          stroke={isConnected ? "#1F4E79" : "#f1f5f9"}
                           strokeWidth={1}
                         />
                         <text
@@ -351,7 +302,7 @@ export const ThreatGraphWidget: React.FC<ThreatGraphWidgetProps> = ({
                           y={midY + 3.5}
                           textAnchor="middle"
                           fontSize="9"
-                          fill={isConnected ? "#17212B" : "#52606D"}
+                          fill={isConnected ? "#0f172a" : "#64748b"}
                           fontFamily="monospace"
                           fontWeight={600}
                         >
@@ -374,7 +325,7 @@ export const ThreatGraphWidget: React.FC<ThreatGraphWidgetProps> = ({
                         key={node.id}
                         transform={`translate(${pos.x}, ${pos.y})`}
                         onClick={() => setSelectedNodeId(node.id === selectedNodeId ? null : node.id)}
-                        style={{ cursor: "pointer" }}
+                        className="cursor-pointer"
                       >
                         {/* Glow / Selection Ring */}
                         {isSelected && (
@@ -400,7 +351,7 @@ export const ThreatGraphWidget: React.FC<ThreatGraphWidgetProps> = ({
                           y={34}
                           textAnchor="middle"
                           fontSize="10"
-                          fill={isSelected ? "#ffffff" : colors.text}
+                          fill={isSelected ? "#000" : colors.text}
                           fontWeight={isSelected ? 700 : 500}
                           fontFamily="sans-serif"
                         >
@@ -412,7 +363,7 @@ export const ThreatGraphWidget: React.FC<ThreatGraphWidgetProps> = ({
                           y={46}
                           textAnchor="middle"
                           fontSize="8"
-                          fill="#7B8794"
+                          fill="#64748b"
                           fontFamily="monospace"
                         >
                           {node.type}
@@ -422,101 +373,84 @@ export const ThreatGraphWidget: React.FC<ThreatGraphWidgetProps> = ({
                   })}
                 </svg>
               )}
-            </Box>
-          </Grid>
+            </div>
+          </div>
 
           {/* Node Details Panel */}
           {selectedNode && (
-            <Grid item xs={12} lg={4}>
-              <Card
-                sx={{
-                  bgcolor: "rgba(15, 23, 42, 0.6)",
-                  border: "1px solid",
-                  borderColor: "divider",
-                  borderRadius: 2,
-                  height: "100%",
-                }}
-              >
-                <CardContent sx={{ p: 2.5 }}>
-                  <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2}>
-                    <Typography variant="subtitle2" fontWeight={700} color="text.primary">
-                      Node Telemetry
-                    </Typography>
-                    <Chip
-                      size="small"
-                      label={selectedNode.type}
-                      sx={{
-                        bgcolor: NODE_COLORS[selectedNode.type]?.bg,
-                        color: NODE_COLORS[selectedNode.type]?.text,
-                        borderColor: NODE_COLORS[selectedNode.type]?.border,
-                        border: "1px solid",
-                        fontWeight: 700,
-                        fontSize: "0.7rem",
-                      }}
-                    />
-                  </Stack>
+            <div className="col-span-1 lg:col-span-4">
+              <div className="h-full bg-slate-900 border border-slate-800 rounded-[8px] p-5">
+                <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-800">
+                  <h4 className="text-[13px] font-[700] text-slate-100 uppercase tracking-wider">
+                    Node Telemetry
+                  </h4>
+                  <div
+                    className="px-2 py-0.5 rounded-[4px] text-[10px] font-[700] border"
+                    style={{
+                      backgroundColor: NODE_COLORS[selectedNode.type]?.bg,
+                      color: NODE_COLORS[selectedNode.type]?.text,
+                      borderColor: NODE_COLORS[selectedNode.type]?.border,
+                    }}
+                  >
+                    {selectedNode.type}
+                  </div>
+                </div>
 
-                  <Stack spacing={1.5}>
-                    <Box>
-                      <Typography variant="caption" color="text.secondary">Identifier</Typography>
-                      <Typography variant="body2" sx={{ fontFamily: "monospace", color: "cyan.300", wordBreak: "break-all" }}>
-                        {selectedNode.id}
-                      </Typography>
-                    </Box>
+                <div className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[11px] text-slate-400 uppercase font-[600]">Identifier</span>
+                    <span className="text-[12px] font-mono text-cyan-300 break-all bg-slate-950 p-1.5 rounded border border-slate-800">
+                      {selectedNode.id}
+                    </span>
+                  </div>
 
-                    <Box>
-                      <Typography variant="caption" color="text.secondary">Label / Value</Typography>
-                      <Typography variant="body2" fontWeight={600} color="text.primary" sx={{ wordBreak: "break-all" }}>
-                        {selectedNode.label}
-                      </Typography>
-                    </Box>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[11px] text-slate-400 uppercase font-[600]">Label / Value</span>
+                    <span className="text-[13px] font-[600] text-slate-200 break-all">
+                      {selectedNode.label}
+                    </span>
+                  </div>
 
-                    {selectedNode.properties && Object.keys(selectedNode.properties).length > 0 && (
-                      <Box>
-                        <Typography variant="caption" color="text.secondary">Properties</Typography>
-                        <Box sx={{ p: 1, bgcolor: "rgba(0,0,0,0.3)", borderRadius: 1, mt: 0.5 }}>
-                          {Object.entries(selectedNode.properties).map(([k, v]) => (
-                            <Typography key={k} variant="caption" display="block" sx={{ fontFamily: "monospace", color: "text.secondary" }}>
-                              {k}: {String(v)}
-                            </Typography>
-                          ))}
-                        </Box>
-                      </Box>
-                    )}
+                  {selectedNode.properties && Object.keys(selectedNode.properties).length > 0 && (
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[11px] text-slate-400 uppercase font-[600]">Properties</span>
+                      <div className="bg-slate-950 p-2 rounded-[6px] border border-slate-800 flex flex-col gap-1">
+                        {Object.entries(selectedNode.properties).map(([k, v]) => (
+                          <div key={k} className="flex gap-2">
+                            <span className="text-[11px] text-slate-500 font-mono shrink-0">{k}:</span>
+                            <span className="text-[11px] text-slate-300 font-mono break-all">{String(v)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
-                    <Divider sx={{ my: 1 }} />
-
-                    <Typography variant="caption" fontWeight={700} color="text.secondary">
+                  <div className="mt-2 pt-4 border-t border-slate-800 flex flex-col gap-2">
+                    <span className="text-[12px] font-[700] text-slate-300">
                       Connected Relationships ({connectedRelationships.length})
-                    </Typography>
+                    </span>
 
-                    <Stack spacing={1}>
+                    <div className="flex flex-col gap-2 max-h-[160px] overflow-y-auto pr-1 custom-scrollbar">
                       {connectedRelationships.map((r) => (
-                        <Box
+                        <div
                           key={r.id}
-                          sx={{
-                            p: 1,
-                            bgcolor: "rgba(255,255,255,0.03)",
-                            border: "1px solid",
-                            borderColor: "divider",
-                            borderRadius: 1,
-                          }}
+                          className="p-2 bg-slate-800/50 border border-slate-700 rounded-[6px]"
                         >
-                          <Typography variant="caption" fontWeight={700} color="secondary.light" display="block">
+                          <span className="text-[11px] font-[700] text-indigo-300 block mb-1">
                             {r.type}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary" sx={{ fontFamily: "monospace" }}>
+                          </span>
+                          <span className="text-[11px] text-slate-400 font-mono break-all">
                             {r.source === selectedNode.id ? `→ ${r.target}` : `← ${r.source}`}
-                          </Typography>
-                        </Box>
+                          </span>
+                        </div>
                       ))}
-                    </Stack>
-                  </Stack>
-                </CardContent>
-              </Card>
-            </Grid>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
-        </Grid>
+        </div>
       </CardContent>
     </Card>
   );

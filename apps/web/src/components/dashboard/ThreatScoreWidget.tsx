@@ -2,15 +2,6 @@
 
 import React from "react";
 import {
-  Box,
-  Card,
-  CardContent,
-  Chip,
-  LinearProgress,
-  Stack,
-  Typography,
-} from "@mui/material";
-import {
   ShieldAlert,
   ShieldCheck,
   AlertTriangle,
@@ -19,6 +10,7 @@ import {
   Info,
 } from "lucide-react";
 import { HeaderForensicsResponse, RiskAssessmentResponse, ThreatAssessmentResponse } from "@/types";
+import { Card, CardContent, Badge, LoadingState } from "@/components/ui";
 
 interface ThreatScoreWidgetProps {
   risk: RiskAssessmentResponse | undefined;
@@ -37,11 +29,8 @@ export const ThreatScoreWidget: React.FC<ThreatScoreWidgetProps> = ({
 }) => {
   if (isLoading) {
     return (
-      <Card sx={{ bgcolor: "background.paper", border: "1px solid", borderColor: "divider", p: 3 }}>
-        <Typography variant="body2" color="text.secondary">
-          Analyzing investigation...
-        </Typography>
-        <LinearProgress sx={{ mt: 2 }} />
+      <Card className="p-6">
+        <LoadingState message="Analyzing investigation..." />
       </Card>
     );
   }
@@ -55,18 +44,19 @@ export const ThreatScoreWidget: React.FC<ThreatScoreWidgetProps> = ({
   const getSeverityConfig = (sev: string) => {
     switch (sev.toLowerCase()) {
       case "critical":
-        return { color: "error", icon: Flame, label: "CRITICAL", bgcolor: "#FDECEC", text: "#C53030", border: "#C53030" };
+        return { variant: "critical" as const, icon: Flame, label: "CRITICAL", bgClass: "bg-danger-bg", textClass: "text-critical", borderClass: "border-danger", barClass: "bg-critical" };
       case "high":
-        return { color: "error", icon: ShieldAlert, label: "HIGH", bgcolor: "rgba(249, 115, 22, 0.15)", text: "#B7791F", border: "#B7791F" };
+        return { variant: "danger" as const, icon: ShieldAlert, label: "HIGH", bgClass: "bg-danger-bg", textClass: "text-danger-dark", borderClass: "border-danger", barClass: "bg-danger" };
       case "medium":
-        return { color: "warning", icon: AlertTriangle, label: "MEDIUM", bgcolor: "#FFF7E6", text: "#B7791F", border: "#B7791F" };
+        return { variant: "warning" as const, icon: AlertTriangle, label: "MEDIUM", bgClass: "bg-warning-bg", textClass: "text-warning-dark", borderClass: "border-warning", barClass: "bg-warning" };
       default:
-        return { color: "success", icon: ShieldCheck, label: "LOW", bgcolor: "#E8F5EF", text: "#237A57", border: "#237A57" };
+        return { variant: "success" as const, icon: ShieldCheck, label: "LOW", bgClass: "bg-success-bg", textClass: "text-success-dark", borderClass: "border-success", barClass: "bg-success" };
     }
   };
 
   const sevConfig = getSeverityConfig(severity);
   const SevIcon = sevConfig.icon;
+  const classVariant = classification === "normal" ? "success" : "danger";
 
   // Synthesize concise executive explanation verdict
   const getExecutiveVerdict = () => {
@@ -127,174 +117,81 @@ export const ThreatScoreWidget: React.FC<ThreatScoreWidgetProps> = ({
   };
 
   const topReasons = getTopReasons();
+  const clampedScore = Math.min(100, Math.max(0, totalScore));
 
   return (
-    <Card
-      sx={{
-        bgcolor: "background.paper",
-        border: "1px solid #D9E0E7",
-        borderRadius: 2,
-        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.4)",
-        overflow: "hidden",
-      }}
-    >
+    <Card className="shadow-md overflow-hidden">
       {/* SECTION A: VERDICT */}
-      <Box
-        sx={{
-          p: 3,
-          borderBottom: "1px solid #F8FAFC",
-          bgcolor: "#F5F7FA",
-        }}
-      >
-        <Stack
-          direction={{ xs: "column", md: "row" }}
-          justifyContent="space-between"
-          alignItems={{ xs: "flex-start", md: "center" }}
-          spacing={2}
-          mb={2}
-        >
-          <Stack direction="row" alignItems="center" spacing={1.5}>
-            <Box
-              sx={{
-                p: 1.25,
-                borderRadius: 1.5,
-                bgcolor: sevConfig.bgcolor,
-                color: sevConfig.text,
-                display: "flex",
-                alignItems: "center",
-                border: `1px solid ${sevConfig.border}`,
-              }}
-            >
-              <SevIcon size={24} />
-            </Box>
-            <Box>
-              <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
-                <Typography variant="h5" fontWeight={800} color="text.primary" sx={{ letterSpacing: "-0.02em" }}>
+      <div className="p-6 border-b border-bg-page bg-bg-panel-subtle">
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-5">
+          <div className="flex items-center gap-4">
+            <div className={`p-2.5 rounded-lg border ${sevConfig.bgClass} ${sevConfig.borderClass} ${sevConfig.textClass} flex items-center`}>
+              <SevIcon className="w-8 h-8" />
+            </div>
+            <div className="flex flex-col">
+              <div className="flex flex-wrap items-center gap-2 mb-1">
+                <h2 className="text-[22px] font-[800] text-text-primary tracking-tight">
                   Threat Risk Score: {totalScore} / 100
-                </Typography>
-                <Chip
-                  label={sevConfig.label}
-                  size="small"
-                  sx={{
-                    bgcolor: sevConfig.bgcolor,
-                    color: sevConfig.text,
-                    fontWeight: 700,
-                    fontSize: "0.75rem",
-                    border: `1px solid ${sevConfig.border}`,
-                  }}
-                />
-                <Chip
-                  label={`Class: ${classification.toUpperCase()}`}
-                  size="small"
-                  sx={{
-                    bgcolor: classification === "normal" ? "#E8F5EF" : "rgba(239, 68, 68, 0.1)",
-                    color: classification === "normal" ? "#237A57" : "#C53030",
-                    fontWeight: 700,
-                    fontSize: "0.75rem",
-                    border: `1px solid ${classification === "normal" ? "#18533B" : "#dc2626"}`,
-                  }}
-                />
-              </Stack>
-              <Typography variant="caption" sx={{ color: "text.secondary", fontFamily: "monospace", mt: 0.5, display: "block" }}>
+                </h2>
+                <Badge variant={sevConfig.variant} className="text-[11px] px-2 py-0.5">
+                  {sevConfig.label}
+                </Badge>
+                <Badge variant={classVariant} className="text-[11px] px-2 py-0.5 uppercase">
+                  Class: {classification.toUpperCase()}
+                </Badge>
+              </div>
+              <span className="text-xs text-text-secondary font-mono">
                 Case ID: {caseId || risk?.case_id || "N/A"} • Confidence: {confidencePercent}%
-              </Typography>
-            </Box>
-          </Stack>
-        </Stack>
+              </span>
+            </div>
+          </div>
+        </div>
 
         {/* Progress Bar */}
-        <Box mb={2}>
-          <LinearProgress
-            variant="determinate"
-            value={Math.min(100, Math.max(0, totalScore))}
-            sx={{
-              height: 8,
-              borderRadius: 4,
-              bgcolor: "#F8FAFC",
-              "& .MuiLinearProgress-bar": {
-                bgcolor: sevConfig.text,
-                borderRadius: 4,
-              },
-            }}
+        <div className="w-full h-2.5 bg-border/40 rounded-full mb-5 overflow-hidden">
+          <div 
+            className={`h-full rounded-full transition-all duration-500 ease-out ${sevConfig.barClass}`} 
+            style={{ width: `${clampedScore}%` }}
           />
-        </Box>
+        </div>
 
         {/* Short Executive Verdict Explanation */}
-        <Box
-          sx={{
-            p: 1.75,
-            borderRadius: 1.5,
-            bgcolor: "#FFFFFF",
-            border: "1px solid #D9E0E7",
-          }}
-        >
-          <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 500, lineHeight: 1.5 }}>
+        <div className="p-3.5 bg-white border border-border rounded-lg">
+          <p className="text-sm font-[500] text-text-primary leading-snug">
             {getExecutiveVerdict()}
-          </Typography>
-        </Box>
-      </Box>
+          </p>
+        </div>
+      </div>
 
       {/* SECTION B: WHY? (Top 5 Strongest Reasons) */}
-      <CardContent sx={{ p: 3 }}>
-        <Stack direction="row" alignItems="center" spacing={1} mb={2}>
-          <Typography
-            variant="subtitle1"
-            sx={{
-              fontWeight: 800,
-              color: "text.primary",
-              textTransform: "uppercase",
-              letterSpacing: "0.05em",
-              fontSize: "0.85rem",
-            }}
-          >
-            Why Was It Classified This Way? (Top Reasons)
-          </Typography>
-        </Stack>
+      <CardContent className="p-6">
+        <h3 className="text-[13px] font-[800] text-text-primary uppercase tracking-wider mb-4">
+          Why Was It Classified This Way? (Top Reasons)
+        </h3>
 
-        <Stack spacing={1.25}>
+        <div className="flex flex-col gap-2.5">
           {topReasons.map((reason, idx) => (
-            <Box
+            <div
               key={idx}
-              sx={{
-                display: "flex",
-                alignItems: "flex-start",
-                gap: 1.5,
-                p: 1.25,
-                borderRadius: 1,
-                bgcolor: "rgba(30, 41, 59, 0.4)",
-                border: "1px solid rgba(51, 65, 85, 0.5)",
-              }}
+              className="flex items-start gap-3 p-2.5 rounded-md bg-bg-page border border-border/70"
             >
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: 20,
-                  height: 20,
-                  borderRadius: "50%",
-                  bgcolor: classification === "normal" ? "#E8F5EF" : "rgba(249, 115, 22, 0.15)",
-                  color: classification === "normal" ? "#237A57" : "#fb923c",
-                  flexShrink: 0,
-                  mt: "1px",
-                }}
-              >
-                <Check size={13} strokeWidth={3} />
-              </Box>
-              <Typography variant="body2" sx={{ color: "#17212B", fontWeight: 500, fontSize: "0.85rem" }}>
+              <div className={`flex items-center justify-center w-5 h-5 rounded-full shrink-0 mt-px ${classification === "normal" ? "bg-success-bg text-success" : "bg-danger-bg text-danger-dark"}`}>
+                <Check className="w-3.5 h-3.5" strokeWidth={3} />
+              </div>
+              <span className="text-[13px] font-[500] text-text-primary leading-relaxed">
                 {reason}
-              </Typography>
-            </Box>
+              </span>
+            </div>
           ))}
-        </Stack>
+        </div>
 
         {threat?.model_version && (
-          <Box mt={2} display="flex" alignItems="center" gap={0.75}>
-            <Info size={13} color="#7B8794" />
-            <Typography variant="caption" sx={{ color: "#7B8794", fontStyle: "italic" }}>
+          <div className="flex items-center gap-1.5 mt-5">
+            <Info className="w-3.5 h-3.5 text-text-muted" />
+            <span className="text-[11px] text-text-muted italic">
               Assessment Model: {threat.model_version}
-            </Typography>
-          </Box>
+            </span>
+          </div>
         )}
       </CardContent>
     </Card>
