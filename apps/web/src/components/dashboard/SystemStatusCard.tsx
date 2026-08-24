@@ -33,7 +33,7 @@ export const SystemStatusCard: React.FC = () => {
     <div className="card">
       <div className="card-header">
         <div className="flex items-center gap-2">
-          <Activity className="w-5 h-5 text-cyan-400" />
+          <Activity className="w-5 h-5 text-[#1F4E79]" />
           <h2 className="card-title">System Infrastructure Status</h2>
         </div>
         <button
@@ -44,7 +44,7 @@ export const SystemStatusCard: React.FC = () => {
           aria-label="Refresh telemetry status"
         >
           <RefreshCw
-            className={`w-4 h-4 ${isRefreshing ? "animate-spin text-cyan-400" : ""}`}
+            className={`w-4 h-4 ${isRefreshing ? "animate-spin text-[#1F4E79]" : ""}`}
           />
         </button>
       </div>
@@ -53,7 +53,7 @@ export const SystemStatusCard: React.FC = () => {
         {/* API Gateway Status */}
         <div className="status-item">
           <div className="status-item-header">
-            <Server className="w-4 h-4 text-cyan-400" />
+            <Server className="w-4 h-4 text-[#1F4E79]" />
             <span className="status-item-label">FastAPI Gateway</span>
           </div>
           <div className="status-item-value">
@@ -73,7 +73,7 @@ export const SystemStatusCard: React.FC = () => {
         {/* PostgreSQL Database Status */}
         <div className="status-item">
           <div className="status-item-header">
-            <Database className="w-4 h-4 text-cyan-400" />
+            <Database className="w-4 h-4 text-[#1F4E79]" />
             <span className="status-item-label">PostgreSQL Database</span>
           </div>
           <div className="status-item-value">

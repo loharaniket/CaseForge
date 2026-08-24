@@ -46,7 +46,7 @@ export const RelayHopsTimelineWidget: React.FC<RelayHopsTimelineWidgetProps> = (
       <CardContent sx={{ p: 3 }}>
         <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ xs: "flex-start", sm: "center" }} spacing={1} mb={2}>
           <Stack direction="row" alignItems="center" spacing={1.5}>
-            <Network className="w-5 h-5 text-cyan-400" />
+            <Network className="w-5 h-5 text-[#1F4E79]" />
             <Typography variant="h6" fontWeight={700} color="text.primary">
               MTA Relay Pathway Timeline
             </Typography>
@@ -56,7 +56,7 @@ export const RelayHopsTimelineWidget: React.FC<RelayHopsTimelineWidgetProps> = (
             <Chip
               label={`${hops.length} Relay Hops`}
               size="small"
-              sx={{ bgcolor: "rgba(6, 182, 212, 0.15)", color: "#06b6d4", fontWeight: 600 }}
+              sx={{ bgcolor: "#EAF2F8", color: "#1F4E79", fontWeight: 600 }}
             />
             {probableOrigin && (
               <Chip
@@ -107,14 +107,14 @@ export const RelayHopsTimelineWidget: React.FC<RelayHopsTimelineWidgetProps> = (
                           icon={<Lock size={12} />}
                           label="Private Subnet (RFC1918)"
                           size="small"
-                          sx={{ bgcolor: "rgba(156, 163, 175, 0.15)", color: "#9ca3af", fontSize: "0.7rem" }}
+                          sx={{ bgcolor: "#F5F7FA", color: "#52606D", fontSize: "0.7rem" }}
                         />
                       ) : (
                         <Chip
                           icon={<Globe size={12} />}
                           label="Public Gateway"
                           size="small"
-                          sx={{ bgcolor: "rgba(16, 185, 129, 0.15)", color: "#10b981", fontSize: "0.7rem" }}
+                          sx={{ bgcolor: "#E8F5EF", color: "#237A57", fontSize: "0.7rem" }}
                         />
                       )}
                     </Stack>
@@ -140,7 +140,7 @@ export const RelayHopsTimelineWidget: React.FC<RelayHopsTimelineWidgetProps> = (
 
                 {idx < hops.length - 1 && (
                   <Box display="flex" justifyContent="center" my={0.5}>
-                    <ArrowDown size={14} color="#6b7280" />
+                    <ArrowDown size={14} color="#7B8794" />
                   </Box>
                 )}
               </Box>

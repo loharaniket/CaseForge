@@ -4,43 +4,28 @@ import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Box,
-  Button,
   Card,
   CardContent,
   Chip,
-  Divider,
   Grid,
-  IconButton,
-  LinearProgress,
   Stack,
   Tab,
   Tabs,
   Typography,
   Alert,
-  Tooltip,
 } from "@mui/material";
 import {
-  FileSearch,
   Shield,
-  Radio,
-  Fingerprint,
   RefreshCw,
-  AlertTriangle,
   Mail,
-  User,
-  Calendar,
-  Key,
-  Globe,
   Paperclip,
-  Copy,
-  Check,
-  Clock,
   FileDown,
   FileCheck2,
   Share2,
 } from "lucide-react";
 import {
   downloadInvestigationReport,
+  getCaseEvidence,
   getCaseGeoInfrastructure,
   getCaseIOCs,
   getCaseRisk,
@@ -50,16 +35,11 @@ import {
   getHeaderForensics,
   getParsedEmail,
   getThreatAnalysis,
+  verifyCaseEvidence,
 } from "@/lib/api/email";
-import { ThreatScoreWidget } from "./ThreatScoreWidget";
-import { AuthenticationForensicsWidget } from "./AuthenticationForensicsWidget";
-import { RelayHopsTimelineWidget } from "./RelayHopsTimelineWidget";
-import { ThreatIntelGeoWidget } from "./ThreatIntelGeoWidget";
-import { IOCTableWidget } from "./IOCTableWidget";
-import { ForensicTimelineWidget } from "./ForensicTimelineWidget";
-import { EvidenceIntegrityWidget } from "./EvidenceIntegrityWidget";
-import { ThreatGraphWidget } from "./ThreatGraphWidget";
 import {
+  CaseEvidenceListResponse,
+  CaseEvidenceVerificationResponse,
   CaseGeoInfrastructureResponse,
   CaseIOCListResponse,
   CaseThreatGraphResponse,
@@ -70,6 +50,14 @@ import {
   RiskAssessmentResponse,
   ThreatAssessmentResponse,
 } from "@/types";
+import { ThreatScoreWidget } from "./ThreatScoreWidget";
+import { AuthenticationForensicsWidget } from "./AuthenticationForensicsWidget";
+import { RelayHopsTimelineWidget } from "./RelayHopsTimelineWidget";
+import { ThreatIntelGeoWidget } from "./ThreatIntelGeoWidget";
+import { IOCTableWidget } from "./IOCTableWidget";
+import { ForensicTimelineWidget } from "./ForensicTimelineWidget";
+import { EvidenceIntegrityWidget } from "./EvidenceIntegrityWidget";
+import { ThreatGraphWidget } from "./ThreatGraphWidget";
 
 interface InvestigationDashboardProps {
   caseId: string;
@@ -78,21 +66,11 @@ interface InvestigationDashboardProps {
 export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ caseId }) => {
   const [activeTab, setActiveTab] = useState<number>(0);
   const [bodyFormat, setBodyFormat] = useState<"plain" | "html">("plain");
-  const [copiedText, setCopiedText] = useState<string | null>(null);
-  const [isDownloadingReport, setIsDownloadingReport] = useState<boolean>(false);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+  const [isVerifyingEvidence, setIsVerifyingEvidence] = useState(false);
+  const [verifyNotice, setVerifyNotice] = useState<string | null>(null);
 
-  const handleDownloadReport = async () => {
-    try {
-      setIsDownloadingReport(true);
-      await downloadInvestigationReport(caseId);
-    } catch (err) {
-      console.error("Failed to download investigation PDF report:", err);
-    } finally {
-      setIsDownloadingReport(false);
-    }
-  };
-
-  // Orchestrate parallel data fetching for the case
+  // 1. Parsed Email Query
   const {
     data: parsed,
     isLoading: isParsedLoading,
@@ -103,8 +81,10 @@ export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ 
     queryKey: ["parsed_email", caseId],
     queryFn: () => getParsedEmail(caseId),
     enabled: !!caseId,
+    staleTime: 60000,
   });
 
+  // 2. Risk Assessment Query
   const {
     data: risk,
     isLoading: isRiskLoading,
@@ -113,38 +93,46 @@ export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ 
     queryKey: ["case_risk", caseId],
     queryFn: () => getCaseRisk(caseId),
     enabled: !!caseId,
+    staleTime: 60000,
   });
 
+  // 3. AI Threat Assessment Query
   const {
     data: threat,
     isLoading: isThreatLoading,
     refetch: refetchThreat,
   } = useQuery<ThreatAssessmentResponse, Error>({
-    queryKey: ["case_threat", caseId],
+    queryKey: ["threat_analysis", caseId],
     queryFn: () => getThreatAnalysis(caseId),
     enabled: !!caseId,
+    staleTime: 60000,
   });
 
+  // 4. Header Forensics Query
   const {
     data: forensics,
     isLoading: isForensicsLoading,
     refetch: refetchForensics,
   } = useQuery<HeaderForensicsResponse, Error>({
-    queryKey: ["case_forensics", caseId],
+    queryKey: ["header_forensics", caseId],
     queryFn: () => getHeaderForensics(caseId),
-    enabled: !!caseId,
+    enabled: !!caseId && (activeTab === 0 || activeTab === 1),
+    staleTime: 60000,
   });
 
+  // 5. Extracted IOCs Query
   const {
-    data: iocData,
-    isLoading: isIocLoading,
+    data: iocs,
+    isLoading: isIocsLoading,
     refetch: refetchIocs,
   } = useQuery<CaseIOCListResponse, Error>({
     queryKey: ["case_iocs", caseId],
     queryFn: () => getCaseIOCs(caseId),
-    enabled: !!caseId,
+    enabled: !!caseId && (activeTab === 0 || activeTab === 3),
+    staleTime: 60000,
   });
 
+  // 6. Threat Intel Query
   const {
     data: intel,
     isLoading: isIntelLoading,
@@ -152,19 +140,23 @@ export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ 
   } = useQuery<CaseThreatIntelResponse, Error>({
     queryKey: ["case_threat_intel", caseId],
     queryFn: () => getCaseThreatIntel(caseId),
-    enabled: !!caseId,
+    enabled: !!caseId && (activeTab === 0 || activeTab === 2),
+    staleTime: 60000,
   });
 
+  // 7. Geo Infrastructure Query
   const {
     data: geo,
     isLoading: isGeoLoading,
     refetch: refetchGeo,
   } = useQuery<CaseGeoInfrastructureResponse, Error>({
-    queryKey: ["case_geo", caseId],
+    queryKey: ["case_geo_infrastructure", caseId],
     queryFn: () => getCaseGeoInfrastructure(caseId),
-    enabled: !!caseId,
+    enabled: !!caseId && (activeTab === 0 || activeTab === 2),
+    staleTime: 60000,
   });
 
+  // 8. Forensic Timeline Query
   const {
     data: timeline,
     isLoading: isTimelineLoading,
@@ -172,20 +164,35 @@ export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ 
   } = useQuery<ForensicTimelineResponse, Error>({
     queryKey: ["case_timeline", caseId],
     queryFn: () => getCaseTimeline(caseId),
-    enabled: !!caseId,
+    enabled: !!caseId && (activeTab === 0 || activeTab === 4),
+    staleTime: 60000,
   });
 
+  // 9. Evidence Records Query
   const {
-    data: graphData,
+    data: evidence,
+    isLoading: isEvidenceLoading,
+    refetch: refetchEvidence,
+  } = useQuery<CaseEvidenceListResponse, Error>({
+    queryKey: ["case_evidence", caseId],
+    queryFn: () => getCaseEvidence(caseId),
+    enabled: !!caseId && (activeTab === 0 || activeTab === 5),
+    staleTime: 60000,
+  });
+
+  // 10. Threat Relationship Graph Query
+  const {
+    data: graph,
     isLoading: isGraphLoading,
     refetch: refetchGraph,
   } = useQuery<CaseThreatGraphResponse, Error>({
-    queryKey: ["case_graph", caseId],
+    queryKey: ["case_threat_graph", caseId],
     queryFn: () => getCaseThreatGraph(caseId),
-    enabled: !!caseId,
+    enabled: !!caseId && (activeTab === 0 || activeTab === 6),
+    staleTime: 60000,
   });
 
-  const handleRefetchAll = () => {
+  const handleRefreshAll = () => {
     refetchParsed();
     refetchRisk();
     refetchThreat();
@@ -194,431 +201,489 @@ export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ 
     refetchIntel();
     refetchGeo();
     refetchTimeline();
+    refetchEvidence();
     refetchGraph();
   };
 
-  const handleCopy = (text: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedText(text);
-    setTimeout(() => setCopiedText(null), 2000);
+  const handleDownloadPdf = async () => {
+    setIsDownloadingPdf(true);
+    try {
+      await downloadInvestigationReport(caseId);
+    } catch (err: unknown) {
+      console.error("PDF export failed:", err);
+    } finally {
+      setIsDownloadingPdf(false);
+    }
   };
 
-  const isAnyLoading =
-    isParsedLoading ||
-    isRiskLoading ||
-    isThreatLoading ||
-    isForensicsLoading ||
-    isIocLoading ||
-    isIntelLoading ||
-    isGeoLoading ||
-    isTimelineLoading ||
-    isGraphLoading;
+  const handleVerifyEvidence = async () => {
+    setIsVerifyingEvidence(true);
+    setVerifyNotice(null);
+    try {
+      const res: CaseEvidenceVerificationResponse = await verifyCaseEvidence(caseId);
+      if (res.all_valid) {
+        setVerifyNotice("✓ Evidence integrity verified: All SHA-256 hashes match tamper-evident baselines.");
+      } else {
+        setVerifyNotice("⚠ Evidence integrity warning: One or more evidence records failed hash verification.");
+      }
+      refetchEvidence();
+    } catch {
+      setVerifyNotice("Failed to verify evidence integrity records.");
+    } finally {
+      setIsVerifyingEvidence(false);
+    }
+  };
 
-  if (isParsedLoading && !parsed) {
+  const isInitialLoading = isParsedLoading && !parsed;
+
+  if (isInitialLoading) {
     return (
-      <Card sx={{ bgcolor: "background.paper", border: "1px solid", borderColor: "divider", p: 4 }}>
-        <Stack spacing={2} alignItems="center" textAlign="center">
-          <RefreshCw className="w-8 h-8 text-cyan-400 animate-spin" />
-          <Typography variant="h6" fontWeight={600} color="text.primary">
+      <Card sx={{ bgcolor: "background.paper", border: "1px solid #D9E0E7", p: 6, textAlign: "center" }}>
+        <Stack spacing={2} alignItems="center">
+          <RefreshCw className="w-8 h-8 text-[#1F4E79] animate-spin" />
+          <Typography variant="h6" color="text.primary">
             Loading Investigation Telemetry...
           </Typography>
-          <Typography variant="caption" color="text.secondary">
-            Synchronizing risk assessment, forensic relay graphs, threat intelligence, and IOC extractions.
+          <Typography variant="body2" color="text.secondary" fontFamily="monospace">
+            Aggregating case evidence, header forensics, threat intelligence, and risk assessment
           </Typography>
-          <LinearProgress sx={{ width: "100%", maxWidth: 400, borderRadius: 2 }} />
         </Stack>
       </Card>
     );
   }
 
-  if (isParsedError && !parsed) {
+  if (isParsedError || !parsed) {
     return (
-      <Card sx={{ bgcolor: "background.paper", border: "1px solid", borderColor: "error.main", p: 3 }}>
-        <Stack spacing={2} alignItems="center" textAlign="center">
-          <AlertTriangle className="w-8 h-8 text-amber-400" />
-          <Typography variant="h6" fontWeight={600} color="text.primary">
-            Investigation Loading Notice
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {parsedError?.message || "Failed to load investigation telemetry for case ID: " + caseId}
-          </Typography>
-          <IconButton onClick={handleRefetchAll} color="primary" sx={{ border: "1px solid", borderColor: "divider" }}>
-            <RefreshCw size={18} />
-          </IconButton>
-        </Stack>
+      <Card sx={{ bgcolor: "background.paper", border: "1px solid #D9E0E7", p: 4 }}>
+        <Typography variant="h6" color="#C53030" mb={1}>
+          Investigation Loading Notice
+        </Typography>
+        <Alert severity="error" sx={{ bgcolor: "rgba(239, 68, 68, 0.1)", color: "#C53030", border: "1px solid #dc2626" }}>
+          Email parsing failed: {parsedError?.message || "Failed to load case investigation evidence."}
+        </Alert>
+        <Box mt={2} textAlign="center">
+          <button onClick={handleRefreshAll} className="action-btn">
+            <RefreshCw className="w-4 h-4" />
+            <span>Retry Investigation Analysis</span>
+          </button>
+        </Box>
       </Card>
     );
   }
 
   return (
-    <Stack spacing={3}>
-      {/* 1. Master Case Header Card */}
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      {/* Investigation Top Header Bar */}
       <Card
         sx={{
           bgcolor: "background.paper",
-          border: "1px solid",
-          borderColor: "divider",
+          border: "1px solid #D9E0E7",
           borderRadius: 2,
-          boxShadow: 2,
+          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.4)",
         }}
       >
-        <CardContent sx={{ p: 3 }}>
-          <Stack direction={{ xs: "column", md: "row" }} justifyContent="space-between" alignItems={{ xs: "flex-start", md: "center" }} spacing={2} mb={2}>
-            <Stack direction="row" alignItems="center" spacing={1.5}>
-              <FileSearch className="w-6 h-6 text-cyan-400" />
-              <Box>
-                <Typography variant="h5" fontWeight={700} color="text.primary">
+        <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+          <Stack
+            direction={{ xs: "column", md: "row" }}
+            justifyContent="space-between"
+            alignItems={{ xs: "flex-start", md: "center" }}
+            spacing={2}
+          >
+            <div>
+              <Stack direction="row" spacing={1.5} alignItems="center">
+                <Shield className="w-6 h-6 text-[#1F4E79]" />
+                <Typography variant="h5" fontWeight={800} color="text.primary" letterSpacing="-0.01em">
                   Case Investigation Console
                 </Typography>
-                <Typography variant="caption" color="text.secondary" sx={{ fontFamily: "monospace" }}>
-                  Case ID: {caseId}
-                </Typography>
-              </Box>
-            </Stack>
+                <Chip
+                  label="ACTIVE CASE"
+                  size="small"
+                  sx={{
+                    bgcolor: "#EAF2F8",
+                    color: "#1F4E79",
+                    fontWeight: 700,
+                    fontSize: "0.7rem",
+                    border: "1px solid #1F4E79",
+                  }}
+                />
+              </Stack>
+              <Typography variant="caption" sx={{ color: "text.secondary", fontFamily: "monospace", mt: 0.5, display: "block" }}>
+                Case ID: {parsed.case_id} • Ingested: {new Date(parsed.created_at).toLocaleString()}
+              </Typography>
+            </div>
 
-            <Stack direction="row" spacing={1} alignItems="center">
-              <Chip label="ACTIVE INVESTIGATION" size="small" color="primary" sx={{ fontWeight: 700, fontSize: "0.75rem" }} />
-              <Button
-                variant="outlined"
-                size="small"
-                onClick={handleDownloadReport}
-                disabled={isDownloadingReport}
-                startIcon={<FileDown size={14} className={isDownloadingReport ? "animate-bounce" : ""} />}
-                sx={{
-                  textTransform: "none",
-                  fontWeight: 600,
-                  fontSize: "0.75rem",
-                  borderColor: "rgba(6, 182, 212, 0.4)",
-                  color: "#06b6d4",
-                  "&:hover": { borderColor: "#06b6d4", bgcolor: "rgba(6, 182, 212, 0.1)" },
-                }}
+            {/* Refresh Header Control */}
+            <Stack direction="row" spacing={1.5} alignItems="center">
+              <button
+                onClick={handleRefreshAll}
+                className="refresh-button"
+                title="Refresh all investigation telemetry"
+                aria-label="Refresh telemetry"
               >
-                {isDownloadingReport ? "Exporting PDF..." : "Export PDF Report"}
-              </Button>
-              <Tooltip title="Refresh investigation telemetry">
-                <IconButton onClick={handleRefetchAll} size="small" sx={{ border: "1px solid", borderColor: "divider" }}>
-                  <RefreshCw size={16} className={isAnyLoading ? "animate-spin text-cyan-400" : ""} />
-                </IconButton>
-              </Tooltip>
+                <RefreshCw className="w-4 h-4 text-gray-600" />
+              </button>
             </Stack>
           </Stack>
 
-          <Divider sx={{ my: 1.5 }} />
+          {verifyNotice && (
+            <Box mt={2}>
+              <Alert
+                severity={verifyNotice.startsWith("✓") ? "success" : "warning"}
+                onClose={() => setVerifyNotice(null)}
+                sx={{
+                  bgcolor: verifyNotice.startsWith("✓") ? "#E8F5EF" : "#FFF7E6",
+                  color: verifyNotice.startsWith("✓") ? "#237A57" : "#B7791F",
+                  border: `1px solid ${verifyNotice.startsWith("✓") ? "#18533B" : "#975A16"}`,
+                }}
+              >
+                {verifyNotice}
+              </Alert>
+            </Box>
+          )}
 
-          {/* Quick Case Metadata Row */}
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6} md={3}>
-              <Typography variant="caption" color="text.secondary" display="flex" alignItems="center" gap={0.5}>
-                <Mail size={12} /> Subject
-              </Typography>
-              <Typography variant="body2" fontWeight={600} color="text.primary" noWrap>
-                {parsed?.subject || "(No Subject)"}
-              </Typography>
-            </Grid>
-
-            <Grid item xs={12} sm={6} md={3}>
-              <Typography variant="caption" color="text.secondary" display="flex" alignItems="center" gap={0.5}>
-                <User size={12} /> Sender (From)
-              </Typography>
-              <Typography variant="body2" fontWeight={600} color="cyan.300" noWrap sx={{ fontFamily: "monospace" }}>
-                {parsed?.from_address || parsed?.sender || "Unknown"}
-              </Typography>
-            </Grid>
-
-            <Grid item xs={12} sm={6} md={3}>
-              <Typography variant="caption" color="text.secondary" display="flex" alignItems="center" gap={0.5}>
-                <Calendar size={12} /> Date Received
-              </Typography>
-              <Typography variant="body2" color="text.primary" noWrap>
-                {parsed?.date_parsed ? new Date(parsed.date_parsed).toUTCString() : parsed?.date_raw || "Unknown"}
-              </Typography>
-            </Grid>
-
-            <Grid item xs={12} sm={6} md={3}>
-              <Typography variant="caption" color="text.secondary" display="flex" alignItems="center" gap={0.5}>
-                <Key size={12} /> Evidence SHA-256
-              </Typography>
-              <Stack direction="row" alignItems="center" spacing={0.5}>
-                <Typography variant="caption" color="text.secondary" noWrap sx={{ fontFamily: "monospace", maxWidth: 160 }}>
-                  {parsed?.id || caseId}
-                </Typography>
-                <IconButton size="small" onClick={() => handleCopy(caseId)} sx={{ p: 0.2 }}>
-                  {copiedText === caseId ? <Check size={12} color="#10b981" /> : <Copy size={12} color="#9ca3af" />}
-                </IconButton>
-              </Stack>
-            </Grid>
-          </Grid>
+          {/* Section Jump Tabs */}
+          <Box sx={{ mt: 3, borderTop: "1px solid #D9E0E7", pt: 1 }}>
+            <Tabs
+              value={activeTab}
+              onChange={(_, val) => setActiveTab(val)}
+              variant="scrollable"
+              scrollButtons="auto"
+              sx={{
+                "& .MuiTab-root": {
+                  color: "text.secondary",
+                  fontWeight: 600,
+                  fontSize: "0.8rem",
+                  textTransform: "none",
+                  minHeight: 40,
+                  py: 1,
+                  "&.Mui-selected": {
+                    color: "#1F4E79",
+                  },
+                },
+                "& .MuiTabs-indicator": {
+                  bgcolor: "#1F4E79",
+                  height: 2,
+                },
+              }}
+            >
+              <Tab label="Full Investigation (Continuous View)" />
+              <Tab label="Authentication & Relays" />
+              <Tab label="Threat Intel & Geo" />
+              <Tab label="IOC Indicators" />
+              <Tab label="Forensic Timeline" />
+              <Tab label="Evidence & Custody Integrity" />
+              <Tab label="Threat Graph" />
+            </Tabs>
+          </Box>
         </CardContent>
       </Card>
 
-      {/* 2. Top-Level Risk & Threat Widget */}
-      <ThreatScoreWidget risk={risk} threat={threat} isLoading={isRiskLoading || isThreatLoading} />
+      {/* ========================================================================= */}
+      {/* CONTINUOUS VERTICAL INVESTIGATION WORKFLOW (SECTIONS A THROUGH L)          */}
+      {/* ========================================================================= */}
 
-      {/* 3. Section Navigation Tabs */}
-      <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-        <Tabs
-          value={activeTab}
-          onChange={(_, newVal) => setActiveTab(newVal)}
-          variant="scrollable"
-          scrollButtons="auto"
-          sx={{
-            "& .MuiTab-root": { textTransform: "none", fontWeight: 600, fontSize: "0.85rem", minHeight: 44 },
-          }}
-        >
-          <Tab value={0} icon={<Shield size={16} />} iconPosition="start" label="Overview & Envelope" />
-          <Tab value={1} icon={<Radio size={16} />} iconPosition="start" label="Authentication & Relays" />
-          <Tab value={2} icon={<Globe size={16} />} iconPosition="start" label="Threat Intel & Geo" />
-          <Tab
-            value={3}
-            icon={<Fingerprint size={16} />}
-            iconPosition="start"
-            label={`IOC Indicators (${iocData?.total_count || 0})`}
+      {/* SECTION A: VERDICT & SECTION B: WHY? */}
+      {(activeTab === 0 || activeTab === 1) && (
+        <section id="section-verdict-why">
+          <ThreatScoreWidget
+            risk={risk}
+            threat={threat}
+            forensics={forensics}
+            caseId={parsed.case_id}
+            isLoading={isRiskLoading || isThreatLoading}
           />
-          <Tab
-            value={4}
-            icon={<Clock size={16} />}
-            iconPosition="start"
-            label={`Forensic Timeline (${timeline?.total_events || 0})`}
-          />
-          <Tab value={5} icon={<FileCheck2 size={16} />} iconPosition="start" label="Evidence & Custody Integrity" />
-          <Tab
-            value={6}
-            icon={<Share2 size={16} />}
-            iconPosition="start"
-            label={`Threat Graph (${graphData?.total_nodes || 0})`}
-          />
-        </Tabs>
-      </Box>
-
-      {/* Tab 0: Overview & Envelope */}
-      {activeTab === 0 && (
-        <Stack spacing={3}>
-          <Grid container spacing={3}>
-            {/* Sender & Recipient Details */}
-            <Grid item xs={12} md={6}>
-              <Card sx={{ bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 2, height: "100%" }}>
-                <CardContent sx={{ p: 3 }}>
-                  <Typography variant="subtitle1" fontWeight={700} color="text.primary" mb={2}>
-                    Envelope & Address Entities
-                  </Typography>
-                  <Stack spacing={1.5}>
-                    <Box>
-                      <Typography variant="caption" color="text.secondary">From Display Name</Typography>
-                      <Typography variant="body2" fontWeight={600} color="text.primary">{parsed?.from_name || "(None)"}</Typography>
-                    </Box>
-                    <Box>
-                      <Typography variant="caption" color="text.secondary">From Address</Typography>
-                      <Typography variant="body2" color="cyan.300" sx={{ fontFamily: "monospace" }}>{parsed?.from_address || parsed?.sender || "None"}</Typography>
-                    </Box>
-                    <Box>
-                      <Typography variant="caption" color="text.secondary">To Recipients ({parsed?.recipients?.length || 0})</Typography>
-                      <Typography variant="body2" color="text.primary" sx={{ fontFamily: "monospace" }}>
-                        {parsed?.recipients && parsed.recipients.length > 0 ? parsed.recipients.join(", ") : "None specified"}
-                      </Typography>
-                    </Box>
-                    {parsed?.cc && parsed.cc.length > 0 && (
-                      <Box>
-                        <Typography variant="caption" color="text.secondary">CC Recipients</Typography>
-                        <Typography variant="body2" color="text.primary" sx={{ fontFamily: "monospace" }}>{parsed.cc.join(", ")}</Typography>
-                      </Box>
-                    )}
-                    {parsed?.reply_to && parsed.reply_to.length > 0 && (
-                      <Box>
-                        <Typography variant="caption" color="text.secondary">Reply-To Address</Typography>
-                        <Typography variant="body2" color="amber.300" sx={{ fontFamily: "monospace" }}>{parsed.reply_to.join(", ")}</Typography>
-                      </Box>
-                    )}
-                  </Stack>
-                </CardContent>
-              </Card>
-            </Grid>
-
-            {/* Quick Forensics & Geo Summary */}
-            <Grid item xs={12} md={6}>
-              <Card sx={{ bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 2, height: "100%" }}>
-                <CardContent sx={{ p: 3 }}>
-                  <Typography variant="subtitle1" fontWeight={700} color="text.primary" mb={2}>
-                    Forensic Highlights
-                  </Typography>
-                  <Stack spacing={1.5}>
-                    <Box>
-                      <Typography variant="caption" color="text.secondary">Probable Infrastructure Origin</Typography>
-                      <Typography variant="body2" fontWeight={600} color="text.primary">
-                        {geo?.probable_infrastructure_origin || "Pending investigation"}
-                      </Typography>
-                    </Box>
-                    <Box>
-                      <Typography variant="caption" color="text.secondary">Candidate Origin IP</Typography>
-                      <Typography variant="body2" color="cyan.300" sx={{ fontFamily: "monospace" }}>
-                        {forensics?.probable_origin_ip || geo?.candidate_origin_ip || "None identified"}
-                      </Typography>
-                    </Box>
-                    <Box>
-                      <Typography variant="caption" color="text.secondary">Authentication Result</Typography>
-                      <Stack direction="row" spacing={1} mt={0.5}>
-                        <Chip
-                          label={`SPF: ${forensics?.spf_status?.toUpperCase() || "N/A"}`}
-                          size="small"
-                          color={forensics?.spf_status === "pass" ? "success" : "default"}
-                        />
-                        <Chip
-                          label={`DKIM: ${forensics?.dkim_status?.toUpperCase() || "N/A"}`}
-                          size="small"
-                          color={forensics?.dkim_status === "pass" ? "success" : "default"}
-                        />
-                        <Chip
-                          label={`DMARC: ${forensics?.dmarc_status?.toUpperCase() || "N/A"}`}
-                          size="small"
-                          color={forensics?.dmarc_status === "pass" ? "success" : "default"}
-                        />
-                      </Stack>
-                    </Box>
-                    <Box>
-                      <Typography variant="caption" color="text.secondary">Extracted Indicators</Typography>
-                      <Typography variant="body2" fontWeight={600} color="text.primary">
-                        {iocData?.total_count || 0} Indicators of Compromise (IOCs) Cataloged
-                      </Typography>
-                    </Box>
-                  </Stack>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
-        </Stack>
+        </section>
       )}
 
-      {/* Tab 1: Authentication & Relay Hops */}
-      {activeTab === 1 && (
-        <Stack spacing={3}>
-          <AuthenticationForensicsWidget forensics={forensics} isLoading={isForensicsLoading} />
-          <RelayHopsTimelineWidget forensics={forensics} isLoading={isForensicsLoading} />
-        </Stack>
-      )}
-
-      {/* Tab 2: Threat Intelligence & Geolocation */}
-      {activeTab === 2 && (
-        <ThreatIntelGeoWidget intel={intel} geo={geo} isLoading={isIntelLoading || isGeoLoading} />
-      )}
-
-      {/* Tab 3: IOC Indicators */}
-      {activeTab === 3 && (
-        <IOCTableWidget iocData={iocData} isLoading={isIocLoading} />
-      )}
-
-      {/* Tab 4: Forensic Timeline */}
-      {activeTab === 4 && (
-        <ForensicTimelineWidget timeline={timeline} isLoading={isTimelineLoading} />
-      )}
-
-      {/* Tab 5: Evidence & Custody Integrity */}
-      {activeTab === 5 && (
-        <Stack spacing={3}>
-          <EvidenceIntegrityWidget caseId={caseId} />
-          <Card sx={{ bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 2 }}>
-          <CardContent sx={{ p: 3 }}>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
-              <Typography variant="h6" fontWeight={700} color="text.primary">
-                Untrusted Body & Evidence Payload
-              </Typography>
-              <Stack direction="row" spacing={1}>
-                <Chip
-                  label="Plain Text"
-                  onClick={() => setBodyFormat("plain")}
-                  color={bodyFormat === "plain" ? "primary" : "default"}
-                  size="small"
-                  sx={{ cursor: "pointer" }}
-                />
-                <Chip
-                  label="Sandboxed HTML"
-                  onClick={() => setBodyFormat("html")}
-                  color={bodyFormat === "html" ? "primary" : "default"}
-                  size="small"
-                  disabled={!parsed?.body_html}
-                  sx={{ cursor: "pointer" }}
-                />
+      {/* SECTION C: EMAIL SUMMARY & ENVELOPE */}
+      {(activeTab === 0) && (
+        <section id="section-email-summary">
+          <Card
+            sx={{
+              bgcolor: "background.paper",
+              border: "1px solid #D9E0E7",
+              borderRadius: 2,
+              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.4)",
+              overflow: "hidden",
+            }}
+          >
+            <CardContent sx={{ p: 3 }}>
+              <Stack direction="row" alignItems="center" spacing={1.5} mb={2.5}>
+                <Mail className="w-5 h-5 text-[#1F4E79]" />
+                <Typography variant="h6" fontWeight={700} color="text.primary">
+                  Email Envelope & Identity Summary
+                </Typography>
               </Stack>
-            </Stack>
 
-            {bodyFormat === "plain" ? (
+              {/* 2-Column Info Grid */}
               <Box
-                component="pre"
                 sx={{
-                  p: 2,
-                  bgcolor: "rgba(0, 0, 0, 0.4)",
+                  p: 2.5,
                   borderRadius: 1.5,
-                  border: "1px solid rgba(255, 255, 255, 0.05)",
-                  fontFamily: "monospace",
-                  fontSize: "0.8rem",
-                  color: "text.primary",
-                  overflowX: "auto",
-                  whiteSpace: "pre-wrap",
-                  wordBreak: "break-word",
-                  maxHeight: 400,
+                  bgcolor: "#F5F7FA",
+                  border: "1px solid #D9E0E7",
+                  mb: 3,
                 }}
               >
-                {parsed?.body_plain || "(No plain text body content found in email)"}
-              </Box>
-            ) : (
-              <Box sx={{ border: "1px solid rgba(255, 255, 255, 0.1)", borderRadius: 1.5, overflow: "hidden" }}>
-                <Alert severity="warning" icon={<Shield size={16} />} sx={{ py: 0.5, fontSize: "0.75rem" }}>
-                  Isolated sandbox iframe: Scripts, forms, and network executions are strictly disabled.
-                </Alert>
-                <Box
-                  component="iframe"
-                  title="Sandboxed Email HTML Body"
-                  sandbox="allow-same-origin"
-                  srcDoc={parsed?.body_html || "<p>No HTML body</p>"}
-                  sx={{ width: "100%", height: 400, border: 0, bgcolor: "#ffffff" }}
-                />
-              </Box>
-            )}
+                <Grid container spacing={2}>
+                  <Grid item xs={12} md={6}>
+                    <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", fontWeight: 600 }}>
+                      From (Sender)
+                    </Typography>
+                    <Typography variant="body2" fontWeight={600} color="text.primary" sx={{ mt: 0.5, wordBreak: "break-all" }}>
+                      {parsed.from_name ? `${parsed.from_name} <${parsed.from_address || parsed.sender}>` : parsed.sender || "N/A"}
+                    </Typography>
+                  </Grid>
 
-            {/* Attachments Section */}
-            {parsed?.attachments_metadata && parsed.attachments_metadata.length > 0 && (
-              <Box mt={3}>
-                <Typography variant="subtitle2" fontWeight={600} color="text.primary" mb={1} display="flex" alignItems="center" gap={0.5}>
-                  <Paperclip size={14} /> Attachments ({parsed.attachments_metadata.length})
-                </Typography>
-                <Stack spacing={1}>
-                  {parsed.attachments_metadata.map((att, idx) => (
-                    <Box
-                      key={idx}
-                      sx={{
-                        p: 1.5,
-                        borderRadius: 1,
-                        bgcolor: "rgba(255, 255, 255, 0.02)",
-                        border: "1px solid rgba(255, 255, 255, 0.05)",
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                      }}
+                  <Grid item xs={12} md={6}>
+                    <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", fontWeight: 600 }}>
+                      To (Recipients)
+                    </Typography>
+                    <Typography variant="body2" fontWeight={600} color="text.primary" sx={{ mt: 0.5, wordBreak: "break-all" }}>
+                      {parsed.recipients && parsed.recipients.length > 0 ? parsed.recipients.join(", ") : "None declared"}
+                    </Typography>
+                  </Grid>
+
+                  <Grid item xs={12} md={6}>
+                    <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", fontWeight: 600 }}>
+                      Subject
+                    </Typography>
+                    <Typography variant="body1" fontWeight={700} color="#1F4E79" sx={{ mt: 0.5 }}>
+                      {parsed.subject || "(No Subject Declared)"}
+                    </Typography>
+                  </Grid>
+
+                  <Grid item xs={12} md={6}>
+                    <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", fontWeight: 600 }}>
+                      Date Declared
+                    </Typography>
+                    <Typography variant="body2" color="text.primary" sx={{ mt: 0.5 }}>
+                      {parsed.date_parsed ? new Date(parsed.date_parsed).toUTCString() : parsed.date_raw || "Not available"}
+                    </Typography>
+                  </Grid>
+
+                  <Grid item xs={12} md={6}>
+                    <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", fontWeight: 600 }}>
+                      Message-ID
+                    </Typography>
+                    <Typography variant="caption" fontFamily="monospace" color="#cbd5e1" sx={{ mt: 0.5, display: "block", wordBreak: "break-all" }}>
+                      {parsed.message_id || "None declared"}
+                    </Typography>
+                  </Grid>
+
+                  <Grid item xs={12} md={6}>
+                    <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", fontWeight: 600 }}>
+                      Reply-To / CC
+                    </Typography>
+                    <Typography variant="body2" color="#cbd5e1" sx={{ mt: 0.5 }}>
+                      {parsed.reply_to && parsed.reply_to.length > 0 ? `Reply-To: ${parsed.reply_to.join(", ")}` : "No Reply-To mismatch"}
+                    </Typography>
+                  </Grid>
+                </Grid>
+              </Box>
+
+              {/* Body Content Preview */}
+              <Box>
+                <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1.5}>
+                  <Typography variant="subtitle2" fontWeight={700} color="text.primary">
+                    Email Body Content Preview
+                  </Typography>
+                  <Stack direction="row" spacing={1}>
+                    <button
+                      onClick={() => setBodyFormat("plain")}
+                      className={`format-toggle-btn ${bodyFormat === "plain" ? "active" : ""}`}
                     >
-                      <Box>
-                        <Typography variant="body2" fontWeight={600} color="text.primary">{att.filename}</Typography>
-                        <Typography variant="caption" color="text.secondary" sx={{ fontFamily: "monospace" }}>
-                          SHA-256: {att.sha256}
-                        </Typography>
-                      </Box>
-                      <Chip label={`${(att.file_size_bytes / 1024).toFixed(1)} KB`} size="small" />
-                    </Box>
-                  ))}
+                      Plain Text
+                    </button>
+                    <button
+                      onClick={() => setBodyFormat("html")}
+                      className={`format-toggle-btn ${bodyFormat === "html" ? "active" : ""}`}
+                    >
+                      Safe HTML
+                    </button>
+                  </Stack>
                 </Stack>
+
+                {bodyFormat === "plain" ? (
+                  <Box
+                    sx={{
+                      p: 2,
+                      borderRadius: 1.5,
+                      bgcolor: "rgba(15, 23, 42, 0.9)",
+                      border: "1px solid #D9E0E7",
+                      maxHeight: 220,
+                      overflowY: "auto",
+                      fontFamily: "monospace",
+                      fontSize: "0.82rem",
+                      color: "text.primary",
+                      whiteSpace: "pre-wrap",
+                    }}
+                  >
+                    {parsed.body_plain || "No plain text content available."}
+                  </Box>
+                ) : (
+                  <Box
+                    sx={{
+                      p: 2,
+                      borderRadius: 1.5,
+                      bgcolor: "#ffffff",
+                      color: "#F5F7FA",
+                      maxHeight: 220,
+                      overflowY: "auto",
+                      fontSize: "0.85rem",
+                    }}
+                    dangerouslySetInnerHTML={{
+                      __html: parsed.body_html || "<p>No HTML body content available.</p>",
+                    }}
+                  />
+                )}
               </Box>
-            )}
-          </CardContent>
-        </Card>
-      </Stack>
-    )}
 
-    {/* Tab 6: Threat Relationship Graph */}
-    {activeTab === 6 && (
-      <ThreatGraphWidget
-        graph={graphData}
-        isLoading={isGraphLoading}
-        onRefresh={refetchGraph}
-      />
-    )}
-  </Stack>
-);
+              {/* Attachments Section */}
+              {parsed.attachments_metadata && parsed.attachments_metadata.length > 0 && (
+                <Box mt={3}>
+                  <Typography variant="subtitle2" fontWeight={700} color="text.primary" mb={1.5} display="flex" alignItems="center" gap={1}>
+                    <Paperclip size={16} /> Attached Evidence Files ({parsed.attachments_metadata.length})
+                  </Typography>
+                  <Stack spacing={1}>
+                    {parsed.attachments_metadata.map((att, idx) => (
+                      <Box
+                        key={idx}
+                        sx={{
+                          p: 1.5,
+                          borderRadius: 1.5,
+                          bgcolor: "rgba(30, 41, 59, 0.4)",
+                          border: "1px solid #D9E0E7",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                        }}
+                      >
+                        <div>
+                          <Typography variant="body2" fontWeight={600} color="text.primary">
+                            {att.filename}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: "text.secondary", fontFamily: "monospace" }}>
+                            Size: {(att.file_size_bytes / 1024).toFixed(1)} KB • SHA-256: {att.sha256}
+                          </Typography>
+                        </div>
+                        <Chip label={att.extension.toUpperCase()} size="small" sx={{ bgcolor: "#D9E0E7", color: "#cbd5e1" }} />
+                      </Box>
+                    ))}
+                  </Stack>
+                </Box>
+              )}
+            </CardContent>
+          </Card>
+        </section>
+      )}
+
+      {/* SECTION D: AUTHENTICATION & SECTION E: HEADER FORENSICS */}
+      {(activeTab === 0 || activeTab === 1) && (
+        <section id="section-auth-relays">
+          <Stack spacing={3}>
+            <AuthenticationForensicsWidget forensics={forensics} isLoading={isForensicsLoading} />
+            <RelayHopsTimelineWidget forensics={forensics} isLoading={isForensicsLoading} />
+          </Stack>
+        </section>
+      )}
+
+      {/* SECTION F: THREAT INTEL & SECTION G: GEO INFRASTRUCTURE */}
+      {(activeTab === 0 || activeTab === 2) && (
+        <section id="section-threat-intel-geo">
+          <ThreatIntelGeoWidget
+            intel={intel}
+            geo={geo}
+            isLoading={isIntelLoading || isGeoLoading}
+          />
+        </section>
+      )}
+
+      {/* SECTION H: INDICATORS OF COMPROMISE (IOCS) */}
+      {(activeTab === 0 || activeTab === 3) && (
+        <section id="section-iocs">
+          <IOCTableWidget iocData={iocs} isLoading={isIocsLoading} />
+        </section>
+      )}
+
+      {/* SECTION I: FORENSIC TIMELINE */}
+      {(activeTab === 0 || activeTab === 4) && (
+        <section id="section-timeline">
+          <ForensicTimelineWidget timelineData={timeline} isLoading={isTimelineLoading} />
+        </section>
+      )}
+
+      {/* SECTION J: THREAT RELATIONSHIP GRAPH */}
+      {(activeTab === 0 || activeTab === 6) && (
+        <section id="section-graph">
+          <ThreatGraphWidget graph={graph} isLoading={isGraphLoading} onRefresh={refetchGraph} />
+        </section>
+      )}
+
+      {/* SECTION K: EVIDENCE INTEGRITY */}
+      {(activeTab === 0 || activeTab === 5) && (
+        <section id="section-evidence">
+          <EvidenceIntegrityWidget caseId={caseId} />
+        </section>
+      )}
+
+      {/* SECTION L: BOTTOM ACTIONS TOOLBAR */}
+      <Card
+        sx={{
+          bgcolor: "background.paper",
+          border: "1px solid #D9E0E7",
+          borderRadius: 2,
+          p: 3,
+        }}
+      >
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          justifyContent="space-between"
+          alignItems="center"
+          spacing={2}
+        >
+          <div>
+            <Typography variant="subtitle2" fontWeight={700} color="text.primary">
+              Investigation Actions & Export
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Generate tamper-evident PDF reports, verify cryptographic hash records, or re-run analysis.
+            </Typography>
+          </div>
+
+          <Stack direction="row" spacing={1.5} flexWrap="wrap">
+            <button
+              onClick={handleDownloadPdf}
+              disabled={isDownloadingPdf}
+              className="action-btn"
+            >
+              <FileDown className="w-4 h-4" />
+              <span>{isDownloadingPdf ? "Compiling PDF..." : "Export PDF Report"}</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setActiveTab(6);
+                const el = document.getElementById("section-graph");
+                if (el) el.scrollIntoView({ behavior: "smooth" });
+              }}
+              className="action-btn"
+            >
+              <Share2 className="w-4 h-4" />
+              <span>View Relationship Graph</span>
+            </button>
+
+            <button
+              onClick={handleVerifyEvidence}
+              disabled={isVerifyingEvidence}
+              className="action-btn"
+            >
+              <FileCheck2 className="w-4 h-4" />
+              <span>Verify Evidence Integrity</span>
+            </button>
+          </Stack>
+        </Stack>
+      </Card>
+    </Box>
+  );
 };
-

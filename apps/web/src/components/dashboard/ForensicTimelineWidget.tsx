@@ -28,40 +28,44 @@ import {
 import { ForensicTimelineResponse, TimelineEvent } from "@/types";
 
 interface ForensicTimelineWidgetProps {
-  timeline: ForensicTimelineResponse | undefined;
+  timeline?: ForensicTimelineResponse;
+  timelineData?: ForensicTimelineResponse;
   isLoading?: boolean;
 }
 
 export const ForensicTimelineWidget: React.FC<ForensicTimelineWidgetProps> = ({
   timeline,
+  timelineData,
   isLoading = false,
 }) => {
-  if (isLoading || !timeline) {
+  const activeTimeline = timeline || timelineData;
+
+  if (isLoading || !activeTimeline) {
     return null;
   }
 
-  const events = timeline.events || [];
+  const events = activeTimeline.events || [];
 
   const getEventIcon = (type: string) => {
     switch (type) {
       case "EMAIL_DATE":
-        return <Mail size={16} color="#06b6d4" />;
+        return <Mail size={16} color="#1F4E79" />;
       case "MTA_RELAY":
         return <Network size={16} color="#3b82f6" />;
       case "AUTHENTICATION":
-        return <ShieldCheck size={16} color="#10b981" />;
+        return <ShieldCheck size={16} color="#237A57" />;
       case "INGESTION_STARTED":
-        return <UploadCloud size={16} color="#8b5cf6" />;
+        return <UploadCloud size={16} color="#1F4E79" />;
       case "PARSING_COMPLETED":
-        return <FileText size={16} color="#06b6d4" />;
+        return <FileText size={16} color="#1F4E79" />;
       case "THREAT_ASSESSMENT":
-        return <AlertTriangle size={16} color="#f97316" />;
+        return <AlertTriangle size={16} color="#B7791F" />;
       case "INTEL_ENRICHMENT":
-        return <Globe2 size={16} color="#ec4899" />;
+        return <Globe2 size={16} color="#2B6CB0" />;
       case "GEO_ENRICHMENT":
-        return <MapPin size={16} color="#14b8a6" />;
+        return <MapPin size={16} color="#237A57" />;
       default:
-        return <Clock size={16} color="#9ca3af" />;
+        return <Clock size={16} color="#52606D" />;
     }
   };
 
@@ -73,7 +77,7 @@ export const ForensicTimelineWidget: React.FC<ForensicTimelineWidgetProps> = ({
           <Chip
             label={quality}
             size="small"
-            sx={{ bgcolor: "rgba(16, 185, 129, 0.15)", color: "#10b981", fontSize: "0.65rem", height: 18 }}
+            sx={{ bgcolor: "#E8F5EF", color: "#237A57", fontSize: "0.65rem", height: 18 }}
           />
         );
       case "HEADER_DECLARED":
@@ -81,7 +85,7 @@ export const ForensicTimelineWidget: React.FC<ForensicTimelineWidgetProps> = ({
           <Chip
             label="HEADER DECLARED"
             size="small"
-            sx={{ bgcolor: "rgba(6, 182, 212, 0.15)", color: "#06b6d4", fontSize: "0.65rem", height: 18 }}
+            sx={{ bgcolor: "#EAF2F8", color: "#1F4E79", fontSize: "0.65rem", height: 18 }}
           />
         );
       case "DERIVED":
@@ -89,7 +93,7 @@ export const ForensicTimelineWidget: React.FC<ForensicTimelineWidgetProps> = ({
           <Chip
             label="DERIVED"
             size="small"
-            sx={{ bgcolor: "rgba(234, 179, 8, 0.15)", color: "#eab308", fontSize: "0.65rem", height: 18 }}
+            sx={{ bgcolor: "#FFF7E6", color: "#B7791F", fontSize: "0.65rem", height: 18 }}
           />
         );
       case "MISSING":
@@ -97,7 +101,7 @@ export const ForensicTimelineWidget: React.FC<ForensicTimelineWidgetProps> = ({
           <Chip
             label="TIMESTAMP MISSING"
             size="small"
-            sx={{ bgcolor: "rgba(239, 68, 68, 0.15)", color: "#ef4444", fontSize: "0.65rem", height: 18 }}
+            sx={{ bgcolor: "#FDECEC", color: "#C53030", fontSize: "0.65rem", height: 18 }}
           />
         );
       default:
@@ -105,7 +109,7 @@ export const ForensicTimelineWidget: React.FC<ForensicTimelineWidgetProps> = ({
           <Chip
             label={quality}
             size="small"
-            sx={{ bgcolor: "rgba(156, 163, 175, 0.15)", color: "#9ca3af", fontSize: "0.65rem", height: 18 }}
+            sx={{ bgcolor: "#F5F7FA", color: "#52606D", fontSize: "0.65rem", height: 18 }}
           />
         );
     }
@@ -136,7 +140,7 @@ export const ForensicTimelineWidget: React.FC<ForensicTimelineWidgetProps> = ({
         {/* Header */}
         <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ xs: "flex-start", sm: "center" }} spacing={1} mb={2}>
           <Stack direction="row" alignItems="center" spacing={1.5}>
-            <Clock className="w-5 h-5 text-cyan-400" />
+            <Clock className="w-5 h-5 text-[#1F4E79]" />
             <Box>
               <Typography variant="h6" fontWeight={700} color="text.primary">
                 Chronological Forensic Timeline
@@ -149,15 +153,15 @@ export const ForensicTimelineWidget: React.FC<ForensicTimelineWidgetProps> = ({
 
           <Stack direction="row" spacing={1} alignItems="center">
             <Chip
-              label={`${timeline.total_events} Milestones`}
+              label={`${activeTimeline.total_events} Milestones`}
               size="small"
-              sx={{ bgcolor: "rgba(6, 182, 212, 0.15)", color: "#06b6d4", fontWeight: 700 }}
+              sx={{ bgcolor: "#EAF2F8", color: "#1F4E79", fontWeight: 700 }}
             />
           </Stack>
         </Stack>
 
         {/* Missing Timestamps Alert if applicable */}
-        {timeline.has_missing_timestamps && (
+        {activeTimeline.has_missing_timestamps && (
           <Alert severity="info" icon={<Info size={16} />} sx={{ mb: 2, py: 0.5, fontSize: "0.75rem" }}>
             Some transmission hops or headers lacked parseable timestamps. No synthetic timestamps were fabricated; original unparsed values are preserved.
           </Alert>
@@ -204,8 +208,8 @@ export const ForensicTimelineWidget: React.FC<ForensicTimelineWidgetProps> = ({
                           label={`Transit Delay: ${delayStr}`}
                           size="small"
                           sx={{
-                            bgcolor: "rgba(234, 179, 8, 0.1)",
-                            color: "#eab308",
+                            bgcolor: "#FFF7E6",
+                            color: "#B7791F",
                             fontSize: "0.68rem",
                             height: 20,
                             fontFamily: "monospace",
@@ -234,7 +238,7 @@ export const ForensicTimelineWidget: React.FC<ForensicTimelineWidgetProps> = ({
 
                   {idx < events.length - 1 && (
                     <Box display="flex" justifyContent="center" my={0.5}>
-                      <ArrowDown size={14} color="#6b7280" />
+                      <ArrowDown size={14} color="#7B8794" />
                     </Box>
                   )}
                 </Box>

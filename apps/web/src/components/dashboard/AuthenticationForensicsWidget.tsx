@@ -38,24 +38,24 @@ export const AuthenticationForensicsWidget: React.FC<AuthenticationForensicsWidg
   const getStatusChip = (protocol: string, statusVal: string) => {
     const s = (statusVal || "none").toLowerCase();
     let bg = "rgba(107, 114, 128, 0.15)";
-    let border = "#6b7280";
-    let text = "#9ca3af";
+    let border = "#7B8794";
+    let text = "#52606D";
     let Icon = ShieldAlert;
 
     if (s === "pass") {
-      bg = "rgba(16, 185, 129, 0.15)";
-      border = "#10b981";
-      text = "#10b981";
+      bg = "#E8F5EF";
+      border = "#237A57";
+      text = "#237A57";
       Icon = ShieldCheck;
     } else if (s.includes("fail") || s === "permerror") {
-      bg = "rgba(239, 68, 68, 0.15)";
-      border = "#ef4444";
-      text = "#ef4444";
+      bg = "#FDECEC";
+      border = "#C53030";
+      text = "#C53030";
       Icon = ShieldX;
     } else if (s === "softfail" || s === "neutral" || s === "temperror") {
-      bg = "rgba(234, 179, 8, 0.15)";
-      border = "#eab308";
-      text = "#eab308";
+      bg = "#FFF7E6";
+      border = "#B7791F";
+      text = "#B7791F";
       Icon = ShieldAlert;
     }
 
@@ -96,7 +96,7 @@ export const AuthenticationForensicsWidget: React.FC<AuthenticationForensicsWidg
         {/* Header */}
         <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ xs: "flex-start", sm: "center" }} spacing={1} mb={2}>
           <Stack direction="row" alignItems="center" spacing={1.5}>
-            <FileCheck className="w-5 h-5 text-cyan-400" />
+            <FileCheck className="w-5 h-5 text-[#1F4E79]" />
             <Typography variant="h6" fontWeight={700} color="text.primary">
               Email Authentication Forensics
             </Typography>

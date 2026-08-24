@@ -36,12 +36,12 @@ interface ThreatGraphWidgetProps {
 }
 
 const NODE_COLORS: Record<string, { bg: string; border: string; text: string; iconColor: string }> = {
-  Email: { bg: "rgba(59, 130, 246, 0.15)", border: "#3b82f6", text: "#93c5fd", iconColor: "#60a5fa" },
-  EmailAddress: { bg: "rgba(14, 165, 233, 0.15)", border: "#0ea5e9", text: "#7dd3fc", iconColor: "#38bdf8" },
-  Domain: { bg: "rgba(168, 85, 247, 0.15)", border: "#a855f7", text: "#d8b4fe", iconColor: "#c084fc" },
-  IP: { bg: "rgba(245, 158, 11, 0.15)", border: "#f59e0b", text: "#fcd34d", iconColor: "#fbbf24" },
-  Country: { bg: "rgba(16, 185, 129, 0.15)", border: "#10b981", text: "#6ee7b7", iconColor: "#34d399" },
-  AttachmentHash: { bg: "rgba(244, 63, 94, 0.15)", border: "#f43f5e", text: "#fda4af", iconColor: "#fb7185" },
+  Email: { bg: "#EAF2F8", border: "#1F4E79", text: "#17212B", iconColor: "#1F4E79" },
+  EmailAddress: { bg: "#EAF2F8", border: "#2B6CB0", text: "#17212B", iconColor: "#2B6CB0" },
+  Domain: { bg: "#F3E8FF", border: "#7E22CE", text: "#17212B", iconColor: "#7E22CE" },
+  IP: { bg: "#FFF7E6", border: "#B7791F", text: "#17212B", iconColor: "#B7791F" },
+  Country: { bg: "#E8F5EF", border: "#237A57", text: "#17212B", iconColor: "#237A57" },
+  AttachmentHash: { bg: "#FDECEC", border: "#C53030", text: "#17212B", iconColor: "#C53030" },
 };
 
 function getNodeIcon(type: string) {
@@ -174,7 +174,7 @@ export const ThreatGraphWidget: React.FC<ThreatGraphWidgetProps> = ({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                color: "#c084fc",
+                color: "#1F4E79",
               }}
             >
               <Share2 size={20} />
@@ -256,7 +256,7 @@ export const ThreatGraphWidget: React.FC<ThreatGraphWidgetProps> = ({
               sx={{
                 width: "100%",
                 height: 480,
-                bgcolor: "#0b0f19",
+                bgcolor: "#F8FAFC",
                 borderRadius: 2,
                 border: "1px solid",
                 borderColor: "divider",
@@ -273,7 +273,7 @@ export const ThreatGraphWidget: React.FC<ThreatGraphWidgetProps> = ({
                   height="100%"
                   gap={1}
                 >
-                  <Share2 size={36} color="#6b7280" />
+                  <Share2 size={36} color="#7B8794" />
                   <Typography variant="body2" color="text.secondary">
                     No graph relationships recorded for this investigation case.
                   </Typography>
@@ -295,7 +295,7 @@ export const ThreatGraphWidget: React.FC<ThreatGraphWidgetProps> = ({
                       markerHeight="6"
                       orient="auto-start-reverse"
                     >
-                      <path d="M 0 1 L 10 5 L 0 9 z" fill="#64748b" />
+                      <path d="M 0 1 L 10 5 L 0 9 z" fill="#7B8794" />
                     </marker>
                     <marker
                       id="arrow-active"
@@ -306,7 +306,7 @@ export const ThreatGraphWidget: React.FC<ThreatGraphWidgetProps> = ({
                       markerHeight="6"
                       orient="auto-start-reverse"
                     >
-                      <path d="M 0 1 L 10 5 L 0 9 z" fill="#c084fc" />
+                      <path d="M 0 1 L 10 5 L 0 9 z" fill="#1F4E79" />
                     </marker>
                   </defs>
 
@@ -330,7 +330,7 @@ export const ThreatGraphWidget: React.FC<ThreatGraphWidgetProps> = ({
                           y1={src.y}
                           x2={tgt.x}
                           y2={tgt.y}
-                          stroke={isConnected ? "#c084fc" : "#334155"}
+                          stroke={isConnected ? "#1F4E79" : "#D9E0E7"}
                           strokeWidth={isConnected ? 2.5 : 1.5}
                           strokeDasharray={rel.type === "RESOLVES_TO" ? "4 4" : undefined}
                           markerEnd={isConnected ? "url(#arrow-active)" : "url(#arrow)"}
@@ -342,8 +342,8 @@ export const ThreatGraphWidget: React.FC<ThreatGraphWidgetProps> = ({
                           width={76}
                           height={18}
                           rx={9}
-                          fill="#0f172a"
-                          stroke={isConnected ? "#a855f7" : "#1e293b"}
+                          fill="#F5F7FA"
+                          stroke={isConnected ? "#1F4E79" : "#F8FAFC"}
                           strokeWidth={1}
                         />
                         <text
@@ -351,7 +351,7 @@ export const ThreatGraphWidget: React.FC<ThreatGraphWidgetProps> = ({
                           y={midY + 3.5}
                           textAnchor="middle"
                           fontSize="9"
-                          fill={isConnected ? "#e2e8f0" : "#94a3b8"}
+                          fill={isConnected ? "#17212B" : "#52606D"}
                           fontFamily="monospace"
                           fontWeight={600}
                         >
@@ -381,7 +381,7 @@ export const ThreatGraphWidget: React.FC<ThreatGraphWidgetProps> = ({
                           <circle
                             r={26}
                             fill="none"
-                            stroke="#c084fc"
+                            stroke="#1F4E79"
                             strokeWidth={2}
                             strokeDasharray="3 3"
                           />
@@ -391,7 +391,7 @@ export const ThreatGraphWidget: React.FC<ThreatGraphWidgetProps> = ({
                         <circle
                           r={20}
                           fill={colors.bg}
-                          stroke={isSelected ? "#c084fc" : colors.border}
+                          stroke={isSelected ? "#1F4E79" : colors.border}
                           strokeWidth={isSelected ? 2.5 : 1.5}
                         />
 
@@ -412,7 +412,7 @@ export const ThreatGraphWidget: React.FC<ThreatGraphWidgetProps> = ({
                           y={46}
                           textAnchor="middle"
                           fontSize="8"
-                          fill="#64748b"
+                          fill="#7B8794"
                           fontFamily="monospace"
                         >
                           {node.type}
@@ -476,7 +476,7 @@ export const ThreatGraphWidget: React.FC<ThreatGraphWidgetProps> = ({
                         <Typography variant="caption" color="text.secondary">Properties</Typography>
                         <Box sx={{ p: 1, bgcolor: "rgba(0,0,0,0.3)", borderRadius: 1, mt: 0.5 }}>
                           {Object.entries(selectedNode.properties).map(([k, v]) => (
-                            <Typography key={k} variant="caption" display="block" sx={{ fontFamily: "monospace", color: "#94a3b8" }}>
+                            <Typography key={k} variant="caption" display="block" sx={{ fontFamily: "monospace", color: "text.secondary" }}>
                               {k}: {String(v)}
                             </Typography>
                           ))}

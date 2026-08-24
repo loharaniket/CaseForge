@@ -56,7 +56,6 @@ describe("EmailUploadZone Component", () => {
   it("renders active dropzone when authenticated", () => {
     renderWithAuth(<EmailUploadZone />);
 
-    expect(screen.getByText(/Evidence Ingestion Dropzone/i)).toBeDefined();
     expect(screen.getByText(/Drag & Drop suspicious/i)).toBeDefined();
     expect(screen.getByText(/Max 10 MB/i)).toBeDefined();
   });

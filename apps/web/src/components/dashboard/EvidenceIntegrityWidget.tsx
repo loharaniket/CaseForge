@@ -97,12 +97,12 @@ export const EvidenceIntegrityWidget: React.FC<EvidenceIntegrityWidgetProps> = (
     if (verResult.status === "VERIFIED") {
       return (
         <Chip
-          icon={<ShieldCheck size={14} className="text-emerald-400" />}
+          icon={<ShieldCheck size={14} className="text-[#237A57]" />}
           label="AUTHENTIC &bull; SHA-256 MATCH"
           size="small"
           sx={{
             bgcolor: "rgba(16, 185, 129, 0.12)",
-            color: "#34d399",
+            color: "#237A57",
             border: "1px solid rgba(16, 185, 129, 0.3)",
             fontWeight: 700,
             fontSize: "0.7rem",
@@ -114,12 +114,12 @@ export const EvidenceIntegrityWidget: React.FC<EvidenceIntegrityWidgetProps> = (
     if (verResult.status === "CORRUPTED") {
       return (
         <Chip
-          icon={<ShieldAlert size={14} className="text-rose-400" />}
+          icon={<ShieldAlert size={14} className="text-[#C53030]" />}
           label="CORRUPTED / TAMPERED"
           size="small"
           sx={{
             bgcolor: "rgba(244, 63, 94, 0.15)",
-            color: "#f87171",
+            color: "#C53030",
             border: "1px solid rgba(244, 63, 94, 0.4)",
             fontWeight: 700,
             fontSize: "0.7rem",
@@ -186,7 +186,7 @@ export const EvidenceIntegrityWidget: React.FC<EvidenceIntegrityWidgetProps> = (
           mb={2.5}
         >
           <Box display="flex" alignItems="center" gap={1.5}>
-            <Shield className="w-5 h-5 text-cyan-400" />
+            <Shield className="w-5 h-5 text-[#1F4E79]" />
             <Box>
               <Typography variant="h6" fontWeight={700} color="text.primary">
                 Cryptographic Evidence & Chain of Custody
@@ -212,7 +212,7 @@ export const EvidenceIntegrityWidget: React.FC<EvidenceIntegrityWidgetProps> = (
 
             <Tooltip title="Refresh evidence list">
               <IconButton onClick={() => refetch()} size="small" sx={{ border: "1px solid", borderColor: "divider" }}>
-                <RefreshCw size={14} className={isLoading ? "animate-spin text-cyan-400" : ""} />
+                <RefreshCw size={14} className={isLoading ? "animate-spin text-[#1F4E79]" : ""} />
               </IconButton>
             </Tooltip>
           </Stack>
@@ -228,8 +228,8 @@ export const EvidenceIntegrityWidget: React.FC<EvidenceIntegrityWidgetProps> = (
                 sx={{
                   bgcolor: "rgba(16, 185, 129, 0.08)",
                   border: "1px solid rgba(16, 185, 129, 0.25)",
-                  color: "#34d399",
-                  "& .MuiAlert-icon": { color: "#34d399" },
+                  color: "#237A57",
+                  "& .MuiAlert-icon": { color: "#237A57" },
                 }}
               >
                 <Typography variant="subtitle2" fontWeight={700}>
@@ -246,8 +246,8 @@ export const EvidenceIntegrityWidget: React.FC<EvidenceIntegrityWidgetProps> = (
                 sx={{
                   bgcolor: "rgba(244, 63, 94, 0.1)",
                   border: "1px solid rgba(244, 63, 94, 0.3)",
-                  color: "#f87171",
-                  "& .MuiAlert-icon": { color: "#f87171" },
+                  color: "#C53030",
+                  "& .MuiAlert-icon": { color: "#C53030" },
                 }}
               >
                 <Typography variant="subtitle2" fontWeight={700}>
@@ -315,7 +315,7 @@ export const EvidenceIntegrityWidget: React.FC<EvidenceIntegrityWidgetProps> = (
                             fontSize: "0.65rem",
                             fontWeight: 700,
                             bgcolor: "rgba(6, 182, 212, 0.1)",
-                            color: "#06b6d4",
+                            color: "#1F4E79",
                             mt: 0.5,
                           }}
                         />
@@ -324,7 +324,7 @@ export const EvidenceIntegrityWidget: React.FC<EvidenceIntegrityWidgetProps> = (
                       {/* Algorithm */}
                       <TableCell>
                         <Stack direction="row" alignItems="center" spacing={0.5}>
-                          <Lock size={12} className="text-cyan-400" />
+                          <Lock size={12} className="text-[#1F4E79]" />
                           <Typography variant="caption" fontWeight={600} color="text.secondary">
                             SHA-256
                           </Typography>
@@ -352,7 +352,7 @@ export const EvidenceIntegrityWidget: React.FC<EvidenceIntegrityWidgetProps> = (
                           <Tooltip title={copiedHash === rec.sha256_hash ? "Copied!" : "Copy SHA-256"}>
                             <IconButton size="small" onClick={() => handleCopy(rec.sha256_hash)}>
                               {copiedHash === rec.sha256_hash ? (
-                                <Check size={14} className="text-emerald-400" />
+                                <Check size={14} className="text-[#237A57]" />
                               ) : (
                                 <Copy size={14} className="text-slate-400 hover:text-white" />
                               )}

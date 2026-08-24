@@ -9,34 +9,37 @@ import {
   LinearProgress,
   Stack,
   Typography,
-  Divider,
 } from "@mui/material";
 import {
   ShieldAlert,
   ShieldCheck,
   AlertTriangle,
   Flame,
-  CheckCircle2,
+  Check,
   Info,
 } from "lucide-react";
-import { RiskAssessmentResponse, ThreatAssessmentResponse } from "@/types";
+import { HeaderForensicsResponse, RiskAssessmentResponse, ThreatAssessmentResponse } from "@/types";
 
 interface ThreatScoreWidgetProps {
   risk: RiskAssessmentResponse | undefined;
   threat: ThreatAssessmentResponse | undefined;
+  forensics?: HeaderForensicsResponse | undefined;
+  caseId?: string;
   isLoading?: boolean;
 }
 
 export const ThreatScoreWidget: React.FC<ThreatScoreWidgetProps> = ({
   risk,
   threat,
+  forensics,
+  caseId,
   isLoading = false,
 }) => {
   if (isLoading) {
     return (
       <Card sx={{ bgcolor: "background.paper", border: "1px solid", borderColor: "divider", p: 3 }}>
         <Typography variant="body2" color="text.secondary">
-          Calculating deterministic risk and threat posture...
+          Analyzing investigation...
         </Typography>
         <LinearProgress sx={{ mt: 2 }} />
       </Card>
@@ -52,180 +55,247 @@ export const ThreatScoreWidget: React.FC<ThreatScoreWidgetProps> = ({
   const getSeverityConfig = (sev: string) => {
     switch (sev.toLowerCase()) {
       case "critical":
-        return { color: "error", icon: Flame, label: "CRITICAL", bgcolor: "rgba(239, 68, 68, 0.15)", text: "#ef4444" };
+        return { color: "error", icon: Flame, label: "CRITICAL", bgcolor: "#FDECEC", text: "#C53030", border: "#C53030" };
       case "high":
-        return { color: "error", icon: ShieldAlert, label: "HIGH", bgcolor: "rgba(249, 115, 22, 0.15)", text: "#f97316" };
+        return { color: "error", icon: ShieldAlert, label: "HIGH", bgcolor: "rgba(249, 115, 22, 0.15)", text: "#B7791F", border: "#B7791F" };
       case "medium":
-        return { color: "warning", icon: AlertTriangle, label: "MEDIUM", bgcolor: "rgba(234, 179, 8, 0.15)", text: "#eab308" };
+        return { color: "warning", icon: AlertTriangle, label: "MEDIUM", bgcolor: "#FFF7E6", text: "#B7791F", border: "#B7791F" };
       default:
-        return { color: "success", icon: ShieldCheck, label: "LOW", bgcolor: "rgba(16, 185, 129, 0.15)", text: "#10b981" };
+        return { color: "success", icon: ShieldCheck, label: "LOW", bgcolor: "#E8F5EF", text: "#237A57", border: "#237A57" };
     }
   };
 
   const sevConfig = getSeverityConfig(severity);
   const SevIcon = sevConfig.icon;
 
-  const breakdownItems = [
-    { label: "AI Threat Heuristics", weight: "40%", score: risk?.breakdown?.ai_score ?? 0 },
-    { label: "Header Forensics", weight: "25%", score: risk?.breakdown?.header_score ?? 0 },
-    { label: "Domain Reputation", weight: "15%", score: risk?.breakdown?.domain_score ?? 0 },
-    { label: "IP Infrastructure", weight: "10%", score: risk?.breakdown?.ip_score ?? 0 },
-    { label: "URL Target Analysis", weight: "10%", score: risk?.breakdown?.url_score ?? 0 },
-  ];
+  // Synthesize concise executive explanation verdict
+  const getExecutiveVerdict = () => {
+    const isPhishOrBec = classification === "phishing" || classification === "bec";
+    if (isPhishOrBec && totalScore >= 75) {
+      return "High-risk phishing email with failed authentication, suspicious sender-domain relationship, and malicious infrastructure indicators.";
+    }
+    if (isPhishOrBec) {
+      return "Suspicious email with anomalous routing and social engineering indicators requiring containment.";
+    }
+    if (classification === "spam") {
+      return "Unsolicited bulk email with low confidence indicators and non-standard relay origins.";
+    }
+    return "Normal email communication with valid authentication alignment and benign infrastructure indicators.";
+  };
+
+  // Compile top 5 strongest reasons prioritizing explainability signals
+  const getTopReasons = (): string[] => {
+    const reasons: string[] = [];
+
+    // 1. AI Threat heuristic reasons first to ensure explainability
+    if (threat?.reasons && threat.reasons.length > 0) {
+      threat.reasons.forEach((r) => {
+        if (!reasons.includes(r)) reasons.push(r);
+      });
+    }
+
+    // 2. Authentication signals
+    if (forensics?.spf_status?.toLowerCase() === "fail") {
+      reasons.push("SPF authentication failed (Unauthorized sending host)");
+    }
+    if (forensics?.dkim_status?.toLowerCase() === "fail") {
+      reasons.push("DKIM cryptographic signature verification failed");
+    }
+    if (forensics?.dmarc_status?.toLowerCase() === "fail") {
+      reasons.push("DMARC alignment policy failed");
+    }
+
+    // 3. Spoofing & Header anomalies
+    if (forensics?.spoofing_indicators && forensics.spoofing_indicators.length > 0) {
+      forensics.spoofing_indicators.forEach((ind) => {
+        if (!reasons.includes(ind)) reasons.push(ind);
+      });
+    }
+
+    // 4. Fallback if clean
+    if (reasons.length === 0) {
+      if (classification === "normal") {
+        reasons.push("Authentication checks passed (SPF/DKIM/DMARC valid)");
+        reasons.push("No known malicious IOCs or blacklisted relay hops identified");
+        reasons.push("Sender identity aligns with declared Return-Path domain");
+      } else {
+        reasons.push(`Classified as ${classification.toUpperCase()} based on composite risk scoring`);
+      }
+    }
+
+    return reasons.slice(0, 5);
+  };
+
+  const topReasons = getTopReasons();
 
   return (
     <Card
       sx={{
         bgcolor: "background.paper",
-        border: "1px solid",
-        borderColor: "divider",
+        border: "1px solid #D9E0E7",
         borderRadius: 2,
-        boxShadow: 2,
+        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.4)",
+        overflow: "hidden",
       }}
     >
-      <CardContent sx={{ p: 3 }}>
-        {/* Header Row */}
-        <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ xs: "flex-start", sm: "center" }} spacing={2} mb={3}>
+      {/* SECTION A: VERDICT */}
+      <Box
+        sx={{
+          p: 3,
+          borderBottom: "1px solid #F8FAFC",
+          bgcolor: "#F5F7FA",
+        }}
+      >
+        <Stack
+          direction={{ xs: "column", md: "row" }}
+          justifyContent="space-between"
+          alignItems={{ xs: "flex-start", md: "center" }}
+          spacing={2}
+          mb={2}
+        >
           <Stack direction="row" alignItems="center" spacing={1.5}>
             <Box
               sx={{
-                p: 1,
+                p: 1.25,
                 borderRadius: 1.5,
                 bgcolor: sevConfig.bgcolor,
                 color: sevConfig.text,
                 display: "flex",
                 alignItems: "center",
+                border: `1px solid ${sevConfig.border}`,
               }}
             >
               <SevIcon size={24} />
             </Box>
             <Box>
-              <Typography variant="h6" fontWeight={700} color="text.primary">
-                Threat Risk Score: {totalScore} / 100
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Deterministic SOC composite risk evaluation (Formula MVP)
+              <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+                <Typography variant="h5" fontWeight={800} color="text.primary" sx={{ letterSpacing: "-0.02em" }}>
+                  Threat Risk Score: {totalScore} / 100
+                </Typography>
+                <Chip
+                  label={sevConfig.label}
+                  size="small"
+                  sx={{
+                    bgcolor: sevConfig.bgcolor,
+                    color: sevConfig.text,
+                    fontWeight: 700,
+                    fontSize: "0.75rem",
+                    border: `1px solid ${sevConfig.border}`,
+                  }}
+                />
+                <Chip
+                  label={`Class: ${classification.toUpperCase()}`}
+                  size="small"
+                  sx={{
+                    bgcolor: classification === "normal" ? "#E8F5EF" : "rgba(239, 68, 68, 0.1)",
+                    color: classification === "normal" ? "#237A57" : "#C53030",
+                    fontWeight: 700,
+                    fontSize: "0.75rem",
+                    border: `1px solid ${classification === "normal" ? "#18533B" : "#dc2626"}`,
+                  }}
+                />
+              </Stack>
+              <Typography variant="caption" sx={{ color: "text.secondary", fontFamily: "monospace", mt: 0.5, display: "block" }}>
+                Case ID: {caseId || risk?.case_id || "N/A"} • Confidence: {confidencePercent}%
               </Typography>
             </Box>
           </Stack>
-
-          <Stack direction="row" spacing={1} alignItems="center">
-            <Chip
-              label={sevConfig.label}
-              size="small"
-              sx={{
-                bgcolor: sevConfig.bgcolor,
-                color: sevConfig.text,
-                fontWeight: 700,
-                fontSize: "0.75rem",
-                border: `1px solid ${sevConfig.text}`,
-              }}
-            />
-            <Chip
-              label={`Class: ${classification.toUpperCase()}`}
-              size="small"
-              variant="outlined"
-              color={classification === "normal" ? "success" : "error"}
-              sx={{ fontWeight: 600, fontSize: "0.75rem" }}
-            />
-            <Chip
-              label={`Confidence: ${confidencePercent}%`}
-              size="small"
-              variant="outlined"
-              sx={{ fontWeight: 500, fontSize: "0.75rem", color: "text.secondary" }}
-            />
-          </Stack>
         </Stack>
 
-        {/* Overall Score Bar */}
-        <Box mb={3}>
+        {/* Progress Bar */}
+        <Box mb={2}>
           <LinearProgress
             variant="determinate"
             value={Math.min(100, Math.max(0, totalScore))}
             sx={{
-              height: 10,
-              borderRadius: 5,
-              bgcolor: "rgba(255, 255, 255, 0.08)",
+              height: 8,
+              borderRadius: 4,
+              bgcolor: "#F8FAFC",
               "& .MuiLinearProgress-bar": {
                 bgcolor: sevConfig.text,
-                borderRadius: 5,
+                borderRadius: 4,
               },
             }}
           />
         </Box>
 
-        <Divider sx={{ my: 2 }} />
+        {/* Short Executive Verdict Explanation */}
+        <Box
+          sx={{
+            p: 1.75,
+            borderRadius: 1.5,
+            bgcolor: "#FFFFFF",
+            border: "1px solid #D9E0E7",
+          }}
+        >
+          <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 500, lineHeight: 1.5 }}>
+            {getExecutiveVerdict()}
+          </Typography>
+        </Box>
+      </Box>
 
-        {/* Two-Column Grid: Breakdown & Explainability */}
-        <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
-          {/* Left: Component Breakdown */}
-          <Box flex={1}>
-            <Typography variant="subtitle2" fontWeight={600} color="text.primary" mb={1.5}>
-              Deterministic Score Breakdown
-            </Typography>
-            <Stack spacing={1.5}>
-              {breakdownItems.map((item, idx) => (
-                <Box key={idx}>
-                  <Stack direction="row" justifyContent="space-between" mb={0.5}>
-                    <Typography variant="caption" color="text.secondary">
-                      {item.label} ({item.weight})
-                    </Typography>
-                    <Typography variant="caption" fontWeight={600} color="text.primary">
-                      {Math.round(item.score)} / 100
-                    </Typography>
-                  </Stack>
-                  <LinearProgress
-                    variant="determinate"
-                    value={Math.min(100, item.score)}
-                    sx={{
-                      height: 5,
-                      borderRadius: 2.5,
-                      bgcolor: "rgba(255, 255, 255, 0.05)",
-                    }}
-                  />
-                </Box>
-              ))}
-            </Stack>
-          </Box>
-
-          {/* Right: Heuristic Signals & Explainability */}
-          <Box flex={1}>
-            <Typography variant="subtitle2" fontWeight={600} color="text.primary" mb={1.5}>
-              Explainability & Forensic Signals
-            </Typography>
-
-            {threat?.reasons && threat.reasons.length > 0 ? (
-              <Stack spacing={1}>
-                {threat.reasons.map((reason, idx) => (
-                  <Stack key={idx} direction="row" spacing={1} alignItems="flex-start">
-                    <Box sx={{ color: "warning.main", mt: "2px" }}>
-                      <AlertTriangle size={14} />
-                    </Box>
-                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: "0.82rem" }}>
-                      {reason}
-                    </Typography>
-                  </Stack>
-                ))}
-              </Stack>
-            ) : (
-              <Stack direction="row" spacing={1} alignItems="center" sx={{ color: "text.secondary" }}>
-                <CheckCircle2 size={16} color="#10b981" />
-                <Typography variant="body2" sx={{ fontSize: "0.82rem" }}>
-                  No suspicious heuristic signals identified. Classification indicates normal message.
-                </Typography>
-              </Stack>
-            )}
-
-            {threat?.model_version && (
-              <Box mt={2} display="flex" alignItems="center" gap={0.5}>
-                <Info size={12} color="#9ca3af" />
-                <Typography variant="caption" color="text.secondary" sx={{ fontStyle: "italic" }}>
-                  Engine: {threat.model_version}
-                </Typography>
-              </Box>
-            )}
-          </Box>
+      {/* SECTION B: WHY? (Top 5 Strongest Reasons) */}
+      <CardContent sx={{ p: 3 }}>
+        <Stack direction="row" alignItems="center" spacing={1} mb={2}>
+          <Typography
+            variant="subtitle1"
+            sx={{
+              fontWeight: 800,
+              color: "text.primary",
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+              fontSize: "0.85rem",
+            }}
+          >
+            Why Was It Classified This Way? (Top Reasons)
+          </Typography>
         </Stack>
+
+        <Stack spacing={1.25}>
+          {topReasons.map((reason, idx) => (
+            <Box
+              key={idx}
+              sx={{
+                display: "flex",
+                alignItems: "flex-start",
+                gap: 1.5,
+                p: 1.25,
+                borderRadius: 1,
+                bgcolor: "rgba(30, 41, 59, 0.4)",
+                border: "1px solid rgba(51, 65, 85, 0.5)",
+              }}
+            >
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 20,
+                  height: 20,
+                  borderRadius: "50%",
+                  bgcolor: classification === "normal" ? "#E8F5EF" : "rgba(249, 115, 22, 0.15)",
+                  color: classification === "normal" ? "#237A57" : "#fb923c",
+                  flexShrink: 0,
+                  mt: "1px",
+                }}
+              >
+                <Check size={13} strokeWidth={3} />
+              </Box>
+              <Typography variant="body2" sx={{ color: "#17212B", fontWeight: 500, fontSize: "0.85rem" }}>
+                {reason}
+              </Typography>
+            </Box>
+          ))}
+        </Stack>
+
+        {threat?.model_version && (
+          <Box mt={2} display="flex" alignItems="center" gap={0.75}>
+            <Info size={13} color="#7B8794" />
+            <Typography variant="caption" sx={{ color: "#7B8794", fontStyle: "italic" }}>
+              Assessment Model: {threat.model_version}
+            </Typography>
+          </Box>
+        )}
       </CardContent>
     </Card>
   );

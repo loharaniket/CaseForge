@@ -2,11 +2,8 @@
 
 import React from "react";
 import {
-  LayoutDashboard,
-  MailSearch,
-  Fingerprint,
-  Globe2,
-  FileText,
+  FileSearch,
+  History,
   Settings,
   ShieldCheck,
 } from "lucide-react";
@@ -26,40 +23,22 @@ interface NavItem {
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
   const navItems: NavItem[] = [
     {
-      icon: LayoutDashboard,
-      label: "SOC Overview",
-      href: "/",
+      icon: History,
+      label: "Investigations",
+      href: "/#recent-investigations",
       status: "active",
     },
     {
-      icon: MailSearch,
-      label: "Email Ingestion",
-      href: "#ingestion-zone",
+      icon: FileSearch,
+      label: "New Investigation",
+      href: "/#new-investigation",
       status: "active",
-    },
-    {
-      icon: Fingerprint,
-      label: "Header Forensics",
-      href: "#forensics-zone",
-      status: "active",
-    },
-    {
-      icon: Globe2,
-      label: "Threat Intelligence",
-      href: "#intel",
-      status: "planned",
-    },
-    {
-      icon: FileText,
-      label: "Reports & Evidence",
-      href: "#reports",
-      status: "planned",
     },
     {
       icon: Settings,
-      label: "Platform Settings",
+      label: "Settings",
       href: "#settings",
-      status: "planned",
+      status: "active",
     },
   ];
 
@@ -67,7 +46,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
     <aside className={`sidebar ${isOpen ? "open" : "collapsed"}`} aria-label="Main Navigation">
       <div className="sidebar-inner">
         <div className="sidebar-section-title">
-          <span>INVESTIGATION MODULES</span>
+          <span>INVESTIGATIONS</span>
         </div>
 
         <nav className="sidebar-nav">
@@ -80,13 +59,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                 key={index}
                 href={item.href}
                 className={`nav-item ${isActive ? "active" : "disabled"}`}
-                aria-current={item.href === "/" ? "page" : undefined}
               >
                 <Icon className="w-4 h-4 nav-icon" />
                 <span className="nav-label">{item.label}</span>
-                {item.status === "planned" && (
-                  <span className="nav-badge">Planned</span>
-                )}
               </a>
             );
           })}

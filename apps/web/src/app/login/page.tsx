@@ -51,35 +51,35 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="login-container">
-      <div className="login-card">
+    <div style={{ backgroundColor: "#17212B", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}>
+      <div style={{ width: "400px", backgroundColor: "#FFFFFF", borderRadius: "8px", padding: "32px", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)" }}>
         {/* Header Branding */}
-        <div className="text-center mb-6">
-          <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center mx-auto mb-3 shadow-lg shadow-cyan-500/10">
-            <Shield className="w-6 h-6 text-cyan-400" />
+        <div style={{ textAlign: "center", marginBottom: "24px" }}>
+          <div style={{ width: "48px", height: "48px", borderRadius: "12px", backgroundColor: "#EAF2F8", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+            <Shield style={{ width: "24px", height: "24px", color: "#1F4E79" }} />
           </div>
-          <h1 className="text-xl font-bold text-white tracking-tight">Analyst Authentication</h1>
-          <p className="text-xs text-gray-400 font-mono mt-1">
+          <h1 style={{ fontSize: "20px", fontWeight: "700", color: "#17212B", margin: "0 0 4px 0" }}>Analyst Authentication</h1>
+          <p style={{ fontSize: "12px", color: "#52606D" }}>
             ThreatTrace AI Security Operations Center
           </p>
         </div>
 
         {/* Error Alert */}
         {errorMsg && (
-          <div className="auth-error-alert" role="alert">
-            <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0" />
-            <span className="text-xs text-rose-300">{errorMsg}</span>
+          <div role="alert" style={{ display: "flex", alignItems: "center", gap: "8px", padding: "12px", backgroundColor: "#FDECEC", border: "1px solid #C53030", borderRadius: "6px", marginBottom: "20px" }}>
+            <AlertCircle style={{ width: "16px", height: "16px", color: "#C53030", flexShrink: 0 }} />
+            <span style={{ fontSize: "13px", color: "#9B1C1C" }}>{errorMsg}</span>
           </div>
         )}
 
         {/* Login Form */}
-        <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
-          <div className="form-group">
-            <label htmlFor="email-input" className="form-label">
+        <form onSubmit={handleSubmit} noValidate style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          <div>
+            <label htmlFor="email-input" style={{ display: "block", fontSize: "13px", fontWeight: "650", color: "#17212B", marginBottom: "6px" }}>
               Analyst Email
             </label>
-            <div className="input-wrap">
-              <Mail className="w-4 h-4 input-icon" />
+            <div style={{ position: "relative" }}>
+              <Mail style={{ width: "16px", height: "16px", color: "#52606D", position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)" }} />
               <input
                 id="email-input"
                 type="email"
@@ -87,19 +87,19 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="analyst@threattrace.io"
                 disabled={isSubmitting}
-                className="form-input"
+                style={{ width: "100%", height: "36px", padding: "0 12px 0 36px", borderRadius: "6px", border: "1px solid #D9E0E7", fontSize: "13px", color: "#17212B", outline: "none" }}
                 autoComplete="email"
                 required
               />
             </div>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="password-input" className="form-label">
+          <div>
+            <label htmlFor="password-input" style={{ display: "block", fontSize: "13px", fontWeight: "650", color: "#17212B", marginBottom: "6px" }}>
               Passphrase / Credential
             </label>
-            <div className="input-wrap">
-              <Lock className="w-4 h-4 input-icon" />
+            <div style={{ position: "relative" }}>
+              <Lock style={{ width: "16px", height: "16px", color: "#52606D", position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)" }} />
               <input
                 id="password-input"
                 type="password"
@@ -107,7 +107,7 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••••••"
                 disabled={isSubmitting}
-                className="form-input"
+                style={{ width: "100%", height: "36px", padding: "0 12px 0 36px", borderRadius: "6px", border: "1px solid #D9E0E7", fontSize: "13px", color: "#17212B", outline: "none" }}
                 autoComplete="current-password"
                 required
               />
@@ -117,24 +117,25 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="login-submit-btn"
+            className="action-btn primary"
+            style={{ width: "100%", justifyContent: "center", marginTop: "8px" }}
           >
             {isSubmitting ? (
               <>
-                <RefreshCw className="w-4 h-4 animate-spin" />
+                <RefreshCw style={{ width: "16px", height: "16px", animation: "spin 1s linear infinite" }} />
                 <span>Authenticating...</span>
               </>
             ) : (
               <>
                 <span>Access SOC Console</span>
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight style={{ width: "16px", height: "16px" }} />
               </>
             )}
           </button>
         </form>
 
-        <div className="mt-6 pt-4 border-t border-gray-800 text-center">
-          <p className="text-xs text-gray-500 font-mono">
+        <div style={{ marginTop: "24px", paddingTop: "16px", borderTop: "1px solid #D9E0E7", textAlign: "center" }}>
+          <p style={{ fontSize: "11px", color: "#7B8794" }}>
             Restricted access. All analyst activities are audited with tamper-evident logs.
           </p>
         </div>

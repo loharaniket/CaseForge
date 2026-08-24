@@ -45,17 +45,14 @@ describe("AppShell & Navigation", () => {
     // 1. Verify header branding
     expect(screen.getByText("ThreatTrace AI")).toBeInTheDocument();
     expect(
-      screen.getByText("Cybersecurity Email Investigation Platform")
+      screen.getByText("Enterprise SOC Platform")
     ).toBeInTheDocument();
-    expect(screen.getByText("SOC Engine Ready")).toBeInTheDocument();
 
     // 2. Verify sidebar navigation
-    expect(screen.getByText("INVESTIGATION MODULES")).toBeInTheDocument();
-    expect(screen.getByText("SOC Overview")).toBeInTheDocument();
-    expect(screen.getByText("Email Ingestion")).toBeInTheDocument();
-    expect(screen.getByText("Header Forensics")).toBeInTheDocument();
-    expect(screen.getByText("Threat Intelligence")).toBeInTheDocument();
-    expect(screen.getByText("Reports & Evidence")).toBeInTheDocument();
+    expect(screen.getByText("INVESTIGATIONS")).toBeInTheDocument();
+    expect(screen.getAllByText("Investigations").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("New Investigation").length).toBeGreaterThan(0);
+    expect(screen.getByText("Settings")).toBeInTheDocument();
 
     // 3. Verify content
     expect(screen.getByTestId("test-content")).toHaveTextContent(

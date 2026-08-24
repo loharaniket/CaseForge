@@ -99,7 +99,7 @@ export const IOCTableWidget: React.FC<IOCTableWidgetProps> = ({
         {/* Header */}
         <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ xs: "flex-start", sm: "center" }} spacing={1} mb={2}>
           <Stack direction="row" alignItems="center" spacing={1.5}>
-            <Fingerprint className="w-5 h-5 text-cyan-400" />
+            <Fingerprint className="w-5 h-5 text-[#1F4E79]" />
             <Typography variant="h6" fontWeight={700} color="text.primary">
               Extracted Indicators of Compromise (IOCs)
             </Typography>
@@ -108,7 +108,7 @@ export const IOCTableWidget: React.FC<IOCTableWidgetProps> = ({
           <Chip
             label={`${iocs.length} Total IOCs`}
             size="small"
-            sx={{ bgcolor: "rgba(6, 182, 212, 0.15)", color: "#06b6d4", fontWeight: 700 }}
+            sx={{ bgcolor: "#EAF2F8", color: "#1F4E79", fontWeight: 700 }}
           />
         </Stack>
 
@@ -139,7 +139,7 @@ export const IOCTableWidget: React.FC<IOCTableWidgetProps> = ({
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <Search size={14} color="#9ca3af" />
+                  <Search size={14} color="#52606D" />
                 </InputAdornment>
               ),
               sx: { fontSize: "0.8rem", width: { xs: "100%", md: 240 } },
@@ -192,9 +192,9 @@ export const IOCTableWidget: React.FC<IOCTableWidgetProps> = ({
                         <Tooltip title={copiedValue === row.value ? "Copied!" : "Copy indicator"}>
                           <IconButton size="small" onClick={() => handleCopy(row.value)}>
                             {copiedValue === row.value ? (
-                              <Check size={14} color="#10b981" />
+                              <Check size={14} color="#237A57" />
                             ) : (
-                              <Copy size={14} color="#9ca3af" />
+                              <Copy size={14} color="#52606D" />
                             )}
                           </IconButton>
                         </Tooltip>
