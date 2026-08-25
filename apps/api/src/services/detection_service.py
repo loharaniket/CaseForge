@@ -7,6 +7,18 @@ from src.models.email import ParsedEmail
 from src.models.threat import ThreatAssessment
 from src.services.detector.interface import ThreatDetector
 from src.services.detector.rule_based import default_rule_detector
+from src.services.detector.extended import extended_detector
+from src.models.forensics import HeaderForensics
+from src.models.url_intel import URLIntelligenceRecord
+
+class CompositeContext:
+    def __init__(self, parsed, auth_details, url_intel):
+        self._parsed = parsed
+        self.auth_details = auth_details
+        self.url_intel = url_intel
+    def __getattr__(self, name):
+        return getattr(self._parsed, name)
+
 from src.services.parser_service import ParserService, get_parser_service
 
 
@@ -18,7 +30,7 @@ class DetectionService:
         detector: ThreatDetector | None = None,
         parser_service: ParserService | None = None,
     ) -> None:
-        self.detector = detector or default_rule_detector
+        self.detector = detector or extended_detector
         self.parser_service = parser_service or get_parser_service()
 
     def analyze_case(self, case_id: str, db: Session) -> ThreatAssessment:
@@ -52,7 +64,24 @@ class DetectionService:
             parsed_email = self.parser_service.get_parsed_case(case_id=case_id, db=db)
 
         # 4. Execute decoupled threat detector
-        result = self.detector.detect(parsed_email)
+        # Fetch URL intelligence
+        url_intel = db.execute(
+            select(URLIntelligenceRecord).where(URLIntelligenceRecord.case_id == case_id)
+        ).scalars().all()
+        
+        # Fetch Header Forensics (authentication results)
+        hf = db.execute(select(HeaderForensics).where(HeaderForensics.case_id == case_id)).scalar_one_or_none()
+        auth_details = {}
+        if hf:
+            # We don't have authentication directly on the DB model, but we can look for raw_headers in parsed_email
+            # Wait, the prompt says "authentication results". If it's not on HF model, we can parse from raw_headers
+            auth_res = parsed_email.raw_headers.get("Authentication-Results", "") if parsed_email.raw_headers else ""
+            if isinstance(auth_res, list): auth_res = " ".join(auth_res)
+            auth_details["spf_status"] = "fail" if "spf=fail" in auth_res.lower() else ("pass" if "spf=pass" in auth_res.lower() else "neutral")
+            auth_details["dkim_status"] = "fail" if "dkim=fail" in auth_res.lower() else ("pass" if "dkim=pass" in auth_res.lower() else "neutral")
+
+        context = CompositeContext(parsed_email, auth_details, url_intel)
+        result = self.detector.detect(context)
 
         # 5. Persist ThreatAssessment entity
         assessment = ThreatAssessment(
