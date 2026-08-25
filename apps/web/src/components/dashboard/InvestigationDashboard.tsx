@@ -45,6 +45,7 @@ import { ThreatIntelGeoWidget } from "./ThreatIntelGeoWidget";
 import { IOCTableWidget } from "./IOCTableWidget";
 import { ForensicTimelineWidget } from "./ForensicTimelineWidget";
 import { EvidenceIntegrityWidget } from "./EvidenceIntegrityWidget";
+import { IPIntelligenceWidget } from "./IPIntelligenceWidget";
 import { ThreatGraphWidget } from "./ThreatGraphWidget";
 import { Card, CardContent, Badge, Button } from "@/components/ui";
 
@@ -516,6 +517,7 @@ export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ 
             geo={geo}
             isLoading={isIntelLoading || isGeoLoading}
           />
+            <IPIntelligenceWidget caseId={caseId} />
         </section>
       )}
 

@@ -20,6 +20,8 @@ from src.schemas.geo import CaseGeoInfrastructureResponse, GeoLocationResultSche
 from src.schemas.graph import CaseThreatGraphResponse
 from src.schemas.intel import CaseThreatIntelResponse, ReputationResultSchema
 from src.schemas.ioc import CaseIOCListResponse, IOCRecordSchema
+from src.schemas.ip_intel import CaseIPIntelligenceResponse, IPIntelligenceRecordSchema
+from src.services.intelligence.ip_service import AggregatedIPIntelligenceService, get_ip_intel_service
 from src.schemas.report import InvestigationReportDataResponse
 from src.schemas.risk import RiskAssessmentResponse
 from src.schemas.threat import ThreatAssessmentResponse
@@ -764,3 +766,53 @@ def get_case_threat_graph(
     case_access.assert_can_view_case(case_id=case_id, user=current_user, db=db)
     result = graph_service.get_case_graph(case_id=case_id, db=db)
     return CaseThreatGraphResponse.model_validate(result.to_dict())
+
+@router.post(
+    "/{case_id}/ip-intelligence",
+    response_model=CaseIPIntelligenceResponse,
+    status_code=status.HTTP_200_OK,
+    responses={
+        400: {"description": "Case processing failed"},
+        401: {"description": "Authentication required"},
+        404: {"description": "Case not found"},
+    },
+)
+async def enrich_case_ip_intelligence(
+    case_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    case_access: CaseAccessService = Depends(get_case_access_service),
+    ip_service: AggregatedIPIntelligenceService = Depends(get_ip_intel_service),
+) -> CaseIPIntelligenceResponse:
+    """Enriches all case IP infrastructure with IP Intelligence."""
+    case_access.assert_can_modify_case(case_id=case_id, user=current_user, db=db)
+    records = await ip_service.analyze_case_ip_intelligence(case_id=case_id, db=db)
+    return CaseIPIntelligenceResponse(
+        case_id=case_id,
+        ip_intelligence=[IPIntelligenceRecordSchema.model_validate(r) for r in records]
+    )
+
+@router.get(
+    "/{case_id}/ip-intelligence",
+    response_model=CaseIPIntelligenceResponse,
+    status_code=status.HTTP_200_OK,
+    responses={
+        401: {"description": "Authentication required"},
+        403: {"description": "Insufficient permissions"},
+        404: {"description": "Case not found"},
+    },
+)
+def get_case_ip_intelligence(
+    case_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    case_access: CaseAccessService = Depends(get_case_access_service),
+    ip_service: AggregatedIPIntelligenceService = Depends(get_ip_intel_service),
+) -> CaseIPIntelligenceResponse:
+    """Retrieves computed IP Intelligence for a case."""
+    case_access.assert_can_view_case(case_id=case_id, user=current_user, db=db)
+    records = ip_service.get_case_ip_intelligence(case_id=case_id, db=db)
+    return CaseIPIntelligenceResponse(
+        case_id=case_id,
+        ip_intelligence=[IPIntelligenceRecordSchema.model_validate(r) for r in records]
+    )

@@ -55,6 +55,9 @@ class Case(Base):
         "HeaderForensics", back_populates="case", uselist=False, cascade="all, delete-orphan"
     )
     iocs = relationship("CaseIOC", back_populates="case", cascade="all, delete-orphan")
+    ip_intelligence_records = relationship(
+        "IPIntelligenceRecord", back_populates="case", cascade="all, delete-orphan"
+    )
     evidence_records = relationship(
         "EvidenceRecord", back_populates="case", cascade="all, delete-orphan"
     )

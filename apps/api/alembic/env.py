@@ -10,6 +10,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 from src.core.config import settings
 from src.db.base import Base
+import src.models
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

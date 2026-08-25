@@ -24,6 +24,7 @@ from src.schemas.graph import (
 from src.schemas.health import DatabaseStatus, HealthResponse, HealthStatus, LivenessResponse
 from src.schemas.intel import CaseThreatIntelResponse, ReputationResultSchema
 from src.schemas.ioc import CaseIOCListResponse, IOCRecordSchema
+from src.schemas.ip_intel import CaseIPIntelligenceResponse, IPIntelligenceRecordSchema
 from src.schemas.ready import ReadyResponse, ReadyStatus
 from src.schemas.report import InvestigationReportDataResponse
 from src.schemas.risk import RiskAssessmentResponse, RiskBreakdownSchema
@@ -43,7 +44,9 @@ __all__ = [
     "CaseEvidenceListResponse",
     "CaseEvidenceVerificationResponse",
     "CaseGeoInfrastructureResponse",
+    "CaseIPIntelligenceResponse",
     "CaseIOCListResponse",
+    "IPIntelligenceRecordSchema",
     "CaseThreatGraphResponse",
     "CaseThreatIntelResponse",
     "DatabaseStatus",

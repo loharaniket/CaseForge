@@ -18,5 +18,7 @@ __all__ = [
     "ReputationProvider",
     "ProviderStatus",
     "IntelligenceResult",
+    "IPIntelligenceData",
+    "AggregatedIPIntelligenceService",
     "IntelligenceService",
 ]
