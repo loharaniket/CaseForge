@@ -30,6 +30,7 @@ class URLIntelligenceRecordSchema(BaseModel):
     reputation: str | None = None
     risk_score: float | None = None
     provider_status: str | None = None
+    redirect_chain: list[dict] | None = None
     last_updated: datetime
 
     model_config = ConfigDict(from_attributes=True)

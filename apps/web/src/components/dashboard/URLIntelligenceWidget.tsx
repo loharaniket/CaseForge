@@ -5,6 +5,18 @@ import { Link2, ShieldAlert, ShieldCheck, AlertTriangle } from "lucide-react";
 import { Card, CardContent, Badge, Table, Thead, Tbody, Tr, Th, Td } from "@/components/ui";
 import { getCaseURLIntelligence, enrichCaseURLIntelligence } from "@/lib/api/email";
 
+interface RedirectNode {
+  original_url: string;
+  status: number | string;
+  error?: string;
+  hostname?: string;
+  resolved_ip?: string;
+  order?: number;
+  timestamp?: string;
+  redirect_url?: string;
+  final_url?: string;
+}
+
 interface URLIntelligenceRecord {
   raw_url: string;
   scheme: string | null;
@@ -27,6 +39,7 @@ interface URLIntelligenceRecord {
   explanation: string | null;
   reputation: string | null;
   risk_score: number | null;
+  redirect_chain?: RedirectNode[] | null;
 }
 
 interface CaseURLIntelligenceResponse {
@@ -110,6 +123,7 @@ export function URLIntelligenceWidget({ caseId }: URLIntelligenceWidgetProps) {
                 <Th>Risk Indicators</Th>
                 <Th>Lookalike Assessment</Th>
                 <Th>Reputation</Th>
+                <Th>Redirect Chain</Th>
               </Tr>
             </Thead>
             <Tbody>
@@ -160,6 +174,33 @@ export function URLIntelligenceWidget({ caseId }: URLIntelligenceWidgetProps) {
                         <ShieldCheck className="h-4 w-4" />
                         <span className="text-sm font-medium">Clean</span>
                       </div>
+                    )}
+                  </Td>
+                                  <Td>
+                    {urlData.redirect_chain && urlData.redirect_chain.length > 0 ? (
+                      <div className="flex flex-col gap-1 text-xs">
+                        {urlData.redirect_chain.map((node, i) => (
+                          <div key={i} className="flex items-center gap-1">
+                            <span className="text-slate-400">?</span>
+                            <span className="truncate max-w-[200px]" title={(node.redirect_url || node.final_url || node.status) as string}>
+                              {node.status === "BLOCKED_SECURITY_POLICY" ? (
+                                <span className="text-red-500 font-semibold flex items-center gap-1">
+                                  <ShieldAlert className="h-3 w-3"/>
+                                  BLOCKED ({node.error})
+                                </span>
+                              ) : node.redirect_url ? (
+                                node.redirect_url
+                              ) : node.final_url ? (
+                                <span className="text-green-600">Final: {node.final_url}</span>
+                              ) : (
+                                <span className="text-orange-500">{node.status}</span>
+                              )}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-xs text-slate-400">No redirects</span>
                     )}
                   </Td>
                 </Tr>

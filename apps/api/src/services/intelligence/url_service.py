@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 
 from src.services.intelligence.service import IntelligenceService
 from src.services.intelligence.providers.virustotal_domain import VirusTotalDomainFoundationProvider
+from src.services.intelligence.redirect_analyzer import SafeRedirectAnalyzer
 from src.services.intelligence.dto import URLIntelligenceData
 from src.services.intelligence.types import ProviderStatus
 from src.models.url_intel import URLIntelligenceRecord
@@ -118,6 +119,11 @@ class AggregatedURLIntelligenceService:
                 continue
                 
             data = await self.get_url_intelligence(url)
+            try:
+                redirects = await SafeRedirectAnalyzer.analyze(url)
+                data.redirect_chain = redirects
+            except Exception as e:
+                data.redirect_chain = [{"original_url": url, "status": "ERROR", "error": str(e)}]
             
             record = URLIntelligenceRecord(
                 case_id=case_id,
@@ -143,7 +149,8 @@ class AggregatedURLIntelligenceService:
                 explanation=data.explanation,
                 reputation=data.reputation,
                 risk_score=data.risk_score,
-                provider_status=data.provider_status
+                provider_status=data.provider_status,
+                redirect_chain=data.redirect_chain
             )
             db.add(record)
             results.append(record)

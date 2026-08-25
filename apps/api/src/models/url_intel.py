@@ -41,6 +41,7 @@ class URLIntelligenceRecord(Base):
     risk_score: Mapped[float | None] = mapped_column(Float, nullable=True)
     provider_status: Mapped[str | None] = mapped_column(String(64), nullable=True)
     
+    redirect_chain: Mapped[list[dict] | None] = mapped_column(JSON, nullable=True)
     last_updated: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
 
     case = relationship("Case", back_populates="url_intelligence")
