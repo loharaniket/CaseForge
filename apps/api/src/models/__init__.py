@@ -7,6 +7,7 @@ from src.models.evidence import EvidenceRecord
 from src.models.forensics import HeaderForensics
 from src.models.ioc import CaseIOC
 from src.models.ip_intel import IPIntelligenceRecord
+from src.models.domain_intel import DomainIntelligenceRecord
 from src.models.risk import RiskAssessment
 from src.models.threat import ThreatAssessment
 from src.models.user import User, UserRole
@@ -16,6 +17,7 @@ __all__ = [
     "Case",
     "CaseIOC",
     "IPIntelligenceRecord",
+    "DomainIntelligenceRecord",
     "CaseStatus",
     "EvidenceRecord",
     "HeaderForensics",

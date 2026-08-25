@@ -22,3 +22,5 @@ __all__ = [
     "AggregatedIPIntelligenceService",
     "IntelligenceService",
 ]
+
+from .domain_service import AggregatedDomainIntelligenceService, get_domain_intel_service

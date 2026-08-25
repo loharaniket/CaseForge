@@ -82,3 +82,5 @@ __all__ = [
     "UserResponse",
     "UserRole",
 ]
+
+from .domain_intel import CaseDomainIntelligenceResponse, DomainIntelligenceRecordSchema

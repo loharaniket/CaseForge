@@ -20,6 +20,8 @@ from src.schemas.geo import CaseGeoInfrastructureResponse, GeoLocationResultSche
 from src.schemas.graph import CaseThreatGraphResponse
 from src.schemas.intel import CaseThreatIntelResponse, ReputationResultSchema
 from src.schemas.ioc import CaseIOCListResponse, IOCRecordSchema
+from src.schemas.domain_intel import CaseDomainIntelligenceResponse, DomainIntelligenceRecordSchema
+from src.services.intelligence.domain_service import AggregatedDomainIntelligenceService, get_domain_intel_service
 from src.schemas.ip_intel import CaseIPIntelligenceResponse, IPIntelligenceRecordSchema
 from src.services.intelligence.ip_service import AggregatedIPIntelligenceService, get_ip_intel_service
 from src.schemas.report import InvestigationReportDataResponse
@@ -815,4 +817,55 @@ def get_case_ip_intelligence(
     return CaseIPIntelligenceResponse(
         case_id=case_id,
         ip_intelligence=[IPIntelligenceRecordSchema.model_validate(r) for r in records]
+    )
+
+
+@router.post(
+    "/{case_id}/domain-intelligence",
+    response_model=CaseDomainIntelligenceResponse,
+    status_code=status.HTTP_200_OK,
+    responses={
+        400: {"description": "Case processing failed"},
+        401: {"description": "Authentication required"},
+        404: {"description": "Case not found"},
+    },
+)
+async def enrich_case_domain_intelligence(
+    case_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    case_access: CaseAccessService = Depends(get_case_access_service),
+    domain_service: AggregatedDomainIntelligenceService = Depends(get_domain_intel_service),
+) -> CaseDomainIntelligenceResponse:
+    """Enriches all case domain infrastructure with Domain Intelligence."""
+    case_access.assert_can_modify_case(case_id=case_id, user=current_user, db=db)
+    records = await domain_service.analyze_case_domain_intelligence(case_id=case_id, db=db)
+    return CaseDomainIntelligenceResponse(
+        case_id=case_id,
+        domain_intelligence=[DomainIntelligenceRecordSchema.model_validate(r) for r in records]
+    )
+
+@router.get(
+    "/{case_id}/domain-intelligence",
+    response_model=CaseDomainIntelligenceResponse,
+    status_code=status.HTTP_200_OK,
+    responses={
+        401: {"description": "Authentication required"},
+        403: {"description": "Insufficient permissions"},
+        404: {"description": "Case not found"},
+    },
+)
+def get_case_domain_intelligence(
+    case_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    case_access: CaseAccessService = Depends(get_case_access_service),
+    domain_service: AggregatedDomainIntelligenceService = Depends(get_domain_intel_service),
+) -> CaseDomainIntelligenceResponse:
+    """Retrieves computed Domain Intelligence for a case."""
+    case_access.assert_can_view_case(case_id=case_id, user=current_user, db=db)
+    records = domain_service.get_case_domain_intelligence(case_id=case_id, db=db)
+    return CaseDomainIntelligenceResponse(
+        case_id=case_id,
+        domain_intelligence=[DomainIntelligenceRecordSchema.model_validate(r) for r in records]
     )
