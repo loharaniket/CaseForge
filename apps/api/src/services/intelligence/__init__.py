@@ -24,3 +24,5 @@ __all__ = [
 ]
 
 from .domain_service import AggregatedDomainIntelligenceService, get_domain_intel_service
+
+from .url_service import AggregatedURLIntelligenceService, get_url_intel_service

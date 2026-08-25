@@ -58,6 +58,9 @@ class Case(Base):
     domain_intelligence: Mapped[list["DomainIntelligenceRecord"]] = relationship(
         "DomainIntelligenceRecord", back_populates="case", cascade="all, delete-orphan"
     )
+    url_intelligence: Mapped[list["URLIntelligenceRecord"]] = relationship(
+        "URLIntelligenceRecord", back_populates="case", cascade="all, delete-orphan"
+    )
     ip_intelligence_records = relationship(
         "IPIntelligenceRecord", back_populates="case", cascade="all, delete-orphan"
     )

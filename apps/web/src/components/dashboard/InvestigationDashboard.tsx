@@ -47,6 +47,7 @@ import { ForensicTimelineWidget } from "./ForensicTimelineWidget";
 import { EvidenceIntegrityWidget } from "./EvidenceIntegrityWidget";
 import { IPIntelligenceWidget } from "./IPIntelligenceWidget";
 import { DomainIntelligenceWidget } from "./DomainIntelligenceWidget";
+import { URLIntelligenceWidget } from "./URLIntelligenceWidget";
 import { ThreatGraphWidget } from "./ThreatGraphWidget";
 import { Card, CardContent, Badge, Button } from "@/components/ui";
 
@@ -520,6 +521,7 @@ export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ 
           />
             <IPIntelligenceWidget caseId={caseId} />
             <DomainIntelligenceWidget caseId={caseId} />
+            <URLIntelligenceWidget caseId={caseId} />
         </section>
       )}
 

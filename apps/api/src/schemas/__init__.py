@@ -84,3 +84,5 @@ __all__ = [
 ]
 
 from .domain_intel import CaseDomainIntelligenceResponse, DomainIntelligenceRecordSchema
+
+from .url_intel import CaseURLIntelligenceResponse, URLIntelligenceRecordSchema

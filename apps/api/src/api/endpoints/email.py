@@ -20,6 +20,8 @@ from src.schemas.geo import CaseGeoInfrastructureResponse, GeoLocationResultSche
 from src.schemas.graph import CaseThreatGraphResponse
 from src.schemas.intel import CaseThreatIntelResponse, ReputationResultSchema
 from src.schemas.ioc import CaseIOCListResponse, IOCRecordSchema
+from src.schemas.url_intel import CaseURLIntelligenceResponse, URLIntelligenceRecordSchema
+from src.services.intelligence.url_service import AggregatedURLIntelligenceService, get_url_intel_service
 from src.schemas.domain_intel import CaseDomainIntelligenceResponse, DomainIntelligenceRecordSchema
 from src.services.intelligence.domain_service import AggregatedDomainIntelligenceService, get_domain_intel_service
 from src.schemas.ip_intel import CaseIPIntelligenceResponse, IPIntelligenceRecordSchema
@@ -868,4 +870,55 @@ def get_case_domain_intelligence(
     return CaseDomainIntelligenceResponse(
         case_id=case_id,
         domain_intelligence=[DomainIntelligenceRecordSchema.model_validate(r) for r in records]
+    )
+
+
+@router.post(
+    "/{case_id}/url-intelligence",
+    response_model=CaseURLIntelligenceResponse,
+    status_code=status.HTTP_200_OK,
+    responses={
+        400: {"description": "Case processing failed"},
+        401: {"description": "Authentication required"},
+        404: {"description": "Case not found"},
+    },
+)
+async def enrich_case_url_intelligence(
+    case_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    case_access: CaseAccessService = Depends(get_case_access_service),
+    url_service: AggregatedURLIntelligenceService = Depends(get_url_intel_service),
+) -> CaseURLIntelligenceResponse:
+    """Enriches all case URL infrastructure with URL Intelligence."""
+    case_access.assert_can_modify_case(case_id=case_id, user=current_user, db=db)
+    records = await url_service.analyze_case_url_intelligence(case_id=case_id, db=db)
+    return CaseURLIntelligenceResponse(
+        case_id=case_id,
+        url_intelligence=[URLIntelligenceRecordSchema.model_validate(r) for r in records]
+    )
+
+@router.get(
+    "/{case_id}/url-intelligence",
+    response_model=CaseURLIntelligenceResponse,
+    status_code=status.HTTP_200_OK,
+    responses={
+        401: {"description": "Authentication required"},
+        403: {"description": "Insufficient permissions"},
+        404: {"description": "Case not found"},
+    },
+)
+def get_case_url_intelligence(
+    case_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    case_access: CaseAccessService = Depends(get_case_access_service),
+    url_service: AggregatedURLIntelligenceService = Depends(get_url_intel_service),
+) -> CaseURLIntelligenceResponse:
+    """Retrieves computed URL Intelligence for a case."""
+    case_access.assert_can_view_case(case_id=case_id, user=current_user, db=db)
+    records = url_service.get_case_url_intelligence(case_id=case_id, db=db)
+    return CaseURLIntelligenceResponse(
+        case_id=case_id,
+        url_intelligence=[URLIntelligenceRecordSchema.model_validate(r) for r in records]
     )
