@@ -57,6 +57,9 @@ class Settings(BaseSettings):
     POSTGRES_POOL_TIMEOUT: int = 30
     POSTGRES_CONNECT_TIMEOUT: int = 2
 
+    # Providers
+    PROVIDER_TIMEOUT_SECONDS: float = 10.0
+
     # Threat Intelligence External Providers (Keys from env only)
     ABUSEIPDB_API_KEY: str | None = None
     VIRUSTOTAL_API_KEY: str | None = None
