@@ -178,8 +178,8 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
 
 def setup_exception_handlers(app: FastAPI) -> None:
     """Registers structured exception handlers on the FastAPI application."""
-    app.add_exception_handler(AppException, app_exception_handler)
-    app.add_exception_handler(RequestValidationError, validation_exception_handler)
-    app.add_exception_handler(StarletteHTTPException, http_exception_handler)
-    app.add_exception_handler(SQLAlchemyError, sqlalchemy_exception_handler)
-    app.add_exception_handler(Exception, unhandled_exception_handler)
+    app.add_exception_handler(AppException, app_exception_handler)  # type: ignore
+    app.add_exception_handler(RequestValidationError, validation_exception_handler)  # type: ignore
+    app.add_exception_handler(StarletteHTTPException, http_exception_handler)  # type: ignore
+    app.add_exception_handler(SQLAlchemyError, sqlalchemy_exception_handler)  # type: ignore
+    app.add_exception_handler(Exception, unhandled_exception_handler)  # type: ignore

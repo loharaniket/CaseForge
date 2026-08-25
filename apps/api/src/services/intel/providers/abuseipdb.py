@@ -45,7 +45,7 @@ class AbuseIPDBProvider(IPReputationProvider):
             "Key": self.api_key,
             "Accept": "application/json",
         }
-        params = {
+        params: dict[str, str | int | bool] = {
             "ipAddress": clean_ip,
             "maxAgeInDays": 90,
             "verbose": True,

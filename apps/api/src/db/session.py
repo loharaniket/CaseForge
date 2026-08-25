@@ -12,7 +12,7 @@ from src.core.logging import logger
 
 def build_engine(database_url: str) -> tuple[Engine, dict[str, Any]]:
     """Constructs a SQLAlchemy engine configured for the database dialect."""
-    connect_args = {}
+    connect_args: dict[str, Any] = {}
     engine_kwargs: dict[str, Any] = {
         "pool_pre_ping": True,
     }

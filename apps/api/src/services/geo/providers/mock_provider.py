@@ -1,4 +1,5 @@
 import ipaddress
+from typing import Any
 
 from src.services.geo.types import (
     DISCLAIMER_TEXT,
@@ -31,7 +32,7 @@ def _is_private(ip_obj: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
 class MockGeoIPProvider(GeoIPProvider):
     """Deterministic development and test GeoIP provider."""
 
-    KNOWN_INFRASTRUCTURE = {
+    KNOWN_INFRASTRUCTURE: dict[str, dict[str, Any]] = {
         "198.51.100.200": {
             "country_code": "DE",
             "country_name": "Germany",

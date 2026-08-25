@@ -198,10 +198,10 @@ class InvestigationReportService:
             threat_severity=threat_sev,
             score_breakdown=risk.breakdown if risk else {},
             explainability_reasons=threat.reasons if threat else [],
-            subject=parsed_email.subject if parsed_email else "N/A",
-            sender=parsed_email.sender if parsed_email else "N/A",
-            from_name=parsed_email.from_name if parsed_email else "N/A",
-            from_address=parsed_email.from_address if parsed_email else "N/A",
+            subject=(parsed_email.subject or "N/A") if parsed_email else "N/A",
+            sender=(parsed_email.sender or "N/A") if parsed_email else "N/A",
+            from_name=(parsed_email.from_name or "N/A") if parsed_email else "N/A",
+            from_address=(parsed_email.from_address or "N/A") if parsed_email else "N/A",
             recipients=parsed_email.recipients if parsed_email and parsed_email.recipients else [],
             cc=parsed_email.cc if parsed_email and parsed_email.cc else [],
             reply_to=parsed_email.reply_to if parsed_email and parsed_email.reply_to else [],
@@ -213,7 +213,7 @@ class InvestigationReportService:
             )
             if parsed_email
             else "N/A",
-            message_id=parsed_email.message_id if parsed_email else "N/A",
+            message_id=(parsed_email.message_id or "N/A") if parsed_email else "N/A",
             spf_status=spf_stat,
             dkim_status=forensics.dkim_status if forensics else "none",
             dmarc_status=dmarc_stat,

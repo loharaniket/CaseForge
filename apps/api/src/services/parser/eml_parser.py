@@ -1,4 +1,5 @@
 import hashlib
+import typing
 from datetime import UTC
 from email import policy
 from email.header import decode_header
@@ -74,7 +75,7 @@ class EMLParser(EmailParser):
         except Exception:
             # Fallback for heavily corrupted headers
             try:
-                msg: EmailMessage = BytesParser(policy=policy.compat32).parsebytes(raw_content)
+                msg = typing.cast(EmailMessage, BytesParser(policy=policy.compat32).parsebytes(raw_content))
             except Exception:
                 return ParsedEmailData(body_plain=raw_content.decode("utf-8", errors="replace"))
 
@@ -148,7 +149,9 @@ class EMLParser(EmailParser):
                 extension = Path(clean_filename).suffix.lower()
 
                 try:
-                    payload = part.get_payload(decode=True) or b""
+                    payload = part.get_payload(decode=True)
+                    if not isinstance(payload, bytes):
+                        payload = b""
                 except Exception:
                     payload = b""
 
@@ -168,6 +171,8 @@ class EMLParser(EmailParser):
                 content_type = part.get_content_type()
                 try:
                     payload_bytes = part.get_payload(decode=True)
+                    if not isinstance(payload_bytes, bytes):
+                        payload_bytes = None
                     if payload_bytes is not None:
                         charset = part.get_content_charset() or "utf-8"
                         try:
