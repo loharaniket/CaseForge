@@ -32,9 +32,14 @@ export const InvestigationConclusionWidget: React.FC<InvestigationConclusionWidg
   if (isLoading) {
     return (
       <Card className="mb-6 border-slate-700/50">
-        <CardHeader title="Analyst Conclusion" icon={<FileText className="w-5 h-5 text-slate-400" />} />
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <FileText className="w-5 h-5 text-slate-400" />
+            <h3 className="font-semibold">Analyst Conclusion</h3>
+          </div>
+        </CardHeader>
         <CardContent>
-          <LoadingState text="Synthesizing investigation conclusion..." />
+          <LoadingState message="Synthesizing investigation conclusion..." />
         </CardContent>
       </Card>
     );
@@ -43,7 +48,12 @@ export const InvestigationConclusionWidget: React.FC<InvestigationConclusionWidg
   if (isError || !conclusion) {
     return (
       <Card className="mb-6 border-slate-700/50">
-        <CardHeader title="Analyst Conclusion" icon={<FileText className="w-5 h-5 text-slate-400" />} />
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <FileText className="w-5 h-5 text-slate-400" />
+            <h3 className="font-semibold">Analyst Conclusion</h3>
+          </div>
+        </CardHeader>
         <CardContent>
           <div className="flex items-center space-x-2 text-red-400 text-sm p-4 bg-red-500/10 rounded-md">
             <AlertTriangle className="w-4 h-4" />
@@ -70,11 +80,12 @@ export const InvestigationConclusionWidget: React.FC<InvestigationConclusionWidg
       {/* Decorative accent line */}
       <div className={`absolute top-0 left-0 w-full h-1 ${isHighRisk ? 'bg-red-500' : 'bg-emerald-500'}`} />
       
-      <CardHeader 
-        title="Automated Analyst Conclusion" 
-        icon={<FileText className="w-5 h-5 text-slate-400" />} 
-        className="pb-2"
-      />
+      <CardHeader className="pb-2">
+        <div className="flex items-center gap-2">
+          <FileText className="w-5 h-5 text-slate-400" />
+          <h3 className="font-semibold text-[16px] text-text-primary">Automated Analyst Conclusion</h3>
+        </div>
+      </CardHeader>
       
       <CardContent className="space-y-6 pt-4">
         {/* Top Summary Row */}

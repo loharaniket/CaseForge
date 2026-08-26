@@ -66,8 +66,8 @@ export const EvidenceIntegrityWidget: React.FC<EvidenceIntegrityWidgetProps> = (
     return verificationData?.results.find((r) => r.evidence_type === evType);
   };
 
-  const renderStatusBadge = (verResult?: EvidenceVerificationResult, dbStatus?: string) => {
-    const status = verResult?.status || dbStatus || "UNVERIFIED";
+  const renderStatusBadge = (verResult?: EvidenceVerificationResult) => {
+    const status = verResult?.status || "UNVERIFIED";
 
     if (status === "VERIFIED") {
       return (
@@ -233,7 +233,7 @@ export const EvidenceIntegrityWidget: React.FC<EvidenceIntegrityWidgetProps> = (
                       {/* Evidence status */}
                       <Td className="align-top">
                         <div className="mt-3">
-                          {renderStatusBadge(verResult, rec.status)}
+                          {renderStatusBadge(verResult)}
                         </div>
                       </Td>
 

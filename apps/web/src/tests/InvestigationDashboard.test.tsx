@@ -86,7 +86,7 @@ const mockForensics = {
       timestamp_raw: "Sun, 23 Aug 2026 12:00:00 +0000",
       timestamp_iso: "2026-08-23T12:00:00Z",
       delay_seconds: 2,
-      ip_addresses: ["198.51.100.200"],
+      ip_address: "198.51.100.200",
       is_private_relay: false,
     },
   ],
