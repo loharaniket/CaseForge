@@ -14,6 +14,8 @@ from src.models.campaign import CampaignInvestigationLink
 from src.schemas.campaign import CampaignResponse
 from src.schemas.analysis import CaseAnalysisHistoryResponse, AnalysisHistoryRecordSchema
 from src.services.analysis_service import AnalysisHistoryService, get_analysis_history_service
+from src.schemas.conclusion import InvestigationConclusionResponse
+from src.services.conclusion.engine import ConclusionEngineService, get_conclusion_engine
 
 from src.schemas.email import ParsedEmailResponse
 from src.schemas.evidence import (
@@ -1008,3 +1010,33 @@ def get_case_campaigns(
         ))
         
     return results
+
+@router.get(
+    "/{case_id}/conclusion",
+    response_model=InvestigationConclusionResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get or Generate Investigation Conclusion",
+)
+def get_investigation_conclusion(
+    case_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    case_access: CaseAccessService = Depends(get_case_access_service),
+    conclusion_engine: ConclusionEngineService = Depends(get_conclusion_engine),
+) -> InvestigationConclusionResponse:
+    """Generates and returns an explainable investigation conclusion deterministically."""
+    case_access.assert_can_view_case(case_id=case_id, user=current_user, db=db)
+    conclusion = conclusion_engine.generate_conclusion(case_id=case_id, db=db)
+    
+    return InvestigationConclusionResponse(
+        id=conclusion.id,
+        case_id=conclusion.case_id,
+        classification=conclusion.classification,
+        risk_score=conclusion.risk_score,
+        confidence=conclusion.confidence,
+        primary_findings=conclusion.primary_findings,
+        supporting_evidence=conclusion.supporting_evidence,
+        probable_infrastructure=conclusion.probable_infrastructure,
+        attribution_assessment=conclusion.attribution_assessment,
+        limitations=conclusion.limitations,
+    )

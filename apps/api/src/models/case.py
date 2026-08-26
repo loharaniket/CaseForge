@@ -73,3 +73,6 @@ class Case(Base):
     campaign_links = relationship(
         "CampaignInvestigationLink", back_populates="case", cascade="all, delete-orphan"
     )
+    conclusion = relationship(
+        "InvestigationConclusion", back_populates="case", uselist=False, cascade="all, delete-orphan"
+    )

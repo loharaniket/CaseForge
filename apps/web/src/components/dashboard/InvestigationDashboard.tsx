@@ -45,6 +45,7 @@ import { ThreatIntelGeoWidget } from "./ThreatIntelGeoWidget";
 import { IOCTableWidget } from "./IOCTableWidget";
 import { ForensicTimelineWidget } from "./ForensicTimelineWidget";
 import { EvidenceIntegrityWidget } from "./EvidenceIntegrityWidget";
+import { InvestigationConclusionWidget } from "./InvestigationConclusionWidget";
 import { IPIntelligenceWidget } from "./IPIntelligenceWidget";
 import { DomainIntelligenceWidget } from "./DomainIntelligenceWidget";
 import { URLIntelligenceWidget } from "./URLIntelligenceWidget";
@@ -348,6 +349,8 @@ export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ 
       {/* SECTION A: VERDICT & SECTION B: WHY? */}
       {(activeTab === 0 || activeTab === 1) && (
         <section id="section-verdict-why">
+          <InvestigationConclusionWidget caseId={parsed.case_id} />
+          
           <ThreatScoreWidget
             risk={risk}
             threat={threat}

@@ -439,3 +439,16 @@ export interface CampaignResponse {
   last_seen: string;
   confidence: number;
 }
+
+export interface InvestigationConclusionResponse {
+  id: string;
+  case_id: string;
+  classification: string;
+  risk_score: number;
+  confidence: number;
+  primary_findings: string[];
+  supporting_evidence: string[];
+  probable_infrastructure: string;
+  attribution_assessment: string;
+  limitations: string[];
+}
