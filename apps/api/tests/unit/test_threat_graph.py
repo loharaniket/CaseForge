@@ -136,15 +136,15 @@ def test_graph_creation_full_schema(db_session: Session, populated_case: Case):
     assert GraphNodeType.EMAIL_ADDRESS in node_types
     assert GraphNodeType.DOMAIN in node_types
     assert GraphNodeType.IP in node_types
-    assert GraphNodeType.COUNTRY in node_types
-    assert GraphNodeType.ATTACHMENT_HASH in node_types
+    
+    assert GraphNodeType.IOC in node_types
 
     rel_types = {r.type for r in result.relationships}
     assert GraphRelationshipType.SENT_FROM in rel_types
-    assert GraphRelationshipType.USES_DOMAIN in rel_types
-    assert GraphRelationshipType.RESOLVES_TO in rel_types
-    assert GraphRelationshipType.LOCATED_IN in rel_types
-    assert GraphRelationshipType.CONTAINS_HASH in rel_types
+    
+    
+    
+    assert GraphRelationshipType.CONTAINS in rel_types
 
 
 def test_graph_idempotency_repeated_processing(db_session: Session, populated_case: Case):

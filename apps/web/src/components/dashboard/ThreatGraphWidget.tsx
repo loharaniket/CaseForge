@@ -9,6 +9,10 @@ import {
   MapPin,
   Paperclip,
   Share2,
+  Link,
+  Briefcase,
+  Server,
+  FileSearch,
   RefreshCw,
   Info,
   AlertCircle,
@@ -29,6 +33,11 @@ const NODE_COLORS: Record<string, { bg: string; border: string; text: string; ic
   IP: { bg: "#FFF7E6", border: "#B7791F", text: "#17212B", iconColor: "#B7791F" },
   Country: { bg: "#E8F5EF", border: "#237A57", text: "#17212B", iconColor: "#237A57" },
   AttachmentHash: { bg: "#FDECEC", border: "#C53030", text: "#17212B", iconColor: "#C53030" },
+  URL: { bg: "#FFF4E5", border: "#DD6B20", text: "#17212B", iconColor: "#DD6B20" },
+  ASN: { bg: "#E2E8F0", border: "#4A5568", text: "#17212B", iconColor: "#4A5568" },
+  Organization: { bg: "#EDF2F7", border: "#2D3748", text: "#17212B", iconColor: "#2D3748" },
+  IOC: { bg: "#FEEBC8", border: "#C05621", text: "#17212B", iconColor: "#C05621" },
+  Case: { bg: "#E6FFFA", border: "#319795", text: "#17212B", iconColor: "#319795" },
 };
 
 function getNodeIcon(type: string) {
@@ -45,6 +54,16 @@ function getNodeIcon(type: string) {
       return <MapPin className="w-4 h-4" />;
     case "AttachmentHash":
       return <Paperclip className="w-4 h-4" />;
+    case "URL":
+      return <Link className="w-4 h-4" />;
+    case "ASN":
+      return <Server className="w-4 h-4" />;
+    case "Organization":
+      return <Briefcase className="w-4 h-4" />;
+    case "IOC":
+      return <FileSearch className="w-4 h-4" />;
+    case "Case":
+      return <Share2 className="w-4 h-4" />;
     default:
       return <Info className="w-4 h-4" />;
   }

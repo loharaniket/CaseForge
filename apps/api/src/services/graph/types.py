@@ -5,23 +5,33 @@ from typing import Any
 
 class GraphNodeType(StrEnum):
     """Investigation threat graph node categories."""
-
+    CASE = "Case"
     EMAIL = "Email"
     EMAIL_ADDRESS = "EmailAddress"
     DOMAIN = "Domain"
+    URL = "URL"
     IP = "IP"
+    ASN = "ASN"
+    ORGANIZATION = "Organization"
+    IOC = "IOC"
     COUNTRY = "Country"
     ATTACHMENT_HASH = "AttachmentHash"
 
 
 class GraphRelationshipType(StrEnum):
     """Investigation threat graph relationship classifications."""
-
     SENT_FROM = "SENT_FROM"
-    USES_DOMAIN = "USES_DOMAIN"
+    REPLY_TO = "REPLY_TO"
+    CONTAINS = "CONTAINS"
+    TRAVELED_THROUGH = "TRAVELED_THROUGH"
     RESOLVES_TO = "RESOLVES_TO"
+    USES_MX = "USES_MX"
+    BELONGS_TO = "BELONGS_TO"
+    OPERATED_BY = "OPERATED_BY"
+    HOSTED_ON = "HOSTED_ON"
     LOCATED_IN = "LOCATED_IN"
     CONTAINS_HASH = "CONTAINS_HASH"
+    USES_DOMAIN = "USES_DOMAIN"
 
 
 @dataclass(frozen=True)
