@@ -20,6 +20,13 @@ export interface EmailUploadResponse {
   created_at: string;
 }
 
+export interface AnalysisStatusResponse {
+  case_id: string;
+  analysis_status: string;
+  analysis_step: string;
+  error_message: string | null;
+}
+
 export interface AttachmentMetadata {
   filename: string;
   extension: string;

@@ -15,6 +15,15 @@ class CaseStatus(StrEnum):
     PARSED = "PARSED"
     FAILED = "FAILED"
 
+class AnalysisStatus(StrEnum):
+    """Overall background analysis status."""
+
+    QUEUED = "QUEUED"
+    PROCESSING = "PROCESSING"
+    COMPLETED = "COMPLETED"
+    PARTIAL = "PARTIAL"
+    FAILED = "FAILED"
+
 
 class Case(Base):
     """Investigation case and uploaded evidence record entity."""
@@ -39,6 +48,8 @@ class Case(Base):
     storage_key: Mapped[str] = mapped_column(String(255), nullable=False)
     status: Mapped[str] = mapped_column(String(50), default=CaseStatus.UPLOADED, nullable=False)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    analysis_status: Mapped[str] = mapped_column(String(50), default=AnalysisStatus.QUEUED, nullable=False)
+    analysis_step: Mapped[str] = mapped_column(String(100), default="Pending", nullable=False)
 
     # Relationships
     analyst = relationship("User", backref="cases")

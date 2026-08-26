@@ -1,7 +1,7 @@
 from sqlalchemy import select
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, File, Response, UploadFile, status
+from fastapi import APIRouter, Depends, File, Response, UploadFile, status, BackgroundTasks
 from sqlalchemy.orm import Session
 
 from src.api.deps import get_current_active_user, get_db
@@ -12,7 +12,7 @@ from src.models.user import User
 from src.services.campaign.service import get_campaign_service
 from src.models.campaign import CampaignInvestigationLink
 from src.schemas.campaign import CampaignResponse
-from src.schemas.analysis import CaseAnalysisHistoryResponse, AnalysisHistoryRecordSchema
+from src.schemas.analysis import CaseAnalysisHistoryResponse, AnalysisHistoryRecordSchema, AnalysisStatusResponse
 from src.services.analysis_service import AnalysisHistoryService, get_analysis_history_service
 from src.schemas.conclusion import InvestigationConclusionResponse
 from src.services.conclusion.engine import ConclusionEngineService, get_conclusion_engine
@@ -57,6 +57,7 @@ from src.services.report.service import InvestigationReportService, get_report_s
 from src.services.risk.service import RiskScoringService, get_risk_service
 from src.services.storage import EvidenceStorage, get_evidence_storage
 from src.services.timeline.service import ForensicTimelineService, get_timeline_service
+from src.services.analysis_orchestrator import run_background_analysis
 
 router = APIRouter()
 
@@ -75,6 +76,7 @@ router = APIRouter()
     },
 )
 async def upload_eml(
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(..., description="Suspicious raw RFC822 (.eml) email file"),
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
@@ -152,13 +154,8 @@ async def upload_eml(
     )
     db.commit()
 
-    # 6. Automatically trigger transactional parsing into PostgreSQL
-    try:
-        parser_service.parse_case(case_id=new_case.id, db=db)
-        db.refresh(new_case)
-    except Exception:
-        # Failure state is safely recorded in new_case.status = FAILED
-        db.refresh(new_case)
+    # 6. Automatically trigger background analysis pipeline
+    background_tasks.add_task(run_background_analysis, new_case.id)
 
     return EmailUploadResponse(
         case_id=new_case.id,
@@ -168,6 +165,34 @@ async def upload_eml(
         sha256=new_case.sha256_hash,
         created_at=new_case.created_at,
         error_message=new_case.error_message,
+    )
+
+
+@router.get(
+    "/{case_id}/analysis/status",
+    response_model=AnalysisStatusResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get Near-Real-Time Analysis Status",
+    description="Polls the current status and step of the background analysis pipeline.",
+    responses={
+        200: {"description": "Current analysis status"},
+        401: {"description": "Authentication required"},
+        404: {"description": "Case not found"},
+    },
+)
+def get_analysis_status(
+    case_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    case_access: CaseAccessService = Depends(get_case_access_service),
+) -> AnalysisStatusResponse:
+    """Retrieves the current background analysis status for a case."""
+    case = case_access.assert_can_view_case(case_id=case_id, user=current_user, db=db)
+    return AnalysisStatusResponse(
+        case_id=case.id,
+        analysis_status=case.analysis_status,
+        analysis_step=case.analysis_step,
+        error_message=case.error_message
     )
 
 

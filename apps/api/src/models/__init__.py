@@ -3,7 +3,7 @@
 from src.db.base import Base
 from src.models.analysis import AnalysisHistory
 from src.models.conclusion import InvestigationConclusion
-from src.models.case import Case, CaseStatus
+from src.models.case import Case, CaseStatus, AnalysisStatus
 from src.models.email import ParsedEmail
 from src.models.evidence import EvidenceRecord
 from src.models.forensics import HeaderForensics
@@ -25,6 +25,7 @@ __all__ = [
     "DomainIntelligenceRecord",
     "URLIntelligenceRecord",
     "CaseStatus",
+    "AnalysisStatus",
     "EvidenceRecord",
     "HeaderForensics",
     "ParsedEmail",

@@ -20,3 +20,11 @@ class CaseAnalysisHistoryResponse(BaseModel):
     case_id: str
     total_records: int
     records: list[AnalysisHistoryRecordSchema]
+
+class AnalysisStatusResponse(BaseModel):
+    """API response model for near-real-time analysis status."""
+
+    case_id: str
+    analysis_status: str
+    analysis_step: str
+    error_message: str | None = None

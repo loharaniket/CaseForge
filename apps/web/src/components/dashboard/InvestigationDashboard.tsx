@@ -24,6 +24,7 @@ import {
   getParsedEmail,
   getThreatAnalysis,
   verifyCaseEvidence,
+  getAnalysisStatus,
 } from "@/lib/api/email";
 import {
   CaseEvidenceListResponse,
@@ -64,6 +65,28 @@ export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ 
   const [isVerifyingEvidence, setIsVerifyingEvidence] = useState(false);
   const [verifyNotice, setVerifyNotice] = useState<string | null>(null);
 
+  // 0. Polling Analysis Status Query
+  const {
+    data: analysisStatus,
+    isLoading: isStatusLoading,
+  } = useQuery({
+    queryKey: ["analysis_status", caseId],
+    queryFn: () => getAnalysisStatus(caseId),
+    enabled: !!caseId,
+    refetchInterval: (query) => {
+      const status = query.state.data?.analysis_status;
+      if (status === "QUEUED" || status === "PROCESSING") {
+        return 2000; // Poll every 2 seconds
+      }
+      return false; // Stop polling
+    },
+  });
+
+  const isAnalysisComplete =
+    analysisStatus?.analysis_status === "COMPLETED" ||
+    analysisStatus?.analysis_status === "PARTIAL" ||
+    analysisStatus?.analysis_status === "FAILED";
+
   // 1. Parsed Email Query
   const {
     data: parsed,
@@ -74,7 +97,7 @@ export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ 
   } = useQuery<ParsedEmail, Error>({
     queryKey: ["parsed_email", caseId],
     queryFn: () => getParsedEmail(caseId),
-    enabled: !!caseId,
+    enabled: !!caseId && isAnalysisComplete,
     staleTime: 60000,
   });
 
@@ -86,7 +109,7 @@ export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ 
   } = useQuery<RiskAssessmentResponse, Error>({
     queryKey: ["case_risk", caseId],
     queryFn: () => getCaseRisk(caseId),
-    enabled: !!caseId,
+    enabled: !!caseId && isAnalysisComplete,
     staleTime: 60000,
   });
 
@@ -98,7 +121,7 @@ export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ 
   } = useQuery<ThreatAssessmentResponse, Error>({
     queryKey: ["threat_analysis", caseId],
     queryFn: () => getThreatAnalysis(caseId),
-    enabled: !!caseId,
+    enabled: !!caseId && isAnalysisComplete,
     staleTime: 60000,
   });
 
@@ -110,7 +133,7 @@ export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ 
   } = useQuery<HeaderForensicsResponse, Error>({
     queryKey: ["header_forensics", caseId],
     queryFn: () => getHeaderForensics(caseId),
-    enabled: !!caseId && (activeTab === 0 || activeTab === 1),
+    enabled: !!caseId && isAnalysisComplete && (activeTab === 0 || activeTab === 1),
     staleTime: 60000,
   });
 
@@ -122,7 +145,7 @@ export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ 
   } = useQuery<CaseIOCListResponse, Error>({
     queryKey: ["case_iocs", caseId],
     queryFn: () => getCaseIOCs(caseId),
-    enabled: !!caseId && (activeTab === 0 || activeTab === 3),
+    enabled: !!caseId && isAnalysisComplete && (activeTab === 0 || activeTab === 3),
     staleTime: 60000,
   });
 
@@ -134,7 +157,7 @@ export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ 
   } = useQuery<CaseThreatIntelResponse, Error>({
     queryKey: ["case_threat_intel", caseId],
     queryFn: () => getCaseThreatIntel(caseId),
-    enabled: !!caseId && (activeTab === 0 || activeTab === 2),
+    enabled: !!caseId && isAnalysisComplete && (activeTab === 0 || activeTab === 2),
     staleTime: 60000,
   });
 
@@ -146,7 +169,7 @@ export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ 
   } = useQuery<CaseGeoInfrastructureResponse, Error>({
     queryKey: ["case_geo_infrastructure", caseId],
     queryFn: () => getCaseGeoInfrastructure(caseId),
-    enabled: !!caseId && (activeTab === 0 || activeTab === 2),
+    enabled: !!caseId && isAnalysisComplete && (activeTab === 0 || activeTab === 2),
     staleTime: 60000,
   });
 
@@ -158,7 +181,7 @@ export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ 
   } = useQuery<ForensicTimelineResponse, Error>({
     queryKey: ["case_timeline", caseId],
     queryFn: () => getCaseTimeline(caseId),
-    enabled: !!caseId && (activeTab === 0 || activeTab === 4),
+    enabled: !!caseId && isAnalysisComplete && (activeTab === 0 || activeTab === 4),
     staleTime: 60000,
   });
 
@@ -170,7 +193,7 @@ export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ 
   } = useQuery<CaseEvidenceListResponse, Error>({
     queryKey: ["case_evidence", caseId],
     queryFn: () => getCaseEvidence(caseId),
-    enabled: !!caseId && (activeTab === 0 || activeTab === 5),
+    enabled: !!caseId && isAnalysisComplete && (activeTab === 0 || activeTab === 5),
     staleTime: 60000,
   });
 
@@ -182,7 +205,7 @@ export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ 
   } = useQuery<CaseThreatGraphResponse, Error>({
     queryKey: ["case_threat_graph", caseId],
     queryFn: () => getCaseThreatGraph(caseId),
-    enabled: !!caseId && (activeTab === 0 || activeTab === 6),
+    enabled: !!caseId && isAnalysisComplete && (activeTab === 0 || activeTab === 6),
     staleTime: 60000,
   });
 
@@ -228,7 +251,34 @@ export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ 
     }
   };
 
-  const isInitialLoading = isParsedLoading && !parsed;
+  const isInitialLoading = !isAnalysisComplete || (isParsedLoading && !parsed);
+
+  if (analysisStatus?.analysis_status === "QUEUED" || analysisStatus?.analysis_status === "PROCESSING") {
+    return (
+      <Card className="p-12 text-center flex flex-col items-center justify-center">
+        <RefreshCw className="w-8 h-8 text-primary animate-spin mb-4" />
+        <h3 className="text-[18px] font-[700] text-text-primary mb-2">
+          {analysisStatus.analysis_step || "Analyzing email..."}
+        </h3>
+        <p className="text-sm font-mono text-text-secondary">
+          ThreatTrace is performing near-real-time automated analysis...
+        </p>
+      </Card>
+    );
+  }
+
+  if (analysisStatus?.analysis_status === "FAILED") {
+    return (
+      <Card className="p-8">
+        <h3 className="text-[18px] font-[700] text-danger-dark mb-4">
+          Investigation Analysis Failed
+        </h3>
+        <div className="p-4 bg-danger-bg border border-danger text-danger-dark rounded-[8px] mb-6 text-sm">
+          {analysisStatus.error_message || "A critical error occurred during background analysis."}
+        </div>
+      </Card>
+    );
+  }
 
   if (isInitialLoading) {
     return (
