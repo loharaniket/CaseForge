@@ -6,11 +6,14 @@ from src.models.case import Case, AnalysisStatus
 from src.services.analysis_orchestrator import run_background_analysis
 
 @pytest.mark.asyncio
-async def test_run_background_analysis_success(db_session, test_user):
+async def test_run_background_analysis_success(db_session):
     # Setup test case
     case = Case(
         id="test-case-123",
-        owner_id=test_user.id,
+        user_id=1,
+        file_name="test.eml",
+        file_size_bytes=100,
+        sha256_hash="test-hash",
         storage_key="test/key",
         status="UPLOADED",
         analysis_status=AnalysisStatus.QUEUED,
@@ -29,7 +32,8 @@ async def test_run_background_analysis_success(db_session, test_user):
          patch("src.services.analysis_orchestrator.get_risk_service") as mock_risk, \
          patch("src.services.analysis_orchestrator.get_timeline_service") as mock_timeline, \
          patch("src.services.analysis_orchestrator.get_graph_service") as mock_graph, \
-         patch("src.services.analysis_orchestrator.get_conclusion_engine") as mock_conclusion:
+         patch("src.services.analysis_orchestrator.get_conclusion_engine") as mock_conclusion, \
+         patch.object(db_session, "close"):
         
         await run_background_analysis(case.id)
 
@@ -52,11 +56,14 @@ async def test_run_background_analysis_success(db_session, test_user):
 
 
 @pytest.mark.asyncio
-async def test_run_background_analysis_partial_on_intel_failure(db_session, test_user):
+async def test_run_background_analysis_partial_on_intel_failure(db_session):
     # Setup test case
     case = Case(
         id="test-case-456",
-        owner_id=test_user.id,
+        user_id=1,
+        file_name="test.eml",
+        file_size_bytes=100,
+        sha256_hash="test-hash",
         storage_key="test/key",
         status="UPLOADED",
         analysis_status=AnalysisStatus.QUEUED,
@@ -75,7 +82,8 @@ async def test_run_background_analysis_partial_on_intel_failure(db_session, test
          patch("src.services.analysis_orchestrator.get_risk_service"), \
          patch("src.services.analysis_orchestrator.get_timeline_service"), \
          patch("src.services.analysis_orchestrator.get_graph_service"), \
-         patch("src.services.analysis_orchestrator.get_conclusion_engine"):
+         patch("src.services.analysis_orchestrator.get_conclusion_engine"), \
+         patch.object(db_session, "close"):
         
         # Simulate Intel Service Failure
         mock_intel.return_value.analyze_case_indicators.side_effect = Exception("API Timeout")
@@ -88,11 +96,14 @@ async def test_run_background_analysis_partial_on_intel_failure(db_session, test
 
 
 @pytest.mark.asyncio
-async def test_run_background_analysis_failed_on_critical_failure(db_session, test_user):
+async def test_run_background_analysis_failed_on_critical_failure(db_session):
     # Setup test case
     case = Case(
         id="test-case-789",
-        owner_id=test_user.id,
+        user_id=1,
+        file_name="test.eml",
+        file_size_bytes=100,
+        sha256_hash="test-hash",
         storage_key="test/key",
         status="UPLOADED",
         analysis_status=AnalysisStatus.QUEUED,
@@ -102,7 +113,8 @@ async def test_run_background_analysis_failed_on_critical_failure(db_session, te
     db_session.commit()
 
     with patch("src.services.analysis_orchestrator.SessionLocal", return_value=db_session), \
-         patch("src.services.analysis_orchestrator.get_parser_service") as mock_parser:
+         patch("src.services.analysis_orchestrator.get_parser_service") as mock_parser, \
+         patch.object(db_session, "close"):
         
         # Simulate Critical Parsing Failure
         mock_parser.return_value.parse_case.side_effect = Exception("Critical Error")
