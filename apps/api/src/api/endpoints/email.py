@@ -1,3 +1,4 @@
+from sqlalchemy import select
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, Response, UploadFile, status
@@ -8,6 +9,10 @@ from src.core.config import settings
 from src.core.errors import AppException
 from src.models.case import Case, CaseStatus
 from src.models.user import User
+from src.services.campaign.service import get_campaign_service
+from src.models.campaign import CampaignInvestigationLink
+from src.schemas.campaign import CampaignResponse
+
 from src.schemas.email import ParsedEmailResponse
 from src.schemas.evidence import (
     CaseEvidenceListResponse,
@@ -922,3 +927,47 @@ def get_case_url_intelligence(
         case_id=case_id,
         url_intelligence=[URLIntelligenceRecordSchema.model_validate(r) for r in records]
     )
+
+
+@router.get(
+    "/{case_id}/campaigns",
+    response_model=list[CampaignResponse],
+    summary="Get related campaigns for an investigation case",
+)
+def get_case_campaigns(
+    case_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    case_access: CaseAccessService = Depends(get_case_access_service),
+):
+    # Verify case access
+    case_access.assert_can_view_case(case_id=case_id, user=current_user, db=db)
+    
+    # Trigger correlation (idempotent, just in case not done)
+    campaign_service = get_campaign_service()
+    campaign_service.correlate_case(case_id, db)
+    
+    # Fetch links
+    links = db.execute(select(CampaignInvestigationLink).where(CampaignInvestigationLink.case_id == case_id)).scalars().all()
+    
+    results = []
+    for link in links:
+        c = link.campaign
+        
+        # get all related case ids (not including current)
+        related = db.execute(select(CampaignInvestigationLink).where(
+            CampaignInvestigationLink.campaign_id == c.id, 
+            CampaignInvestigationLink.case_id != case_id
+        )).scalars().all()
+        
+        results.append(CampaignResponse(
+            campaign_id=c.id,
+            related_investigations=[r.case_id for r in related],
+            shared_indicators=c.shared_indicators,
+            shared_infrastructure=c.shared_infrastructure,
+            first_seen=c.first_seen,
+            last_seen=c.last_seen,
+            confidence=c.confidence
+        ))
+        
+    return results

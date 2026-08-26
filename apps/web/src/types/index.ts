@@ -412,3 +412,13 @@ export interface CaseThreatGraphResponse {
 }
 
 export type InvestigationGraphResponse = CaseThreatGraphResponse;
+
+export interface CampaignResponse {
+  campaign_id: string;
+  related_investigations: string[];
+  shared_indicators: Record<string, string[]>;
+  shared_infrastructure: Record<string, string[]>;
+  first_seen: string;
+  last_seen: string;
+  confidence: number;
+}

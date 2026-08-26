@@ -67,3 +67,6 @@ class Case(Base):
     evidence_records = relationship(
         "EvidenceRecord", back_populates="case", cascade="all, delete-orphan"
     )
+    campaign_links = relationship(
+        "CampaignInvestigationLink", back_populates="case", cascade="all, delete-orphan"
+    )

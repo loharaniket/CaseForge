@@ -49,6 +49,7 @@ import { IPIntelligenceWidget } from "./IPIntelligenceWidget";
 import { DomainIntelligenceWidget } from "./DomainIntelligenceWidget";
 import { URLIntelligenceWidget } from "./URLIntelligenceWidget";
 import { ThreatGraphWidget } from "./ThreatGraphWidget";
+import { CampaignWidget } from "./CampaignWidget";
 import { Card, CardContent, Badge, Button } from "@/components/ui";
 
 interface InvestigationDashboardProps {
@@ -354,6 +355,9 @@ export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ 
             caseId={parsed.case_id}
             isLoading={isRiskLoading || isThreatLoading}
           />
+          <div className="mt-6">
+            <CampaignWidget caseId={parsed.case_id} />
+          </div>
         </section>
       )}
 

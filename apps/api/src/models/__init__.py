@@ -12,6 +12,7 @@ from src.models.url_intel import URLIntelligenceRecord
 from src.models.risk import RiskAssessment
 from src.models.threat import ThreatAssessment
 from src.models.user import User, UserRole
+from src.models.campaign import Campaign, CampaignInvestigationLink
 
 __all__ = [
     "Base",
@@ -28,4 +29,6 @@ __all__ = [
     "ThreatAssessment",
     "User",
     "UserRole",
+    "Campaign",
+    "CampaignInvestigationLink",
 ]
