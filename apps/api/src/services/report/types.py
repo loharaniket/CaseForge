@@ -86,9 +86,21 @@ class InvestigationReportData:
     # 14. Actionable SOC Remediation Recommendations
     recommendations: list[str] = field(default_factory=list)
 
-    # 15. Evidence Custody & Hashing Placeholder
     evidence_sha256: str = "N/A"
     custody_verification: str = "VERIFIED_AUTHENTIC"
+
+    # 16. Analyst Conclusion
+    conclusion_classification: str = "Not available"
+    conclusion_primary_findings: list[str] = field(default_factory=list)
+    conclusion_supporting_evidence: list[str] = field(default_factory=list)
+    conclusion_attribution: str = "Not determined"
+    conclusion_limitations: list[str] = field(default_factory=list)
+
+    # 17. Related Campaigns
+    related_campaigns: list[dict[str, Any]] = field(default_factory=list)
+
+    # 18. Analysis History
+    analysis_history: list[dict[str, Any]] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         """Converts report data to serializable dictionary."""

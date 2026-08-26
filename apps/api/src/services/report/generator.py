@@ -229,7 +229,7 @@ class PDFReportGenerator(ReportGenerator):
         # ==========================================
         # 4 & 5. Threat Assessment & Risk Breakdown
         # ==========================================
-        story.append(Paragraph("3. Threat Assessment & Risk Scoring", self.heading_style))
+        story.append(Paragraph("[DERIVED ASSESSMENT] 3. Threat Assessment & Risk Scoring", self.heading_style))
         sev_color = self._get_severity_color(report_data.threat_severity)
 
         threat_summary_data = [
@@ -282,7 +282,7 @@ class PDFReportGenerator(ReportGenerator):
         # ==========================================
         # 6. Email Envelope & RFC Header Metadata
         # ==========================================
-        story.append(Paragraph("4. Email Envelope & RFC Headers", self.heading_style))
+        story.append(Paragraph("[OBSERVED EVIDENCE] 4. Email Envelope & RFC Headers", self.heading_style))
         email_header_data = [
             [
                 Paragraph("<b>From:</b>", self.body_style),
@@ -340,7 +340,7 @@ class PDFReportGenerator(ReportGenerator):
         # ==========================================
         # 7. Authentication Status (SPF / DKIM / DMARC)
         # ==========================================
-        story.append(Paragraph("5. Email Authentication Verification", self.heading_style))
+        story.append(Paragraph("[OBSERVED EVIDENCE] 5. Email Authentication Verification", self.heading_style))
         auth_data = [
             [
                 Paragraph("<b>Protocol</b>", self.body_style),
@@ -410,7 +410,7 @@ class PDFReportGenerator(ReportGenerator):
         # ==========================================
         story.append(
             Paragraph(
-                f"6. Extracted Indicators of Compromise ({report_data.total_iocs_count} IOCs)",
+                f"[OBSERVED EVIDENCE] 6. Extracted Indicators of Compromise ({report_data.total_iocs_count} IOCs)",
                 self.heading_style,
             )
         )
@@ -455,7 +455,7 @@ class PDFReportGenerator(ReportGenerator):
         # 9. Threat Intelligence & Geo Infrastructure
         # ==========================================
         story.append(
-            Paragraph("7. Threat Intelligence & Infrastructure Origin", self.heading_style)
+            Paragraph("[EXTERNAL INTELLIGENCE] 7. Threat Intelligence & Infrastructure Origin", self.heading_style)
         )
         intel_geo_data = [
             [
@@ -515,7 +515,7 @@ class PDFReportGenerator(ReportGenerator):
         # ==========================================
         story.append(
             Paragraph(
-                f"8. Forensic Milestone Timeline ({report_data.timeline_events_count} Milestones)",
+                f"[OBSERVED EVIDENCE] 8. Forensic Milestone Timeline ({report_data.timeline_events_count} Milestones)",
                 self.heading_style,
             )
         )
@@ -561,12 +561,118 @@ class PDFReportGenerator(ReportGenerator):
         story.append(Spacer(1, 10))
 
         # ==========================================
-        # 11. Actionable SOC Remediation Recommendations
+        # 11. Analyst Conclusion (NEW)
+        # ==========================================
+        story.append(
+            Paragraph("[ANALYST CONCLUSION] 9. Automated Analyst Conclusion", self.heading_style)
+        )
+        conclusion_data = [
+            [
+                Paragraph("<b>Verdict:</b>", self.body_style),
+                Paragraph(f"<b>{self._safe_escape(report_data.conclusion_classification)}</b>", self.body_style)
+            ],
+            [
+                Paragraph("<b>Attribution:</b>", self.body_style),
+                Paragraph(self._safe_escape(report_data.conclusion_attribution), self.body_style)
+            ]
+        ]
+        conc_table = Table(conclusion_data, colWidths=[1.4 * inch, 6.0 * inch])
+        conc_table.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#f8fafc")),
+            ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
+            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ("TOPPADDING", (0, 0), (-1, -1), 3),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+        ]))
+        story.append(conc_table)
+        story.append(Spacer(1, 6))
+
+        if report_data.conclusion_primary_findings:
+            story.append(Paragraph("<b>Primary Findings:</b>", self.body_style))
+            for finding in report_data.conclusion_primary_findings:
+                story.append(Paragraph(f"&bull; {self._safe_escape(finding)}", self.body_style))
+            story.append(Spacer(1, 4))
+        if report_data.conclusion_limitations:
+            story.append(Paragraph("<b>Analysis Limitations:</b>", self.body_style))
+            for lim in report_data.conclusion_limitations:
+                story.append(Paragraph(f"&bull; {self._safe_escape(lim)}", self.body_style))
+            story.append(Spacer(1, 10))
+            
+        # ==========================================
+        # 12. Related Campaigns (NEW)
+        # ==========================================
+        story.append(
+            Paragraph("[DERIVED ASSESSMENT] 10. Related Campaigns", self.heading_style)
+        )
+        if report_data.related_campaigns:
+            camp_rows = [
+                [
+                    Paragraph("<b>Campaign ID</b>", self.body_style),
+                    Paragraph("<b>Confidence</b>", self.body_style),
+                    Paragraph("<b>First Seen</b>", self.body_style)
+                ]
+            ]
+            for camp in report_data.related_campaigns:
+                camp_rows.append([
+                    Paragraph(self._safe_escape(camp["campaign_id"]), self.code_style),
+                    Paragraph(f"{camp['confidence'] * 100:.0f}%", self.body_style),
+                    Paragraph(self._safe_escape(camp["first_seen"][:10]), self.body_style)
+                ])
+            camp_table = Table(camp_rows, colWidths=[3.4 * inch, 2.0 * inch, 2.0 * inch])
+            camp_table.setStyle(TableStyle([
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#e2e8f0")),
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("TOPPADDING", (0, 0), (-1, -1), 3),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+            ]))
+            story.append(camp_table)
+        else:
+            story.append(Paragraph("No related campaigns correlated.", self.body_style))
+        story.append(Spacer(1, 10))
+
+        # ==========================================
+        # 13. Analysis History (NEW)
+        # ==========================================
+        story.append(
+            Paragraph("[OBSERVED EVIDENCE] 11. Analysis History Trail", self.heading_style)
+        )
+        if report_data.analysis_history:
+            hist_rows = [
+                [
+                    Paragraph("<b>Timestamp (UTC)</b>", self.body_style),
+                    Paragraph("<b>Component</b>", self.body_style),
+                    Paragraph("<b>Version/Provider</b>", self.body_style),
+                    Paragraph("<b>Status</b>", self.body_style)
+                ]
+            ]
+            for hist in report_data.analysis_history:
+                hist_rows.append([
+                    Paragraph(self._safe_escape(hist["timestamp"][:19]), self.code_style),
+                    Paragraph(self._safe_escape(hist["component"]), self.body_style),
+                    Paragraph(self._safe_escape(hist["version"]), self.body_style),
+                    Paragraph(self._safe_escape(hist["status"]), self.body_style)
+                ])
+            hist_table = Table(hist_rows, colWidths=[1.8 * inch, 2.6 * inch, 1.8 * inch, 1.2 * inch])
+            hist_table.setStyle(TableStyle([
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#e2e8f0")),
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("TOPPADDING", (0, 0), (-1, -1), 3),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+            ]))
+            story.append(hist_table)
+        else:
+            story.append(Paragraph("No automated analysis history recorded.", self.body_style))
+        story.append(Spacer(1, 10))
+
+        # ==========================================
+        # 14. Actionable SOC Remediation Recommendations
         # ==========================================
         story.append(
             KeepTogether(
                 [
-                    Paragraph("9. Actionable SOC Remediation Recommendations", self.heading_style),
+                    Paragraph("12. Actionable SOC Remediation Recommendations", self.heading_style),
                     *[
                         Paragraph(f"{idx + 1}. {self._safe_escape(rec)}", self.body_style)
                         for idx, rec in enumerate(

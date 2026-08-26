@@ -21,6 +21,9 @@ from src.services.intel.service import default_intel_service
 from src.services.report.generator import PDFReportGenerator, ReportGenerator
 from src.services.report.types import InvestigationReportData
 from src.services.timeline.service import default_timeline_service
+from src.services.conclusion.engine import get_conclusion_engine
+from src.models.campaign import CampaignInvestigationLink
+from src.models.analysis import AnalysisHistory
 
 
 def _run_sync(coro: Coroutine[Any, Any, Any]) -> Any:
@@ -149,6 +152,43 @@ class InvestigationReportService:
                 }
             )
 
+        # Fetch newly added models safely
+        try:
+            conclusion_engine = get_conclusion_engine()
+            conclusion_data = conclusion_engine.generate_conclusion(case_id=case_id, db=db)
+        except Exception as e:
+            logger.warning(f"Report conclusion enrichment failed for case {case_id}: {e}")
+            conclusion_data = None
+            
+        try:
+            campaign_links = db.execute(select(CampaignInvestigationLink).where(CampaignInvestigationLink.case_id == case_id)).scalars().all()
+            related_campaigns = []
+            for link in campaign_links:
+                c = link.campaign
+                related_campaigns.append({
+                    "campaign_id": c.id,
+                    "confidence": c.confidence,
+                    "first_seen": c.first_seen.isoformat(),
+                    "last_seen": c.last_seen.isoformat(),
+                })
+        except Exception as e:
+            logger.warning(f"Report campaign enrichment failed for case {case_id}: {e}")
+            related_campaigns = []
+
+        try:
+            history_records = db.execute(select(AnalysisHistory).where(AnalysisHistory.case_id == case_id).order_by(AnalysisHistory.analysis_timestamp.asc())).scalars().all()
+            analysis_history = []
+            for h in history_records:
+                analysis_history.append({
+                    "timestamp": h.analysis_timestamp.isoformat(),
+                    "component": h.component_name,
+                    "version": h.parser_version or h.detector_version or h.intel_provider or "N/A",
+                    "status": h.result_status
+                })
+        except Exception as e:
+            logger.warning(f"Report history enrichment failed for case {case_id}: {e}")
+            analysis_history = []
+
         threat_cls = threat.classification if threat else "normal"
         threat_sev = risk.severity if risk else "low"
         spf_stat = forensics.spf_status if forensics else "none"
@@ -264,6 +304,13 @@ class InvestigationReportService:
             recommendations=recommendations,
             evidence_sha256=case.sha256_hash,
             custody_verification="VERIFIED_AUTHENTIC",
+            conclusion_classification=conclusion_data.classification if conclusion_data else "Not available",
+            conclusion_primary_findings=conclusion_data.primary_findings if conclusion_data else [],
+            conclusion_supporting_evidence=conclusion_data.supporting_evidence if conclusion_data else [],
+            conclusion_attribution=conclusion_data.attribution_assessment if conclusion_data else "Not determined",
+            conclusion_limitations=conclusion_data.limitations if conclusion_data else [],
+            related_campaigns=related_campaigns,
+            analysis_history=analysis_history,
         )
 
     def generate_case_pdf(self, case_id: str, db: Session) -> tuple[bytes, str]:

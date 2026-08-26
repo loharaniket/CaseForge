@@ -136,6 +136,12 @@ def test_pdf_report_generation_full_sections(db_session: Session, sample_analyst
     db_session.add_all([ioc1, ioc2])
     db_session.commit()
 
+    # Test Data Aggregation
+    report_data = service.build_report_data(case_id=case.id, db=db_session)
+    assert report_data.conclusion_classification in ["PHISHING", "CREDENTIAL_PHISHING"] 
+    # ^ ThreatAssessment class was "credential_phishing" and gets mapped by engine.
+    assert len(report_data.conclusion_primary_findings) > 0
+
     # Generate PDF
     pdf_bytes, filename = service.generate_case_pdf(case_id=case.id, db=db_session)
 
@@ -173,6 +179,10 @@ def test_report_data_missing_and_empty_telemetry_handling(
     assert report_data.threat_classification == "normal"
     assert report_data.threat_severity == "low"
     assert len(report_data.recommendations) > 0
+    assert report_data.conclusion_classification in ["Not available", "UNKNOWN"]
+    assert report_data.conclusion_attribution in ["Not determined", "Origin cannot be conclusively attributed to a human actor."]
+    assert report_data.related_campaigns == []
+    assert report_data.analysis_history == []
 
     pdf_bytes, filename = service.generate_case_pdf(case_id=case.id, db=db_session)
     assert pdf_bytes.startswith(b"%PDF-")
