@@ -16,8 +16,8 @@ class EvidenceIntegrityStatus(StrEnum):
     """Cryptographic verification status outcomes."""
 
     VERIFIED = "VERIFIED"
-    CORRUPTED = "CORRUPTED"
-    MISSING = "MISSING"
+    INTEGRITY_MISMATCH = "INTEGRITY_MISMATCH"
+    UNAVAILABLE = "UNAVAILABLE"
 
 
 @dataclass
@@ -30,6 +30,7 @@ class EvidenceRecordResult:
     sha256_hash: str
     file_name: str | None = None
     file_size_bytes: int = 0
+    status: str = "UNVERIFIED"
     calculated_at_iso: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     metadata: dict[str, Any] = field(default_factory=dict)
 
@@ -41,6 +42,7 @@ class EvidenceRecordResult:
             "sha256_hash": self.sha256_hash,
             "file_name": self.file_name,
             "file_size_bytes": self.file_size_bytes,
+            "status": self.status,
             "calculated_at_iso": self.calculated_at_iso,
             "metadata": self.metadata,
         }

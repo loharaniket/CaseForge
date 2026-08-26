@@ -97,6 +97,18 @@ class DetectionService:
         db.commit()
         db.refresh(assessment)
 
+        try:
+            from src.services.analysis_service import get_analysis_history_service
+            get_analysis_history_service().record_analysis(
+                case_id=case.id,
+                result_status="SUCCESS",
+                detector_version=result.model_version,
+                db=db
+            )
+            db.commit()
+        except Exception:
+            pass
+
         return assessment
 
     def get_assessment(self, case_id: str, db: Session) -> ThreatAssessment:

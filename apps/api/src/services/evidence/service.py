@@ -73,6 +73,7 @@ class EvidenceIntegrityService:
                 existing.file_size_bytes = file_size
                 existing.file_name = file_name or existing.file_name
                 existing.metadata_json = metadata or existing.metadata_json
+                existing.status = "UNVERIFIED"
                 existing.calculated_at = now
                 existing.updated_at = now
                 record_id = existing.id
@@ -83,6 +84,7 @@ class EvidenceIntegrityService:
                     sha256_hash=sha256_hash,
                     file_name=file_name,
                     file_size_bytes=file_size,
+                    status="UNVERIFIED",
                     metadata_json=metadata or {},
                     calculated_at=now,
                 )
@@ -113,6 +115,7 @@ class EvidenceIntegrityService:
             sha256_hash=sha256_hash,
             file_name=file_name,
             file_size_bytes=file_size,
+            status="UNVERIFIED",
             calculated_at_iso=now.isoformat(),
             metadata=metadata or {},
         )
@@ -143,6 +146,7 @@ class EvidenceIntegrityService:
                     sha256_hash=r.sha256_hash,
                     file_name=r.file_name,
                     file_size_bytes=r.file_size_bytes,
+                    status=r.status,
                     calculated_at_iso=r.calculated_at.isoformat()
                     if r.calculated_at
                     else datetime.now(UTC).isoformat(),
@@ -193,13 +197,16 @@ class EvidenceIntegrityService:
         )
 
         if not expected_hash:
+            if record:
+                record.status = EvidenceIntegrityStatus.UNAVAILABLE.value
+                db.commit()
             return EvidenceVerificationResult(
                 case_id=case_id,
                 evidence_type=ev_type,
                 file_name=file_name,
                 expected_sha256=None,
                 actual_sha256=None,
-                status=EvidenceIntegrityStatus.MISSING,
+                status=EvidenceIntegrityStatus.UNAVAILABLE,
                 is_valid=False,
                 details={
                     "reason": f"No baseline cryptographic hash registered for evidence type '{ev_type}'."
@@ -213,13 +220,16 @@ class EvidenceIntegrityService:
         if ev_type == EvidenceType.ORIGINAL_EMAIL:
             actual_bytes = self.storage.get(case.storage_key)
             if actual_bytes is None:
+                if record:
+                    record.status = EvidenceIntegrityStatus.UNAVAILABLE.value
+                    db.commit()
                 return EvidenceVerificationResult(
                     case_id=case_id,
                     evidence_type=ev_type,
                     file_name=file_name,
                     expected_sha256=expected_hash,
                     actual_sha256=None,
-                    status=EvidenceIntegrityStatus.MISSING,
+                    status=EvidenceIntegrityStatus.UNAVAILABLE,
                     is_valid=False,
                     details={
                         "reason": f"Original evidence file '{case.storage_key}' is missing from storage."
@@ -245,6 +255,9 @@ class EvidenceIntegrityService:
                         case_id=case_id, db=db
                     )
                 except Exception as e:
+                    if record:
+                        record.status = EvidenceIntegrityStatus.UNAVAILABLE.value
+                        db.commit()
                     return EvidenceVerificationResult(
                         case_id=case_id,
                         evidence_type=ev_type,
@@ -252,7 +265,7 @@ class EvidenceIntegrityService:
                         or f"ThreatTrace_Investigation_Report_{case_id[:8]}.pdf",
                         expected_sha256=expected_hash,
                         actual_sha256=None,
-                        status=EvidenceIntegrityStatus.MISSING,
+                        status=EvidenceIntegrityStatus.UNAVAILABLE,
                         is_valid=False,
                         details={
                             "reason": f"Failed to retrieve or generate report for verification: {str(e)}"
@@ -260,13 +273,16 @@ class EvidenceIntegrityService:
                     )
 
         if actual_bytes is None:
+            if record:
+                record.status = EvidenceIntegrityStatus.UNAVAILABLE.value
+                db.commit()
             return EvidenceVerificationResult(
                 case_id=case_id,
                 evidence_type=ev_type,
                 file_name=file_name,
                 expected_sha256=expected_hash,
                 actual_sha256=None,
-                status=EvidenceIntegrityStatus.MISSING,
+                status=EvidenceIntegrityStatus.UNAVAILABLE,
                 is_valid=False,
                 details={"reason": "Actual evidence payload could not be retrieved."},
             )
@@ -275,7 +291,7 @@ class EvidenceIntegrityService:
         actual_hash = self.calculate_hash(actual_bytes)
         is_valid = self.verify_hash(expected_hash, actual_bytes)
 
-        status = EvidenceIntegrityStatus.VERIFIED if is_valid else EvidenceIntegrityStatus.CORRUPTED
+        status = EvidenceIntegrityStatus.VERIFIED if is_valid else EvidenceIntegrityStatus.INTEGRITY_MISMATCH
         details["algorithm"] = "SHA-256"
         details["payload_size_bytes"] = len(actual_bytes)
 
@@ -283,6 +299,10 @@ class EvidenceIntegrityService:
             details["tamper_warning"] = (
                 "CRITICAL: Cryptographic checksum mismatch detected. Evidence integrity or custody may be compromised."
             )
+
+        if record:
+            record.status = status.value
+            db.commit()
 
         return EvidenceVerificationResult(
             case_id=case_id,

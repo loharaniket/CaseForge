@@ -91,6 +91,18 @@ class ParserService:
             db.commit()
             db.refresh(parsed_record)
 
+            try:
+                from src.services.analysis_service import get_analysis_history_service
+                get_analysis_history_service().record_analysis(
+                    case_id=case.id,
+                    result_status="SUCCESS",
+                    parser_version="1.0.0",
+                    db=db
+                )
+                db.commit()
+            except Exception as e:
+                logger.error(f"Failed to record analysis history: {e}")
+
             return parsed_record
 
         except Exception as exc:
@@ -104,6 +116,18 @@ class ParserService:
                 case.status = CaseStatus.FAILED
                 case.error_message = str(exc)
                 db.commit()
+
+                try:
+                    from src.services.analysis_service import get_analysis_history_service
+                    get_analysis_history_service().record_analysis(
+                        case_id=case_id,
+                        result_status="FAILED",
+                        parser_version="1.0.0",
+                        db=db
+                    )
+                    db.commit()
+                except Exception as history_exc:
+                    logger.error(f"Failed to record analysis history for failed case: {history_exc}")
 
             raise AppException(
                 message=f"Forensic parsing failed for case '{case_id}': {exc}",

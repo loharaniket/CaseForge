@@ -12,11 +12,12 @@ import {
   FileCheck2,
   Lock,
 } from "lucide-react";
-import { getCaseEvidence, verifyCaseEvidence } from "@/lib/api/email";
+import { getCaseEvidence, verifyCaseEvidence, getCaseAnalysisHistory } from "@/lib/api/email";
 import {
   CaseEvidenceListResponse,
   CaseEvidenceVerificationResponse,
   EvidenceVerificationResult,
+  CaseAnalysisHistoryResponse,
 } from "@/types";
 import { Card, CardContent, CardHeader, Button, Badge, Table, Thead, Tbody, Tr, Th, Td, LoadingState } from "@/components/ui";
 
@@ -41,6 +42,12 @@ export const EvidenceIntegrityWidget: React.FC<EvidenceIntegrityWidgetProps> = (
     enabled: !!caseId,
   });
 
+  const { data: analysisHistory } = useQuery<CaseAnalysisHistoryResponse, Error>({
+    queryKey: ["case_analysis", caseId],
+    queryFn: () => getCaseAnalysisHistory(caseId),
+    enabled: !!caseId,
+  });
+
   const verifyMutation = useMutation<CaseEvidenceVerificationResponse, Error, void>({
     mutationFn: () => verifyCaseEvidence(caseId),
     onSuccess: (data) => {
@@ -59,35 +66,37 @@ export const EvidenceIntegrityWidget: React.FC<EvidenceIntegrityWidgetProps> = (
     return verificationData?.results.find((r) => r.evidence_type === evType);
   };
 
-  const renderStatusBadge = (verResult?: EvidenceVerificationResult) => {
-    if (!verResult) {
-      return <Badge variant="neutral" className="text-[10px]">UNVERIFIED (STORED)</Badge>;
-    }
+  const renderStatusBadge = (verResult?: EvidenceVerificationResult, dbStatus?: string) => {
+    const status = verResult?.status || dbStatus || "UNVERIFIED";
 
-    if (verResult.status === "VERIFIED") {
+    if (status === "VERIFIED") {
       return (
         <Badge variant="success" className="gap-1 px-2 py-0.5 text-[10px]">
           <ShieldCheck className="w-3 h-3" />
-          AUTHENTIC &bull; SHA-256 MATCH
+          VERIFIED
         </Badge>
       );
     }
 
-    if (verResult.status === "CORRUPTED") {
+    if (status === "INTEGRITY_MISMATCH") {
       return (
         <Badge variant="danger" className="gap-1 px-2 py-0.5 text-[10px]">
           <ShieldAlert className="w-3 h-3" />
-          CORRUPTED / TAMPERED
+          INTEGRITY MISMATCH
         </Badge>
       );
     }
 
-    return (
-      <Badge variant="warning" className="gap-1 px-2 py-0.5 text-[10px]">
-        <ShieldAlert className="w-3 h-3" />
-        MISSING PAYLOAD
-      </Badge>
-    );
+    if (status === "UNAVAILABLE") {
+      return (
+        <Badge variant="warning" className="gap-1 px-2 py-0.5 text-[10px]">
+          <ShieldAlert className="w-3 h-3" />
+          UNAVAILABLE
+        </Badge>
+      );
+    }
+
+    return <Badge variant="neutral" className="text-[10px]">UNVERIFIED</Badge>;
   };
 
   if (isLoading) {
@@ -179,74 +188,73 @@ export const EvidenceIntegrityWidget: React.FC<EvidenceIntegrityWidgetProps> = (
             <Table className="border-none rounded-none">
               <Thead>
                 <Tr className="bg-bg-panel-subtle border-b border-border">
-                  <Th className="text-[10px]">EVIDENCE ARTIFACT</Th>
-                  <Th className="text-[10px]">ALGORITHM</Th>
-                  <Th className="text-[10px]">SHA-256 CRYPTOGRAPHIC DIGEST</Th>
-                  <Th className="text-[10px]">SIZE / TIMESTAMP</Th>
-                  <Th className="text-[10px] text-right">CUSTODY STATUS</Th>
+                  <Th className="text-[10px]">SHA-256 DIGEST</Th>
+                  <Th className="text-[10px]">EVIDENCE STATUS</Th>
+                  <Th className="text-[10px]">CAPTURED AT</Th>
+                  <Th className="text-[10px]">ANALYSIS VERSION</Th>
+                  <Th className="text-[10px]">LAST VERIFIED</Th>
                 </Tr>
               </Thead>
               <Tbody>
                 {records.map((rec) => {
                   const verResult = getVerificationStatusForResult(rec.evidence_type);
+                  const latestAnalysis = analysisHistory?.records?.[0];
+                  const analysisVersion = latestAnalysis ? latestAnalysis.parser_version || 'Unknown' : "N/A";
+                  // Extract filename safely
+                  const safeFilename = rec.file_name?.split('/').pop()?.split('\\').pop() || rec.evidence_type;
+
                   return (
                     <Tr key={rec.id}>
-                      {/* Evidence Artifact Name & Type */}
+                      {/* SHA-256 & Name */}
                       <Td className="align-top">
                         <div className="flex flex-col gap-1">
                           <span className="text-[13px] font-[600] text-text-primary">
-                            {rec.file_name || rec.evidence_type}
+                            {safeFilename}
                           </span>
-                          <span className="text-[10px] font-[700] text-primary bg-primary-soft px-1.5 py-0.5 rounded w-fit">
-                            {rec.evidence_type}
-                          </span>
+                          <div className="flex items-start gap-2">
+                            <span className="text-[11px] font-mono bg-bg-panel-subtle px-2 py-1 rounded border border-border text-info break-all max-w-[280px]">
+                              {rec.sha256_hash}
+                            </span>
+                            <button 
+                              onClick={() => handleCopy(rec.sha256_hash)}
+                              className="p-1 hover:bg-bg-panel-subtle rounded text-text-secondary hover:text-text-primary transition-colors"
+                              title={copiedHash === rec.sha256_hash ? "Copied!" : "Copy SHA-256"}
+                            >
+                              {copiedHash === rec.sha256_hash ? (
+                                <Check className="w-3.5 h-3.5 text-success" />
+                              ) : (
+                                <Copy className="w-3.5 h-3.5" />
+                              )}
+                            </button>
+                          </div>
                         </div>
                       </Td>
 
-                      {/* Algorithm */}
+                      {/* Evidence status */}
                       <Td className="align-top">
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          <Lock className="w-3 h-3 text-primary" />
-                          <span className="text-[11px] font-[650] text-text-secondary">SHA-256</span>
+                        <div className="mt-3">
+                          {renderStatusBadge(verResult, rec.status)}
                         </div>
                       </Td>
 
-                      {/* SHA-256 Hash with Copy */}
+                      {/* Captured at */}
                       <Td className="align-top">
-                        <div className="flex items-start gap-2">
-                          <span className="text-[11px] font-mono bg-bg-panel-subtle px-2 py-1 rounded border border-border text-info break-all max-w-[320px]">
-                            {rec.sha256_hash}
-                          </span>
-                          <button 
-                            onClick={() => handleCopy(rec.sha256_hash)}
-                            className="p-1 hover:bg-bg-panel-subtle rounded text-text-secondary hover:text-text-primary transition-colors"
-                            title={copiedHash === rec.sha256_hash ? "Copied!" : "Copy SHA-256"}
-                          >
-                            {copiedHash === rec.sha256_hash ? (
-                              <Check className="w-3.5 h-3.5 text-success" />
-                            ) : (
-                              <Copy className="w-3.5 h-3.5" />
-                            )}
-                          </button>
+                        <div className="mt-3 text-[11px] text-text-secondary">
+                          {new Date(rec.calculated_at_iso).toLocaleString()}
                         </div>
                       </Td>
 
-                      {/* Size & Timestamp */}
+                      {/* Analysis version */}
                       <Td className="align-top">
-                        <div className="flex flex-col gap-0.5">
-                          <span className="text-[11px] text-text-primary font-mono">
-                            {(rec.file_size_bytes / 1024).toFixed(1)} KB <span className="text-text-muted">({rec.file_size_bytes} B)</span>
-                          </span>
-                          <span className="text-[10px] text-text-secondary mt-1">
-                            {new Date(rec.calculated_at_iso).toUTCString()}
-                          </span>
+                        <div className="mt-3 text-[11px] font-mono text-text-secondary">
+                          {analysisVersion}
                         </div>
                       </Td>
 
-                      {/* Custody Status */}
-                      <Td className="align-top text-right">
-                        <div className="flex justify-end mt-0.5">
-                          {renderStatusBadge(verResult)}
+                      {/* Last verified */}
+                      <Td className="align-top">
+                        <div className="mt-3 text-[11px] text-text-secondary">
+                          {verResult ? new Date(verResult.verified_at_iso).toLocaleString() : "Never"}
                         </div>
                       </Td>
                     </Tr>

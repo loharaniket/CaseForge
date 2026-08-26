@@ -367,6 +367,23 @@ export interface CaseEvidenceVerificationResponse {
   results: EvidenceVerificationResult[];
 }
 
+export interface AnalysisHistoryRecord {
+  id: string;
+  case_id: string;
+  analysis_timestamp: string;
+  parser_version: string | null;
+  detector_version: string | null;
+  intel_provider: string | null;
+  provider_lookup_timestamp: string | null;
+  result_status: string;
+}
+
+export interface CaseAnalysisHistoryResponse {
+  case_id: string;
+  total_records: number;
+  records: AnalysisHistoryRecord[];
+}
+
 export type GraphNodeType =
   | "Email"
   | "EmailAddress"

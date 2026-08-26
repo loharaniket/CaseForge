@@ -1,6 +1,7 @@
 """SQLAlchemy ORM models package."""
 
 from src.db.base import Base
+from src.models.analysis import AnalysisHistory
 from src.models.case import Case, CaseStatus
 from src.models.email import ParsedEmail
 from src.models.evidence import EvidenceRecord
@@ -15,6 +16,7 @@ from src.models.user import User, UserRole
 from src.models.campaign import Campaign, CampaignInvestigationLink
 
 __all__ = [
+    "AnalysisHistory",
     "Base",
     "Case",
     "CaseIOC",

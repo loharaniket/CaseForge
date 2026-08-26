@@ -12,6 +12,8 @@ from src.models.user import User
 from src.services.campaign.service import get_campaign_service
 from src.models.campaign import CampaignInvestigationLink
 from src.schemas.campaign import CampaignResponse
+from src.schemas.analysis import CaseAnalysisHistoryResponse, AnalysisHistoryRecordSchema
+from src.services.analysis_service import AnalysisHistoryService, get_analysis_history_service
 
 from src.schemas.email import ParsedEmailResponse
 from src.schemas.evidence import (
@@ -852,6 +854,41 @@ async def enrich_case_domain_intelligence(
         domain_intelligence=[DomainIntelligenceRecordSchema.model_validate(r) for r in records]
     )
 
+
+@router.get(
+    "/{case_id}/analysis-history",
+    response_model=CaseAnalysisHistoryResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get Case Analysis History",
+)
+def get_case_analysis_history(
+    case_id: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    case_access: CaseAccessService = Depends(get_case_access_service),
+    analysis_service: AnalysisHistoryService = Depends(get_analysis_history_service),
+) -> CaseAnalysisHistoryResponse:
+    """Retrieves all analysis events for a case."""
+    case_access.assert_can_view_case(case_id=case_id, user=current_user, db=db)
+    records = analysis_service.get_case_analysis_history(case_id=case_id, db=db)
+    
+    schemas = [
+        AnalysisHistoryRecordSchema(
+            id=r.id,
+            case_id=r.case_id,
+            analysis_timestamp=r.analysis_timestamp.isoformat(),
+            parser_version=r.parser_version,
+            detector_version=r.detector_version,
+            intel_provider=r.intel_provider,
+            provider_lookup_timestamp=r.provider_lookup_timestamp.isoformat() if r.provider_lookup_timestamp else None,
+            result_status=r.result_status
+        ) for r in records
+    ]
+    return CaseAnalysisHistoryResponse(
+        case_id=case_id,
+        total_records=len(schemas),
+        records=schemas
+    )
 @router.get(
     "/{case_id}/domain-intelligence",
     response_model=CaseDomainIntelligenceResponse,

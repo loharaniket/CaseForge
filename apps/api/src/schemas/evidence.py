@@ -14,6 +14,7 @@ class EvidenceRecordSchema(BaseModel):
     sha256_hash: str = Field(description="Deterministic cryptographic SHA-256 hex digest")
     file_name: str | None = Field(default=None, description="Original evidence or report filename")
     file_size_bytes: int = Field(default=0, description="Raw evidence payload size in bytes")
+    status: str = Field(default="UNVERIFIED", description="Current evidence status")
     calculated_at_iso: str = Field(description="ISO 8601 timestamp of hash calculation")
     metadata: dict[str, Any] = Field(default_factory=dict, description="Arbitrary metadata payload")
 
@@ -31,7 +32,7 @@ class EvidenceVerificationResultSchema(BaseModel):
 
     case_id: str
     evidence_type: str
-    status: str = Field(description="VERIFIED, CORRUPTED, or MISSING")
+    status: str = Field(description="VERIFIED, INTEGRITY_MISMATCH, or UNAVAILABLE")
     is_valid: bool = Field(description="True if cryptographic hash exactly matches evidence")
     expected_sha256: str | None = Field(default=None, description="Persisted baseline hash")
     actual_sha256: str | None = Field(

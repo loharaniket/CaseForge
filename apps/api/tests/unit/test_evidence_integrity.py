@@ -229,7 +229,7 @@ def test_verify_case_evidence_corrupted_payload_detected(
     )
 
     assert res.case_id == case.id
-    assert res.status == EvidenceIntegrityStatus.CORRUPTED
+    assert res.status == EvidenceIntegrityStatus.INTEGRITY_MISMATCH
     assert res.is_valid is False
     assert res.expected_sha256 == sha256
     assert res.actual_sha256 != sha256
@@ -260,7 +260,7 @@ def test_verify_case_evidence_missing_storage_file(
         db=db_session,
     )
 
-    assert res.status == EvidenceIntegrityStatus.MISSING
+    assert res.status == EvidenceIntegrityStatus.UNAVAILABLE
     assert res.is_valid is False
     assert res.actual_sha256 is None
 
