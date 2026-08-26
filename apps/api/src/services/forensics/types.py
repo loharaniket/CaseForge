@@ -30,6 +30,11 @@ class RelayHop:
     timestamp_raw: str | None = None
     timestamp_parsed: datetime | None = None
     delay_seconds: float | None = None
+    timezone: str | None = None
+    header_order: int | None = None
+    parser_confidence: float = 1.0
+    validation_issues: list[str] = field(default_factory=list)
+    untrusted_node: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         data = asdict(self)
@@ -62,6 +67,18 @@ class AuthenticationResult:
         }
 
 
+
+@dataclass
+class OriginCandidateScore:
+    candidate_ip: str
+    candidate_score: float
+    reasons: list[str] = field(default_factory=list)
+    confidence: float = 1.0
+    limitations: list[str] = field(default_factory=list)
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
 @dataclass
 class HeaderForensicsResult:
     """Comprehensive header forensics analysis outcome."""
@@ -73,3 +90,4 @@ class HeaderForensicsResult:
     spoofing_indicators: list[str] = field(default_factory=list)
     anomalies: list[str] = field(default_factory=list)
     forensics_risk_score: float = 0.0
+    origin_analysis: OriginCandidateScore | None = None

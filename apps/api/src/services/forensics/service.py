@@ -70,7 +70,6 @@ class HeaderForensicsService:
     @classmethod
     def parse_relay_chain(cls, raw_headers: dict[str, Any]) -> list[RelayHop]:
         """Reconstructs the chronological relay chain from Received header hops."""
-        # Find all Received headers
         received_raw: list[str] = []
         for key, val in raw_headers.items():
             if key.lower() == "received":
@@ -79,10 +78,10 @@ class HeaderForensicsService:
                 else:
                     received_raw.append(str(val))
 
-        # RFC822 adds Received at top of message on each hop; reverse to chronological order
         chronological_received = received_raw[::-1]
         hops: list[RelayHop] = []
         prev_dt = None
+        seen_hops = set()
 
         for idx, rec_str in enumerate(chronological_received, start=1):
             from_host = None
@@ -92,45 +91,76 @@ class HeaderForensicsService:
             date_raw = None
             date_parsed = None
             delay_sec = None
+            timezone_str = None
+            confidence = 1.0
+            issues = []
+            untrusted = False
 
-            # Clean line breaks
             rec_clean = " ".join(rec_str.split())
 
-            # Extract from host & ip
+            if rec_clean in seen_hops:
+                issues.append("Duplicate hop detected.")
+            seen_hops.add(rec_clean)
+
+            # Extract from host
             from_match = RE_FROM_HOST_IP.search(rec_clean)
             if from_match:
                 from_host = from_match.group(1).strip("()[]")
-                candidate_ip = from_match.group(2)
-                if candidate_ip:
-                    try:
-                        ipaddress.ip_address(candidate_ip)
-                        ip_addr = candidate_ip
-                    except ValueError:
-                        pass
 
-            # Extract by host
+            # Better IP extraction: isolate the 'from' clause
+            from_clause = rec_clean.split(" by ")[0] if " by " in rec_clean.lower() else rec_clean
+            ip_candidates = re.findall(r'(?:\d{1,3}\.){3}\d{1,3}|(?:[a-fA-F0-9]{1,4}:){7}[a-fA-F0-9]{1,4}', from_clause)
+            valid_ips = []
+            for c in ip_candidates:
+                try:
+                    import ipaddress
+                    ipaddress.ip_address(c)
+                    valid_ips.append(c)
+                except ValueError:
+                    pass
+                    
+            if valid_ips:
+                # The MTA usually appends the true IP at the end of the from clause
+                ip_addr = valid_ips[-1]
+            elif from_match and from_match.group(2):
+                confidence -= 0.2
+                issues.append("Malformed IP address in hop.")
+                untrusted = True
+
             by_match = RE_BY_HOST.search(rec_clean)
             if by_match:
                 by_host = by_match.group(1).strip("()[]")
+                if from_host and from_host.lower() == by_host.lower():
+                    issues.append("Suspicious loop: from_host equals by_host.")
 
-            # Extract protocol
             proto_match = RE_WITH_PROTO.search(rec_clean)
             if proto_match:
                 with_proto = proto_match.group(1)
 
-            # Extract timestamp
             date_match = RE_DATE_TAIL.search(rec_clean)
             if date_match:
                 date_raw = date_match.group(1).strip()
                 try:
+                    tz_match = re.search(r'([+-]\d{4}|[A-Z]{3,4})', date_raw)
+                    if tz_match:
+                        timezone_str = tz_match.group(1)
+                    import email.utils
                     date_parsed = email.utils.parsedate_to_datetime(date_raw)
                 except Exception:
                     date_parsed = None
+                    confidence -= 0.3
+                    issues.append("Malformed or unparseable timestamp.")
 
-            # Calculate hop delay
             if date_parsed and prev_dt:
                 try:
                     delta = (date_parsed - prev_dt).total_seconds()
+                    if delta < 0:
+                        issues.append("Impossible timestamp ordering (time travel).")
+                        confidence -= 0.4
+                        untrusted = True
+                    elif delta > 86400: # gap of > 1 day
+                        issues.append("Suspicious chronological gap (>1 day).")
+                        confidence -= 0.2
                     delay_sec = max(0.0, round(delta, 2))
                 except Exception:
                     delay_sec = None
@@ -138,11 +168,21 @@ class HeaderForensicsService:
             if date_parsed:
                 prev_dt = date_parsed
 
+            if not from_host and not ip_addr:
+                confidence -= 0.3
+                issues.append("Missing sending host and IP.")
+            
+            # If we couldn't parse the date at all, we mark it as malformed
+            if not date_match:
+                confidence -= 0.5
+                issues.append("Malformed header: No valid date tail found.")
+
             is_private = cls._is_ip_private(ip_addr) if ip_addr else False
 
             hops.append(
                 RelayHop(
                     hop_number=idx,
+                    header_order=len(chronological_received) - idx + 1,
                     from_host=from_host,
                     by_host=by_host,
                     with_protocol=with_proto,
@@ -151,6 +191,10 @@ class HeaderForensicsService:
                     timestamp_raw=date_raw,
                     timestamp_parsed=date_parsed,
                     delay_seconds=delay_sec,
+                    timezone=timezone_str,
+                    parser_confidence=max(0.0, round(confidence, 2)),
+                    validation_issues=issues,
+                    untrusted_node=untrusted
                 )
             )
 

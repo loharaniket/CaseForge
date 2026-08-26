@@ -85,14 +85,27 @@ export interface RelayHop {
   timestamp_raw: string | null;
   timestamp_iso: string | null;
   delay_seconds: number | null;
-  ip_addresses: string[];
+  ip_address: string | null;
   is_private_relay: boolean;
+  untrusted_node?: boolean;
+  validation_issues?: string[];
+  parser_confidence?: number;
+}
+
+
+export interface OriginCandidateAnalysis {
+  candidate_ip: string;
+  candidate_score: number;
+  reasons: string[];
+  confidence: number;
+  limitations: string[];
 }
 
 export interface HeaderForensicsResponse {
   case_id: string;
   relay_hops: RelayHop[];
   origin_ip_candidates: string[];
+  origin_analysis?: OriginCandidateAnalysis | null;
   probable_origin_ip: string | null;
   spf_status: string;
   dkim_status: string;

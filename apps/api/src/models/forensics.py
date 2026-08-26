@@ -28,6 +28,7 @@ class HeaderForensics(Base):
     relay_hops: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list, nullable=False)
     origin_ip_candidates: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
     probable_origin_ip: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    origin_analysis: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     spf_status: Mapped[str] = mapped_column(String(20), nullable=False)
     dkim_status: Mapped[str] = mapped_column(String(20), nullable=False)
     dmarc_status: Mapped[str] = mapped_column(String(20), nullable=False)

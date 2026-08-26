@@ -23,6 +23,12 @@ class RelayHopSchema(BaseModel):
         None, description="Transmission delay in seconds from preceding hop"
     )
 
+    timezone: str | None = Field(None, description="Timezone extracted from timestamp")
+    header_order: int | None = Field(None, description="Physical order in email headers (1=top)")
+    parser_confidence: float = Field(1.0, description="Confidence of extraction (0-1.0)")
+    validation_issues: list[str] = Field(default_factory=list, description="Anomalies detected at this hop")
+    untrusted_node: bool = Field(False, description="Flagged as untrusted or forged")
+
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -64,6 +70,13 @@ class AuthenticationResultSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class OriginCandidateSchema(BaseModel):
+    candidate_ip: str
+    candidate_score: float
+    reasons: list[str]
+    confidence: float
+    limitations: list[str]
+
 class HeaderForensicsResponse(BaseModel):
     """Forensic email header analysis and spoofing assessment response."""
 
@@ -76,6 +89,7 @@ class HeaderForensicsResponse(BaseModel):
         default_factory=list,
         description="Candidate source IP addresses extracted from transmission chain",
     )
+    origin_analysis: OriginCandidateSchema | None = Field(None, description="Detailed analysis of probable origin")
     probable_origin_ip: str | None = Field(
         None, description="First external/public MTA IP in transmission chain"
     )

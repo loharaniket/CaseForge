@@ -34,7 +34,7 @@ export const RelayHopsTimelineWidget: React.FC<RelayHopsTimelineWidgetProps> = (
           <div className="flex items-center gap-3">
             <Network className="w-5 h-5 text-primary" />
             <h3 className="text-[16px] font-[700] text-text-primary">
-              MTA Relay Pathway Timeline
+              Mail Relay Path
             </h3>
           </div>
 
@@ -60,30 +60,51 @@ export const RelayHopsTimelineWidget: React.FC<RelayHopsTimelineWidgetProps> = (
           </div>
         ) : (
           <div className="flex flex-col gap-2">
-            {hops.map((hop, idx) => (
+            {hops.map((hop, idx) => {
+              const isSource = idx === 0;
+              const isDestination = idx === hops.length - 1;
+              const label = isSource ? "Source Candidate" : isDestination ? "Destination" : "Relay";
+              const isProbableOrigin = forensics.origin_analysis?.candidate_ip === hop.ip_address;
+              
+              return (
               <div key={idx} className="flex flex-col">
                 <div
                   className={`p-4 bg-bg-panel-subtle rounded-[8px] border ${
-                    hop.ip_addresses?.includes(probableOrigin || "")
-                      ? "border-primary"
-                      : "border-border"
+                    isProbableOrigin ? "border-primary" : (hop.untrusted_node ? "border-destructive" : "border-border")
                   }`}
                 >
-                  <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 mb-3">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="neutral" className="bg-text-muted text-white text-[11px] font-[700] px-1.5 py-0">
-                        Hop #{hop.hop_number}
-                      </Badge>
-                      {hop.is_private_relay ? (
-                        <Badge variant="neutral" className="gap-1 bg-bg-page text-text-secondary text-[11px] px-1.5 py-0">
-                          <Lock className="w-3 h-3" />
-                          Private Subnet (RFC1918)
+                  <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-2 mb-3">
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="neutral" className="bg-text-muted text-white text-[11px] font-[700] px-1.5 py-0">
+                          {label} (Hop #{hop.hop_number})
                         </Badge>
-                      ) : (
-                        <Badge variant="success" className="gap-1 text-[11px] px-1.5 py-0">
-                          <Globe className="w-3 h-3" />
-                          Public Gateway
-                        </Badge>
+                        {hop.is_private_relay ? (
+                          <Badge variant="neutral" className="gap-1 bg-bg-page text-text-secondary text-[11px] px-1.5 py-0">
+                            <Lock className="w-3 h-3" />
+                            Private Subnet (RFC1918)
+                          </Badge>
+                        ) : (
+                          <Badge variant="success" className="gap-1 text-[11px] px-1.5 py-0">
+                            <Globe className="w-3 h-3" />
+                            Public Gateway
+                          </Badge>
+                        )}
+                      </div>
+                      
+                      {isProbableOrigin && forensics.origin_analysis && (
+                        <div className="mt-2 text-[12px] bg-primary/10 p-2 rounded text-text-primary">
+                           <strong className="block text-primary mb-1">Earliest reliable sending node</strong>
+                           <ul className="list-disc pl-4 text-text-secondary space-y-0.5">
+                             {forensics.origin_analysis.reasons.map((r, i) => <li key={i}>{r}</li>)}
+                           </ul>
+                        </div>
+                      )}
+                      
+                      {hop.validation_issues && hop.validation_issues.length > 0 && (
+                        <div className="mt-1 text-[11px] text-destructive">
+                           <strong>Anomalies:</strong> {hop.validation_issues.join(", ")}
+                        </div>
                       )}
                     </div>
 
@@ -95,7 +116,7 @@ export const RelayHopsTimelineWidget: React.FC<RelayHopsTimelineWidgetProps> = (
                     )}
                   </div>
 
-                  <GridContainer fromHost={hop.from_host} byHost={hop.by_host} withProto={hop.with_protocol} ips={hop.ip_addresses} />
+                  <GridContainer fromHost={hop.from_host} byHost={hop.by_host} withProto={hop.with_protocol} ips={hop.ip_address ? [hop.ip_address] : []} />
 
                   {hop.timestamp_raw && (
                     <span className="text-[11px] text-text-secondary block mt-3">
@@ -110,8 +131,9 @@ export const RelayHopsTimelineWidget: React.FC<RelayHopsTimelineWidgetProps> = (
                   </div>
                 )}
               </div>
-            ))}
+            )})}
           </div>
+
         )}
       </CardContent>
     </Card>
