@@ -16,6 +16,8 @@ from src.services.ioc.service import IOCService, get_ioc_service
 from src.services.ioc.types import IOCType
 
 
+from pathlib import Path
+
 class GeoIPService:
     """Orchestrator for GeoIP and network infrastructure intelligence."""
 
@@ -28,7 +30,7 @@ class GeoIPService:
     ) -> None:
         if provider:
             self.provider = provider
-        elif settings.GEOIP_CITY_DB_PATH:
+        elif settings.GEOIP_CITY_DB_PATH and Path(settings.GEOIP_CITY_DB_PATH).exists():
             self.provider = MaxMindGeoIPProvider()
         else:
             self.provider = MockGeoIPProvider()

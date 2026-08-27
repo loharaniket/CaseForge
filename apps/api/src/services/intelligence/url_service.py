@@ -6,6 +6,8 @@ from sqlalchemy.orm import Session
 from datetime import datetime, timezone
 
 from src.services.intelligence.service import IntelligenceService
+from src.services.intelligence.providers.urlhaus import URLhausFoundationProvider
+from src.services.intelligence.providers.threatfox import ThreatFoxFoundationProvider
 from src.services.intelligence.providers.virustotal_domain import VirusTotalDomainFoundationProvider
 from src.services.intelligence.redirect_analyzer import SafeRedirectAnalyzer
 from src.services.intelligence.dto import URLIntelligenceData
@@ -25,6 +27,8 @@ SUSPICIOUS_PATHS = [
 class AggregatedURLIntelligenceService:
     def __init__(self, intel_service: IntelligenceService | None = None):
         self.intel_service = intel_service or IntelligenceService()
+        self.urlhaus_provider = URLhausFoundationProvider()
+        self.threatfox_provider = ThreatFoxFoundationProvider()
         self.vt_provider = VirusTotalDomainFoundationProvider()
         
     async def get_url_intelligence(self, raw_url: str) -> URLIntelligenceData:
@@ -81,15 +85,32 @@ class AggregatedURLIntelligenceService:
                 if "%40" in lower_query or "@" in lower_query or "email=" in lower_query:
                     data.has_suspicious_query = True
 
-            # Use VT provider for domain reputation of URL
-            if data.hostname and not data.is_raw_ip:
-                vt_res = await self.intel_service.execute_provider(self.vt_provider, self.vt_provider.lookup_domain, data.registrable_domain or data.hostname)
-                if vt_res.status == ProviderStatus.AVAILABLE and vt_res.normalized_result:
-                    data.reputation = vt_res.normalized_result.reputation
-                    data.risk_score = vt_res.normalized_result.risk_score
-                data.provider_status = vt_res.status.value
+            # Query URLhaus for direct URL intelligence
+            urlhaus_res = await self.intel_service.execute_provider(
+                self.urlhaus_provider, self.urlhaus_provider.lookup_url, raw_url
+            )
+            if urlhaus_res.status == ProviderStatus.AVAILABLE and urlhaus_res.normalized_result:
+                uh_data = urlhaus_res.normalized_result
+                if uh_data.get("reputation") == "Malicious":
+                    data.reputation = "Malicious"
+                    data.risk_score = uh_data.get("risk_score", 90.0)
+                    if uh_data.get("threat"):
+                        data.explanation = f"URLhaus Threat: {uh_data.get('threat')} ({uh_data.get('url_status')})"
+
+            # If not yet flagged as malicious by URLhaus, query ThreatFox / Domain provider
+            if (not data.reputation or data.reputation == "Clean") and data.hostname and not data.is_raw_ip:
+                rep_provider = self.threatfox_provider if self.threatfox_provider.api_key else (
+                    self.vt_provider if self.vt_provider.api_key else self.threatfox_provider
+                )
+                rep_res = await self.intel_service.execute_provider(
+                    rep_provider, rep_provider.lookup_domain, data.registrable_domain or data.hostname
+                )
+                if rep_res.status == ProviderStatus.AVAILABLE and rep_res.normalized_result:
+                    data.reputation = rep_res.normalized_result.reputation
+                    data.risk_score = rep_res.normalized_result.risk_score
+                data.provider_status = rep_res.status.value
             else:
-                data.provider_status = "SKIPPED"
+                data.provider_status = urlhaus_res.status.value
                 
         except Exception as e:
             data.explanation = f"URL parsing error: {str(e)}"

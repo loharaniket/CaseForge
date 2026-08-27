@@ -5,6 +5,8 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from src.core.config import settings
+from src.services.intel.providers.threatfox import ThreatFoxProvider
+from src.services.intel.providers.urlhaus import URLhausProvider
 from src.services.intel.providers.abuseipdb import AbuseIPDBProvider
 from src.services.intel.providers.mock_provider import (
     MockDomainReputationProvider,
@@ -33,6 +35,8 @@ class ThreatIntelService:
         # Select real external provider if API key present, otherwise fallback to mock
         if ip_provider:
             self.ip_provider = ip_provider
+        elif settings.THREATFOX_API_KEY:
+            self.ip_provider = ThreatFoxProvider()
         elif settings.ABUSEIPDB_API_KEY:
             self.ip_provider = AbuseIPDBProvider()
         else:
@@ -40,6 +44,10 @@ class ThreatIntelService:
 
         if domain_provider:
             self.domain_provider = domain_provider
+        elif settings.THREATFOX_API_KEY:
+            self.domain_provider = ThreatFoxProvider()
+        elif settings.URLHAUS_API_KEY:
+            self.domain_provider = URLhausProvider()
         elif settings.VIRUSTOTAL_API_KEY:
             self.domain_provider = VirusTotalDomainProvider()
         else:

@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 
 from src.services.intelligence.service import IntelligenceService
 from src.services.intelligence.providers.native_dns import NativeDNSFoundationProvider
+from src.services.intelligence.providers.threatfox import ThreatFoxFoundationProvider
 from src.services.intelligence.providers.virustotal_domain import VirusTotalDomainFoundationProvider
 from src.services.intelligence.dto import DomainIntelligenceData
 from src.services.intelligence.types import ProviderStatus
@@ -14,31 +15,35 @@ class AggregatedDomainIntelligenceService:
     def __init__(self, intel_service: IntelligenceService | None = None):
         self.intel_service = intel_service or IntelligenceService()
         self.dns_provider = NativeDNSFoundationProvider()
+        self.threatfox_provider = ThreatFoxFoundationProvider()
         self.vt_provider = VirusTotalDomainFoundationProvider()
         
     async def get_domain_intelligence(self, domain: str) -> DomainIntelligenceData:
-        # Launch DNS queries
+        # Launch Cloudflare 1.1.1.1 DNS queries
         task_a = self.intel_service.execute_provider(self.dns_provider, self.dns_provider.lookup_dns, domain, "A")
         task_aaaa = self.intel_service.execute_provider(self.dns_provider, self.dns_provider.lookup_dns, domain, "AAAA")
         task_mx = self.intel_service.execute_provider(self.dns_provider, self.dns_provider.lookup_dns, domain, "MX")
         task_txt = self.intel_service.execute_provider(self.dns_provider, self.dns_provider.lookup_dns, domain, "TXT")
         task_ns = self.intel_service.execute_provider(self.dns_provider, self.dns_provider.lookup_dns, domain, "NS")
         
-        # Launch Reputation/Metadata query
-        task_vt = self.intel_service.execute_provider(self.vt_provider, self.vt_provider.lookup_domain, domain)
+        # Launch ThreatFox / VirusTotal Reputation query
+        rep_provider = self.threatfox_provider if self.threatfox_provider.api_key else (
+            self.vt_provider if self.vt_provider.api_key else self.threatfox_provider
+        )
+        task_rep = self.intel_service.execute_provider(rep_provider, rep_provider.lookup_domain, domain)
         
-        res_a, res_aaaa, res_mx, res_txt, res_ns, res_vt = await asyncio.gather(
-            task_a, task_aaaa, task_mx, task_txt, task_ns, task_vt
+        res_a, res_aaaa, res_mx, res_txt, res_ns, res_rep = await asyncio.gather(
+            task_a, task_aaaa, task_mx, task_txt, task_ns, task_rep
         )
         
         data = DomainIntelligenceData(domain=domain)
         
-        if res_vt.status == ProviderStatus.AVAILABLE and res_vt.normalized_result:
-            vt_data: DomainIntelligenceData = res_vt.normalized_result
-            data.registrar = vt_data.registrar
-            data.creation_date = vt_data.creation_date
-            data.reputation = vt_data.reputation
-            data.risk_score = vt_data.risk_score
+        if res_rep.status == ProviderStatus.AVAILABLE and res_rep.normalized_result:
+            rep_data: DomainIntelligenceData = res_rep.normalized_result
+            data.registrar = rep_data.registrar
+            data.creation_date = rep_data.creation_date
+            data.reputation = rep_data.reputation
+            data.risk_score = rep_data.risk_score
             
         if res_a.status == ProviderStatus.AVAILABLE and res_a.normalized_result:
             data.a_records = res_a.normalized_result

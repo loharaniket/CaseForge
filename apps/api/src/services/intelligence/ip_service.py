@@ -5,6 +5,7 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from src.services.intelligence.service import IntelligenceService
+from src.services.intelligence.providers.threatfox import ThreatFoxFoundationProvider
 from src.services.intelligence.providers.abuseipdb import AbuseIPDBFoundationProvider
 from src.services.intelligence.providers.maxmind import MaxMindFoundationProvider
 from src.services.intelligence.dto import IPIntelligenceData
@@ -37,6 +38,7 @@ def is_valid_public_ip(ip_str: str) -> bool:
 class AggregatedIPIntelligenceService:
     def __init__(self, intel_service: IntelligenceService | None = None):
         self.intel_service = intel_service or IntelligenceService()
+        self.threatfox_provider = ThreatFoxFoundationProvider()
         self.abuseipdb_provider = AbuseIPDBFoundationProvider()
         self.maxmind_provider = MaxMindFoundationProvider()
         
@@ -44,14 +46,17 @@ class AggregatedIPIntelligenceService:
         if not is_valid_public_ip(ip):
             return None
             
-        abuse_task = self.intel_service.execute_provider(self.abuseipdb_provider, self.abuseipdb_provider.lookup_ip, ip)
+        threat_provider = self.threatfox_provider if self.threatfox_provider.api_key else (
+            self.abuseipdb_provider if self.abuseipdb_provider.api_key else self.threatfox_provider
+        )
+        threat_task = self.intel_service.execute_provider(threat_provider, threat_provider.lookup_ip, ip)
         maxmind_task = self.intel_service.execute_provider(self.maxmind_provider, self.maxmind_provider.lookup_ip, ip)
         
-        abuse_result, maxmind_result = await asyncio.gather(abuse_task, maxmind_task)
+        threat_result, maxmind_result = await asyncio.gather(threat_task, maxmind_task)
         
         data = IPIntelligenceData(ip_address=ip)
         
-        # Merge MaxMind Data
+        # Merge MaxMind GeoLite2 Data
         if maxmind_result.status == ProviderStatus.AVAILABLE and maxmind_result.normalized_result:
             mm: IPIntelligenceData = maxmind_result.normalized_result
             data.country = mm.country
@@ -63,18 +68,19 @@ class AggregatedIPIntelligenceService:
             data.asn = mm.asn
             data.organization = mm.organization
             
-        # Merge AbuseIPDB Data (takes precedence for shared fields like ISP/country)
-        if abuse_result.status == ProviderStatus.AVAILABLE and abuse_result.normalized_result:
-            ab: IPIntelligenceData = abuse_result.normalized_result
-            if ab.country:
-                data.country = ab.country
-            data.isp = ab.isp
-            if ab.organization:
-                data.organization = ab.organization
-            data.hosting_provider = ab.hosting_provider
-            data.tor_indicator = ab.tor_indicator
-            data.reputation = ab.reputation
-            data.abuse_threat_score = ab.abuse_threat_score
+        # Merge ThreatFox / Abuse Threat Intelligence Data
+        if threat_result.status == ProviderStatus.AVAILABLE and threat_result.normalized_result:
+            th: IPIntelligenceData = threat_result.normalized_result
+            if th.country:
+                data.country = th.country
+            if th.isp:
+                data.isp = th.isp
+            if th.organization:
+                data.organization = th.organization
+            data.hosting_provider = th.hosting_provider
+            data.tor_indicator = th.tor_indicator
+            data.reputation = th.reputation
+            data.abuse_threat_score = th.abuse_threat_score
             
         return data
 

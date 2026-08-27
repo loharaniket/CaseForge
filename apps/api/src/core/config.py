@@ -61,13 +61,20 @@ class Settings(BaseSettings):
     PROVIDER_TIMEOUT_SECONDS: float = 10.0
 
     # Threat Intelligence External Providers (Keys from env only)
+    THREATFOX_API_KEY: str | None = None
+    URLHAUS_API_KEY: str | None = None
     ABUSEIPDB_API_KEY: str | None = None
     VIRUSTOTAL_API_KEY: str | None = None
     INTEL_CACHE_TTL_SECONDS: int = 3600
 
-    # MaxMind GeoIP Database Paths (optional local MMDBs)
+    # MaxMind GeoIP Database / API
+    MAXMIND_LICENSE_KEY: str | None = None
+    MAXMIND_ACCOUNT_ID: str | None = None
     GEOIP_CITY_DB_PATH: str | None = None
     GEOIP_ASN_DB_PATH: str | None = None
+
+    # Cloudflare 1.1.1.1 & High-Performance DNS Nameservers
+    DNS_NAMESERVERS: list[str] = ["1.1.1.1", "1.0.0.1"]
 
     # Neo4j Graph Database
     NEO4J_URI: str = "bolt://localhost:7687"

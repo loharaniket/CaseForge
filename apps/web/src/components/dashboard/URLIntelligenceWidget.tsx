@@ -109,9 +109,16 @@ export function URLIntelligenceWidget({ caseId }: URLIntelligenceWidgetProps) {
 
   return (
     <Card className="border-slate-200 shadow-sm mt-6">
-      <div className="bg-slate-50 px-4 py-3 border-b border-slate-200 flex items-center gap-2">
-        <Link2 className="h-5 w-5 text-slate-600" />
-        <h3 className="font-semibold text-slate-800">URL Intelligence</h3>
+      <div className="bg-slate-50 px-4 py-3 border-b border-slate-200 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Link2 className="h-5 w-5 text-slate-600" />
+          <h3 className="font-semibold text-slate-800">URL Intelligence</h3>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge variant="neutral" className="text-xs bg-slate-200 text-slate-700 font-mono">
+            ⚡ URLhaus & Direct HTTP/HTTPS
+          </Badge>
+        </div>
       </div>
       <CardContent className="p-0">
         <div className="overflow-x-auto">

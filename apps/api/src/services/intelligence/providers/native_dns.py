@@ -2,24 +2,28 @@ import asyncio
 import dns.asyncresolver
 from datetime import datetime, timezone
 
+from src.core.config import settings
 from src.services.intelligence.interfaces import DNSProvider
 from src.services.intelligence.types import IntelligenceResult, ProviderStatus
 
 class NativeDNSFoundationProvider(DNSProvider):
-    """Native DNS provider using dnspython asyncresolver."""
+    """Cloudflare 1.1.1.1 and high-performance asynchronous DNS resolver."""
 
-    def __init__(self, timeout_seconds: float = 3.0):
+    def __init__(self, nameservers: list[str] | None = None, timeout_seconds: float = 3.0):
+        self.nameservers = nameservers or getattr(settings, "DNS_NAMESERVERS", ["1.1.1.1", "1.0.0.1"])
         self.timeout_seconds = timeout_seconds
 
     @property
     def name(self) -> str:
-        return "NativeDNS"
+        return "Cloudflare DNS (1.1.1.1)"
 
     async def lookup_dns(self, query: str, record_type: str = "A") -> IntelligenceResult[list[str]]:
         clean_query = query.strip().lower()
         timestamp = datetime.now(timezone.utc)
         
         resolver = dns.asyncresolver.Resolver()
+        if self.nameservers:
+            resolver.nameservers = list(self.nameservers)
         resolver.timeout = self.timeout_seconds
         resolver.lifetime = self.timeout_seconds
         

@@ -8,15 +8,19 @@ from src.services.intelligence.types import IntelligenceResult, ProviderStatus
 from src.services.intelligence.dto import IPIntelligenceData
 
 class MaxMindFoundationProvider(IPIntelligenceProvider):
-    """MaxMind GeoLite2 MMDB infrastructure adapter for the new foundation."""
+    """MaxMind GeoLite2 self-hosted MMDB and GeoIP2 Web API infrastructure adapter."""
 
     def __init__(
         self,
         city_db_path: str | None = None,
         asn_db_path: str | None = None,
+        account_id: str | None = None,
+        license_key: str | None = None,
     ) -> None:
         self.city_db_path = city_db_path or settings.GEOIP_CITY_DB_PATH
         self.asn_db_path = asn_db_path or settings.GEOIP_ASN_DB_PATH
+        self.account_id = account_id or getattr(settings, "MAXMIND_ACCOUNT_ID", None)
+        self.license_key = license_key or getattr(settings, "MAXMIND_LICENSE_KEY", None)
         self._city_reader = None
         self._asn_reader = None
         self._init_readers()
@@ -37,7 +41,7 @@ class MaxMindFoundationProvider(IPIntelligenceProvider):
 
     @property
     def name(self) -> str:
-        return "MaxMind"
+        return "MaxMind GeoLite2"
 
     async def lookup_ip(self, ip: str) -> IntelligenceResult[IPIntelligenceData]:
         clean_ip = ip.strip()
@@ -49,7 +53,7 @@ class MaxMindFoundationProvider(IPIntelligenceProvider):
                 provider_name=self.name,
                 lookup_timestamp=timestamp,
                 normalized_result=None,
-                error_information="MaxMind databases not configured or missing."
+                error_information="MaxMind GeoLite2 database not configured or missing."
             )
 
         data = IPIntelligenceData()
