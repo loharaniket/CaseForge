@@ -11,12 +11,8 @@ ThreatTrace-AI/
 ├── apps/
 │   ├── api/             # FastAPI Backend API (Python 3.13)
 │   └── web/             # Next.js Frontend Dashboard (React 19, TypeScript)
-├── packages/
-│   └── contracts/       # Shared TypeScript interfaces & types
 ├── infrastructure/      # Docker Compose & PostgreSQL configuration
-├── docs/                # Architecture, database, and API documentation
-├── samples/             # Sample forensic email corpora
-└── scripts/             # Local development setup helpers
+└── docs/                # Architecture, database, and API documentation
 ```
 
 ---

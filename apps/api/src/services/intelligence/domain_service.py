@@ -90,8 +90,12 @@ class AggregatedDomainIntelligenceService:
         # Also grab sender domain from case email
         from src.models.case import Case
         case = db.query(Case).filter(Case.id == case_id).first()
-        if case and case.sender_domain:
-            unique_domains.add(case.sender_domain.lower())
+        if case and case.parsed_email:
+            sender = case.parsed_email.from_address or case.parsed_email.sender
+            if sender and "@" in sender:
+                sender_domain = sender.split("@")[-1].strip().rstrip(">").lower()
+                if sender_domain:
+                    unique_domains.add(sender_domain)
             
         valid_domains = [d for d in unique_domains if d and '.' in d]
         

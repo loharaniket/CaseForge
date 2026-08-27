@@ -1,6 +1,6 @@
 import pytest
 import asyncio
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, AsyncMock
 
 from src.models.case import Case, AnalysisStatus
 from src.services.analysis_orchestrator import run_background_analysis
@@ -35,6 +35,7 @@ async def test_run_background_analysis_success(db_session):
          patch("src.services.analysis_orchestrator.get_conclusion_engine") as mock_conclusion, \
          patch.object(db_session, "close"):
         
+        mock_intel.return_value.analyze_case_indicators = AsyncMock()
         await run_background_analysis(case.id)
 
         # Ensure all services were called

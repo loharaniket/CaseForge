@@ -17,6 +17,7 @@ from src.core.config import settings
 from src.core.security import hash_password
 from src.db.base import Base
 from src.db.session import SessionLocal, check_db_connection, engine
+import src.models  # Ensure all models are registered on Base.metadata
 from src.models.user import User, UserRole
 
 

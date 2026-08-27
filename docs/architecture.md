@@ -9,12 +9,8 @@ ThreatTrace-AI/
 ├── apps/
 │   ├── api/             # FastAPI backend microservice (Python 3.13)
 │   └── web/             # Next.js React frontend (TypeScript, Node 22+)
-├── packages/
-│   └── contracts/       # Shared TypeScript contracts and API models
 ├── infrastructure/      # Docker Compose & database provisioning
-├── docs/                # Architectural, database, and API specifications
-├── samples/             # Sample forensic email test corpora
-└── scripts/             # Developer environment provisioning scripts
+└── docs/                # Architectural, database, and API specifications
 ```
 
 ## Core Architectural Principles

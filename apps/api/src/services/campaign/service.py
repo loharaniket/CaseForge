@@ -153,7 +153,7 @@ class CampaignCorrelationService:
                 self._link_to_campaign(case_id, match_case_id, data["score"], list(data["matches"]), db)
 
     def _link_to_campaign(self, case_id: str, match_case_id: str, score: float, matches: list[str], db: Session):
-        existing_link = db.execute(select(CampaignInvestigationLink).where(CampaignInvestigationLink.case_id == match_case_id)).scalar_one_or_none()
+        existing_link = db.execute(select(CampaignInvestigationLink).where(CampaignInvestigationLink.case_id == match_case_id)).scalars().first()
         
         if existing_link:
             campaign = existing_link.campaign
@@ -170,7 +170,7 @@ class CampaignCorrelationService:
             )
             db.add(link1)
             
-        current_link = db.execute(select(CampaignInvestigationLink).where(CampaignInvestigationLink.case_id == case_id, CampaignInvestigationLink.campaign_id == campaign.id)).scalar_one_or_none()
+        current_link = db.execute(select(CampaignInvestigationLink).where(CampaignInvestigationLink.case_id == case_id, CampaignInvestigationLink.campaign_id == campaign.id)).scalars().first()
         
         if not current_link:
             link2 = CampaignInvestigationLink(

@@ -9,6 +9,7 @@ from src.core.logging import logger
 from src.core.security import hash_password
 from src.db.base import Base
 from src.db.session import SessionLocal, engine
+import src.models  # Ensure all models are registered on Base.metadata
 from src.models.user import User, UserRole
 
 
