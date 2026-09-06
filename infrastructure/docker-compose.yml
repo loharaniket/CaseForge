@@ -53,13 +53,12 @@ services:
     depends_on:
       - api
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8000
+      VITE_API_URL: http://localhost:8000
     ports:
       - "3000:3000"
     volumes:
       - ../apps/web:/app
       - /app/node_modules
-      - /app/.next
     networks:
       - threattrace_net
 

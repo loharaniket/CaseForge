@@ -82,10 +82,10 @@ class InvestigationReportDataResponse(BaseModel):
     domain_intel_results: list[dict[str, Any]] = Field(
         default_factory=list, description="Domain intelligence results"
     )
-    probable_infrastructure_origin: str = Field(..., description="Probable infrastructure location")
-    origin_country: str = Field(..., description="Infrastructure country name")
+    probable_infrastructure_origin: str | None = Field(None, description="Probable infrastructure location")
+    origin_country: str | None = Field(None, description="Infrastructure country name")
     origin_asn: int | None = Field(None, description="Autonomous System Number")
-    origin_isp: str = Field(..., description="Internet Service Provider")
+    origin_isp: str | None = Field(None, description="Internet Service Provider")
     geo_disclaimer: str = Field(..., description="Mandatory infrastructure disclaimer")
     timeline_events_count: int = Field(
         ..., description="Total count of chronological milestone events"

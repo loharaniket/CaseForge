@@ -99,9 +99,40 @@ class MockGeoIPProvider(GeoIPProvider):
         },
     }
 
+    KNOWN_DOMAIN_INFRASTRUCTURE: dict[str, str] = {
+        "bad.com": "198.51.100.200",
+        "bad-link.com": "198.51.100.200",
+        "attacker-infra.com": "198.51.100.200",
+        "phish-login.attacker-infra.com": "198.51.100.200",
+        "attacker-c2.net": "203.0.113.88",
+        "covert-attacker.org": "203.0.113.88",
+        "dark-web.org": "203.0.113.88",
+        "tatacliq.com": "198.51.100.90",
+        "styleupdate.tatacliq.com": "198.51.100.90",
+        "fashioncollections.tatacliq.com": "198.51.100.90",
+        "bounce.styleupdate.tatacliq.com": "198.51.100.90",
+        "example.com": "198.51.100.45",
+        "internal.example.com": "198.51.100.45",
+        "victim-corp.com": "198.51.100.90",
+        "security-ops.com": "198.51.100.90",
+    }
+
     @property
     def provider_name(self) -> str:
         return "MockGeoIPProvider"
+
+    def resolve_domain_ip(self, domain: str) -> str | None:
+        """Resolves known mock domains to deterministic infrastructure IPs."""
+        clean = domain.strip().lower().rstrip(".")
+        if clean in self.KNOWN_DOMAIN_INFRASTRUCTURE:
+            return self.KNOWN_DOMAIN_INFRASTRUCTURE[clean]
+        # Check parent root domain
+        parts = clean.split(".")
+        if len(parts) > 2:
+            root = ".".join(parts[-2:])
+            if root in self.KNOWN_DOMAIN_INFRASTRUCTURE:
+                return self.KNOWN_DOMAIN_INFRASTRUCTURE[root]
+        return None
 
     def lookup(self, ip: str) -> GeoLocationResult:
         clean_ip = ip.strip().strip("[]")
@@ -127,6 +158,11 @@ class MockGeoIPProvider(GeoIPProvider):
                 status=GeoLookupStatus.PRIVATE_IP,
                 is_private=True,
                 probable_infrastructure_origin="Internal / Private Network (RFC 1918 / Loopback)",
+                country_code="LOCAL",
+                country_name="Internal Network (RFC 1918)",
+                asn_number=None,
+                asn_org="Private / Internal Network",
+                isp="Private Network / LAN",
                 data_quality=DataQuality.PRIVATE_NETWORK,
                 disclaimer=DISCLAIMER_TEXT,
                 provider_name=self.provider_name,

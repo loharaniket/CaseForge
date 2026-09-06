@@ -10,7 +10,7 @@ export const Header: React.FC = () => {
             <Shield className="w-6 h-6 text-cyan-400" />
           </div>
           <div>
-            <h1 className="logo-title">ThreatTrace AI</h1>
+            <h1 className="logo-title">CaseForge</h1>
             <p className="logo-subtitle">Cybersecurity Email Investigation Platform</p>
           </div>
         </div>

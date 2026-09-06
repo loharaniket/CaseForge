@@ -23,7 +23,7 @@ export interface EmailUploadResponse {
 export interface AnalysisStatusResponse {
   case_id: string;
   analysis_status: string;
-  analysis_step: string;
+  analysis_step: string | null;
   error_message: string | null;
 }
 
@@ -124,12 +124,20 @@ export interface HeaderForensicsResponse {
 }
 
 export interface RiskScoreBreakdown {
-  ai_score: number | null;
-  header_score: number | null;
-  domain_score: number | null;
-  ip_score: number | null;
-  url_score: number | null;
-  total_score: number;
+  // Backend schema properties (apps/api/src/schemas/risk.py)
+  ai?: number | null;
+  header_forensics?: number | null;
+  domain_reputation?: number | null;
+  ip_reputation?: number | null;
+  url_analysis?: number | null;
+
+  // Frontend aliases
+  ai_score?: number | null;
+  header_score?: number | null;
+  domain_score?: number | null;
+  ip_score?: number | null;
+  url_score?: number | null;
+  total_score?: number;
 }
 
 export interface RiskAssessmentResponse {

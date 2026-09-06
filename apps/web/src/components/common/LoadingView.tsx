@@ -8,7 +8,7 @@ interface LoadingViewProps {
 }
 
 export const LoadingView: React.FC<LoadingViewProps> = ({
-  message = "Initializing ThreatTrace SOC telemetry...",
+  message = "Initializing CaseForge SOC telemetry...",
 }) => {
   return (
     <div className="loading-container">

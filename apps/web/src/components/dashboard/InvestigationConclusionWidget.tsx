@@ -31,11 +31,11 @@ export const InvestigationConclusionWidget: React.FC<InvestigationConclusionWidg
 
   if (isLoading) {
     return (
-      <Card className="mb-6 border-slate-700/50">
-        <CardHeader>
+      <Card className="mb-6 border-border shadow-sm">
+        <CardHeader className="bg-bg-panel-subtle border-b border-border">
           <div className="flex items-center gap-2">
-            <FileText className="w-5 h-5 text-slate-400" />
-            <h3 className="font-semibold">Analyst Conclusion</h3>
+            <FileText className="w-5 h-5 text-primary" />
+            <h3 className="font-semibold text-text-primary">Analyst Conclusion</h3>
           </div>
         </CardHeader>
         <CardContent>
@@ -47,16 +47,16 @@ export const InvestigationConclusionWidget: React.FC<InvestigationConclusionWidg
 
   if (isError || !conclusion) {
     return (
-      <Card className="mb-6 border-slate-700/50">
-        <CardHeader>
+      <Card className="mb-6 border-border shadow-sm">
+        <CardHeader className="bg-bg-panel-subtle border-b border-border">
           <div className="flex items-center gap-2">
-            <FileText className="w-5 h-5 text-slate-400" />
-            <h3 className="font-semibold">Analyst Conclusion</h3>
+            <FileText className="w-5 h-5 text-primary" />
+            <h3 className="font-semibold text-text-primary">Analyst Conclusion</h3>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center space-x-2 text-red-400 text-sm p-4 bg-red-500/10 rounded-md">
-            <AlertTriangle className="w-4 h-4" />
+          <div className="flex items-center space-x-2 text-danger text-sm p-4 bg-danger-bg border border-danger rounded-md">
+            <AlertTriangle className="w-4 h-4 text-danger shrink-0" />
             <span>Failed to generate conclusion: {(error as Error)?.message || "Unknown error"}</span>
           </div>
         </CardContent>
@@ -72,34 +72,34 @@ export const InvestigationConclusionWidget: React.FC<InvestigationConclusionWidg
     conclusion.risk_score >= 25 ? "MEDIUM RISK" : "LOW RISK";
     
   const ThreatIcon = isHighRisk ? ShieldAlert : ShieldCheck;
-  const threatColor = isHighRisk ? "text-red-400" : "text-emerald-400";
-  const badgeColor = isHighRisk ? "bg-red-500/20 text-red-300 border-red-500/30" : "bg-emerald-500/20 text-emerald-300 border-emerald-500/30";
+  const threatColor = isHighRisk ? "text-danger" : "text-success";
+  const badgeColor = isHighRisk ? "bg-red-500/15 text-red-700 border-red-500/30" : "bg-emerald-500/15 text-emerald-700 border-emerald-500/30";
 
   return (
-    <Card className="mb-6 border-slate-700/50 overflow-hidden relative">
+    <Card className="mb-6 border-border shadow-sm overflow-hidden relative bg-bg-panel">
       {/* Decorative accent line */}
       <div className={`absolute top-0 left-0 w-full h-1 ${isHighRisk ? 'bg-red-500' : 'bg-emerald-500'}`} />
       
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-3 border-b border-border bg-bg-panel-subtle">
         <div className="flex items-center gap-2">
-          <FileText className="w-5 h-5 text-slate-400" />
-          <h3 className="font-semibold text-[16px] text-text-primary">Automated Analyst Conclusion</h3>
+          <FileText className="w-5 h-5 text-primary" />
+          <h3 className="font-bold text-[16px] text-text-primary">Automated Analyst Conclusion</h3>
         </div>
       </CardHeader>
       
-      <CardContent className="space-y-6 pt-4">
+      <CardContent className="space-y-6 pt-5">
         {/* Top Summary Row */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="flex flex-col space-y-1">
-            <span className="text-xs text-slate-400 font-medium uppercase tracking-wider">Threat</span>
+            <span className="text-xs text-text-secondary font-bold uppercase tracking-wider">Threat Level</span>
             <div className="flex items-center space-x-2">
               <ThreatIcon className={`w-5 h-5 ${threatColor}`} />
-              <span className={`font-semibold ${threatColor}`}>{threatLevelText}</span>
+              <span className={`font-bold ${threatColor}`}>{threatLevelText}</span>
             </div>
           </div>
           
           <div className="flex flex-col space-y-1">
-            <span className="text-xs text-slate-400 font-medium uppercase tracking-wider">Classification</span>
+            <span className="text-xs text-text-secondary font-bold uppercase tracking-wider">Classification</span>
             <div className="flex items-center">
               <Badge className={badgeColor}>
                 {conclusion.classification.replace(/_/g, " ")}
@@ -108,27 +108,27 @@ export const InvestigationConclusionWidget: React.FC<InvestigationConclusionWidg
           </div>
 
           <div className="flex flex-col space-y-1">
-            <span className="text-xs text-slate-400 font-medium uppercase tracking-wider">Confidence</span>
+            <span className="text-xs text-text-secondary font-bold uppercase tracking-wider">Confidence</span>
             <div className="flex items-center">
-              <span className="text-lg font-mono text-slate-200">
+              <span className="text-xl font-mono font-bold text-text-primary">
                 {(conclusion.confidence * 100).toFixed(0)}%
               </span>
             </div>
           </div>
         </div>
 
-        <div className="h-px w-full bg-slate-700/50" />
+        <div className="h-px w-full bg-border" />
 
         {/* Findings and Infrastructure */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-4">
             <div>
-              <h4 className="text-sm font-medium text-slate-300 mb-2">Primary Findings:</h4>
+              <h4 className="text-sm font-bold text-text-primary mb-2.5">Primary Findings:</h4>
               <ul className="space-y-2">
                 {conclusion.primary_findings.map((finding, idx) => (
-                  <li key={idx} className="flex items-start space-x-2 text-sm text-slate-400">
-                    <span className="text-slate-500 font-mono mt-0.5">{idx + 1}.</span>
-                    <span>{finding}</span>
+                  <li key={idx} className="flex items-start space-x-2 text-sm text-text-primary">
+                    <span className="text-primary font-mono font-bold mt-0.5">{idx + 1}.</span>
+                    <span className="leading-relaxed">{finding}</span>
                   </li>
                 ))}
               </ul>
@@ -136,12 +136,12 @@ export const InvestigationConclusionWidget: React.FC<InvestigationConclusionWidg
             
             {conclusion.supporting_evidence.length > 0 && (
               <div>
-                <h4 className="text-sm font-medium text-slate-300 mb-2 mt-4">Supporting Evidence:</h4>
-                <ul className="space-y-1">
+                <h4 className="text-sm font-bold text-text-primary mb-2 mt-4">Supporting Evidence:</h4>
+                <ul className="space-y-1.5">
                   {conclusion.supporting_evidence.map((evidence, idx) => (
-                    <li key={idx} className="flex items-start space-x-2 text-sm text-slate-500">
-                      <span className="w-1 h-1 rounded-full bg-slate-600 mt-1.5 flex-shrink-0" />
-                      <span>{evidence}</span>
+                    <li key={idx} className="flex items-start space-x-2 text-xs text-text-secondary">
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0" />
+                      <span className="leading-relaxed">{evidence}</span>
                     </li>
                   ))}
                 </ul>
@@ -149,23 +149,34 @@ export const InvestigationConclusionWidget: React.FC<InvestigationConclusionWidg
             )}
           </div>
 
+          {/* Right Column: Probable Infrastructure & Limitations Card */}
           <div className="space-y-4">
-            <div className="p-4 bg-slate-800/50 rounded-lg border border-slate-700/50 space-y-3">
-              <div className="flex items-start space-x-2">
-                <MapPin className="w-4 h-4 text-indigo-400 mt-0.5 flex-shrink-0" />
-                <div>
-                  <span className="text-xs text-slate-400 font-medium uppercase block mb-1">Probable Infrastructure</span>
-                  <p className="text-sm text-slate-200">{conclusion.probable_infrastructure}</p>
+            <div className="p-4 bg-bg-page rounded-lg border border-border space-y-4 shadow-sm">
+              <div className="flex items-start space-x-3">
+                <div className="w-8 h-8 rounded-lg bg-primary-soft flex items-center justify-center shrink-0 mt-0.5">
+                  <MapPin className="w-4 h-4 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <span className="text-xs font-bold text-text-secondary uppercase tracking-wider block mb-1">
+                    Probable Infrastructure
+                  </span>
+                  <p className="text-sm font-bold text-text-primary leading-snug">
+                    {conclusion.probable_infrastructure}
+                  </p>
                 </div>
               </div>
               
-              <div className="h-px w-full bg-slate-700/50" />
+              <div className="h-px w-full bg-border" />
               
-              <div className="flex items-start space-x-2">
-                <Info className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" />
-                <div>
-                  <span className="text-xs text-slate-400 font-medium uppercase block mb-1">Limitations</span>
-                  <p className="text-sm text-slate-400 italic">
+              <div className="flex items-start space-x-3">
+                <div className="w-8 h-8 rounded-lg bg-amber-500/15 flex items-center justify-center shrink-0 mt-0.5">
+                  <Info className="w-4 h-4 text-amber-600" />
+                </div>
+                <div className="flex-1">
+                  <span className="text-xs font-bold text-text-secondary uppercase tracking-wider block mb-1">
+                    Limitations
+                  </span>
+                  <p className="text-xs text-text-secondary leading-relaxed italic bg-white p-2.5 rounded border border-border">
                     {conclusion.attribution_assessment}
                   </p>
                 </div>

@@ -1,14 +1,12 @@
-"use client";
-
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useNavigate } from "react-router-dom";
 import { Shield, Lock, Mail, ArrowRight, RefreshCw, AlertCircle } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { ApiError } from "@/lib/api/client";
 import { Button, Input } from "@/components/ui";
 
 export default function LoginPage() {
-  const router = useRouter();
+  const navigate = useNavigate();
   const { login } = useAuth();
 
   const [email, setEmail] = useState("");
@@ -37,7 +35,7 @@ export default function LoginPage() {
     setIsSubmitting(true);
     try {
       await login({ email: email.trim(), password });
-      router.push("/");
+      navigate("/");
     } catch (err: unknown) {
       if (err instanceof ApiError) {
         setErrorMsg(err.message);
@@ -51,6 +49,12 @@ export default function LoginPage() {
     }
   };
 
+  const handleFillDemoCredentials = () => {
+    setEmail("analyst@threattrace.io");
+    setPassword("Password123!");
+    setErrorMsg(null);
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-nav-bg">
       <div className="w-[400px] bg-bg-panel rounded-[8px] p-8 shadow-sm">
@@ -60,7 +64,7 @@ export default function LoginPage() {
             <Shield className="w-6 h-6 text-primary" />
           </div>
           <h1 className="text-xl font-[700] text-text-primary mb-1">Analyst Authentication</h1>
-          <p className="text-xs text-text-secondary">ThreatTrace AI Security Operations Center</p>
+          <p className="text-xs text-text-secondary">CaseForge Security Operations Center</p>
         </div>
 
         {/* Error Alert */}
@@ -133,8 +137,19 @@ export default function LoginPage() {
           </Button>
         </form>
 
+        {/* Quick Demo Credentials shortcut */}
+        <div className="mt-4 pt-3 border-t border-border text-center">
+          <button
+            type="button"
+            onClick={handleFillDemoCredentials}
+            className="text-xs text-primary hover:text-primary/80 font-semibold underline underline-offset-2 transition-colors"
+          >
+            Quick Fill Analyst Credentials (analyst@threattrace.io)
+          </button>
+        </div>
+
         {/* Footer info */}
-        <div className="mt-6 pt-4 border-t border-border text-center">
+        <div className="mt-4 pt-3 border-t border-border/50 text-center">
           <p className="text-[11px] text-text-muted">
             Restricted access. All analyst activities are audited with tamper-evident logs.
           </p>

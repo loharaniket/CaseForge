@@ -1,11 +1,12 @@
 import React from 'react';
 
-export const Button = React.forwardRef<HTMLButtonElement, React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' | 'danger' | 'tertiary' }>(({ className = '', variant = 'primary', ...props }, ref) => {
+export const Button = React.forwardRef<HTMLButtonElement, React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' | 'danger' | 'tertiary' | 'dark' }>(({ className = '', variant = 'primary', ...props }, ref) => {
   const baseClasses = 'inline-flex items-center justify-center font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed';
   
   const variants = {
     primary: 'bg-primary text-white hover:bg-primary-hover h-9 px-4 rounded-[6px]',
     secondary: 'bg-white border border-border text-text-primary hover:bg-bg-panel-subtle h-9 px-4 rounded-[6px]',
+    dark: 'bg-[#243B53] border border-[#334E68] text-white hover:bg-[#334E68] h-9 px-4 rounded-[6px]',
     danger: 'bg-danger text-white hover:bg-critical h-9 px-4 rounded-[6px]',
     tertiary: 'text-primary hover:text-primary-hover underline-offset-2 hover:underline'
   };

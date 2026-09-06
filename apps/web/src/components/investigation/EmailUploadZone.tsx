@@ -1,7 +1,5 @@
-"use client";
-
 import React, { useRef, useState } from "react";
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import {
   UploadCloud,
   FileCheck,
@@ -103,7 +101,7 @@ export const EmailUploadZone: React.FC<EmailUploadZoneProps> = ({ onUploadSucces
           <p className="text-sm text-text-secondary max-w-[400px] mx-auto mb-6">
             In compliance with SOC chain-of-custody protocols, evidence ingestion requires an active analyst session.
           </p>
-          <Link href="/login" className="no-underline">
+          <Link to="/login" className="no-underline">
             <Button variant="primary" className="gap-2">
               <span>Sign In as Analyst</span>
               <ArrowRight className="w-4 h-4" />

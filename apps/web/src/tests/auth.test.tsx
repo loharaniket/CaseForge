@@ -5,15 +5,18 @@ import LoginPage from "@/app/login/page";
 import { AuthProvider } from "@/context/AuthContext";
 import { Header } from "@/components/layout/Header";
 import { QueryProvider } from "@/providers/QueryProvider";
+import { MemoryRouter } from "react-router-dom";
 
-// Mock next/navigation useRouter
-const mockPush = vi.fn();
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({
-    push: mockPush,
-  }),
-  usePathname: () => "/",
-}));
+// Mock react-router-dom useNavigate
+const mockNavigate = vi.fn();
+vi.mock("react-router-dom", async () => {
+  const actual = await vi.importActual("react-router-dom");
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+    useLocation: () => ({ pathname: "/" }),
+  };
+});
 
 // Mock Health hook for Header test
 vi.mock("@/hooks/useHealth", () => ({
@@ -139,7 +142,7 @@ describe("Authentication & Login UI", () => {
 
     await waitFor(() => {
       expect(localStorage.getItem("threattrace_auth_token")).toBe("mock.jwt.token.analyst");
-      expect(mockPush).toHaveBeenCalledWith("/");
+      expect(mockNavigate).toHaveBeenCalledWith("/");
     });
   });
 
@@ -147,7 +150,9 @@ describe("Authentication & Login UI", () => {
     render(
       <QueryProvider>
         <AuthProvider>
-          <Header />
+          <MemoryRouter>
+            <Header />
+          </MemoryRouter>
         </AuthProvider>
       </QueryProvider>
     );

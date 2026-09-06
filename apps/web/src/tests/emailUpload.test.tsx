@@ -26,10 +26,14 @@ const mockAuthContext: AuthContextValue = {
   logout: vi.fn(),
 };
 
+import { MemoryRouter } from "react-router-dom";
+
 const renderWithAuth = (ui: React.ReactElement, authValue = mockAuthContext) => {
   return render(
     <AuthContext.Provider value={authValue}>
-      {ui}
+      <MemoryRouter>
+        {ui}
+      </MemoryRouter>
     </AuthContext.Provider>
   );
 };

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import { ShieldX, Home } from "lucide-react";
 
 export default function NotFound() {
@@ -14,7 +14,7 @@ export default function NotFound() {
             The requested SOC console route or forensic resource does not exist.
           </p>
         </div>
-        <Link href="/" className="action-btn">
+        <Link to="/" className="action-btn">
           <Home className="w-4 h-4" />
           <span>Return to SOC Overview</span>
         </Link>

@@ -1,16 +1,16 @@
-# ThreatTrace AI — Cybersecurity Email Investigation Platform
+# CaseForge — Cybersecurity Email Investigation Platform
 
-ThreatTrace AI is a modular cybersecurity email forensics and investigation platform built for Security Operations Centers (SOC).
+CaseForge is a modular cybersecurity email forensics and investigation platform built for Security Operations Centers (SOC).
 
 ---
 
 ## Repository Structure
 
 ```
-ThreatTrace-AI/
+CaseForge/
 ├── apps/
 │   ├── api/             # FastAPI Backend API (Python 3.13)
-│   └── web/             # Next.js Frontend Dashboard (React 19, TypeScript)
+│   └── web/             # React 19 + Vite SPA Frontend Dashboard (TypeScript)
 ├── infrastructure/      # Docker Compose & PostgreSQL configuration
 └── docs/                # Architecture, database, and API documentation
 ```
@@ -64,7 +64,7 @@ npm --prefix apps/web run build
 npm --prefix apps/web run typecheck
 ```
 
-Start the Next.js development server:
+Start the Vite development server:
 ```bash
 npm --prefix apps/web run dev
 ```

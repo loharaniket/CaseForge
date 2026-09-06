@@ -73,7 +73,7 @@ export const EvidenceIntegrityWidget: React.FC<EvidenceIntegrityWidgetProps> = (
       return (
         <Badge variant="success" className="gap-1 px-2 py-0.5 text-[10px]">
           <ShieldCheck className="w-3 h-3" />
-          VERIFIED
+          AUTHENTIC • SHA-256 MATCH
         </Badge>
       );
     }
@@ -208,9 +208,14 @@ export const EvidenceIntegrityWidget: React.FC<EvidenceIntegrityWidgetProps> = (
                       {/* SHA-256 & Name */}
                       <Td className="align-top">
                         <div className="flex flex-col gap-1">
-                          <span className="text-[13px] font-[600] text-text-primary">
-                            {safeFilename}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[13px] font-[600] text-text-primary">
+                              {safeFilename}
+                            </span>
+                            <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-primary-soft text-primary border border-primary/30">
+                              {rec.evidence_type}
+                            </span>
+                          </div>
                           <div className="flex items-start gap-2">
                             <span className="text-[11px] font-mono bg-bg-panel-subtle px-2 py-1 rounded border border-border text-info break-all max-w-[280px]">
                               {rec.sha256_hash}

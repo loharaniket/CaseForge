@@ -146,11 +146,27 @@ class EmailAuthenticationAnalyzer:
                         status = AuthStatus.UNKNOWN
 
                     # Extract attributes from whole clean header string
+                    domain = None
                     domain_match = RE_MAILFROM.search(val_clean)
-                    domain = domain_match.group(1) if domain_match else None
+                    if domain_match:
+                        domain = domain_match.group(1).split("@")[-1].strip("<>\"'()")
+                    else:
+                        dom_of = re.search(r"domain\s+of\s+([^\s;>)]+)", val_clean, re.IGNORECASE)
+                        if dom_of:
+                            domain = dom_of.group(1).split("@")[-1].strip("<>\"'()")
+                        elif "return-path" in raw_headers:
+                            rp_val = str(raw_headers["return-path"]).split("@")[-1].strip("<>\"'()\r\n ")
+                            if rp_val and "." in rp_val:
+                                domain = rp_val
 
+                    sender_ip = None
                     ip_match = RE_SENDER_IP.search(val_clean)
-                    sender_ip = ip_match.group(1) if ip_match else None
+                    if ip_match:
+                        sender_ip = ip_match.group(1)
+                    else:
+                        desig = re.search(r"designates\s+([0-9a-fA-F:.]+)", val_clean, re.IGNORECASE)
+                        if desig:
+                            sender_ip = desig.group(1)
 
                     explanation = cls._generate_spf_explanation(status, domain, sender_ip)
 
@@ -177,11 +193,27 @@ class EmailAuthenticationAnalyzer:
                 except ValueError:
                     status = AuthStatus.UNKNOWN
 
+                sender_ip = None
                 ip_match = RE_SENDER_IP.search(spf_clean)
-                sender_ip = ip_match.group(1) if ip_match else None
+                if ip_match:
+                    sender_ip = ip_match.group(1)
+                else:
+                    desig = re.search(r"designates\s+([0-9a-fA-F:.]+)", spf_clean, re.IGNORECASE)
+                    if desig:
+                        sender_ip = desig.group(1)
 
+                domain = None
                 domain_match = RE_MAILFROM.search(spf_clean)
-                domain = domain_match.group(1) if domain_match else None
+                if domain_match:
+                    domain = domain_match.group(1).split("@")[-1].strip("<>\"'()")
+                else:
+                    dom_of = re.search(r"domain\s+of\s+([^\s;>)]+)", spf_clean, re.IGNORECASE)
+                    if dom_of:
+                        domain = dom_of.group(1).split("@")[-1].strip("<>\"'()")
+                    elif "return-path" in raw_headers:
+                        rp_val = str(raw_headers["return-path"]).split("@")[-1].strip("<>\"'()\r\n ")
+                        if rp_val and "." in rp_val:
+                            domain = rp_val
 
                 explanation = cls._generate_spf_explanation(status, domain, sender_ip)
 
@@ -230,6 +262,19 @@ class EmailAuthenticationAnalyzer:
                     selector_match = RE_HEADER_S.search(val_clean)
                     selector = selector_match.group(1) if selector_match else None
 
+                    # If domain or selector missing, inspect DKIM-Signature header
+                    if not domain or not selector:
+                        dkim_sigs = cls._get_header_values(raw_headers, "dkim-signature")
+                        for sig in dkim_sigs:
+                            if not domain:
+                                d_m = re.search(r"\bd=([^;\s]+)", sig, re.IGNORECASE)
+                                if d_m:
+                                    domain = d_m.group(1).strip("<>\"'")
+                            if not selector:
+                                s_m = re.search(r"\bs=([^;\s]+)", sig, re.IGNORECASE)
+                                if s_m:
+                                    selector = s_m.group(1).strip("<>\"'")
+
                     explanation = cls._generate_dkim_explanation(status, domain, selector)
 
                     return ProtocolAuthResult(
@@ -246,10 +291,24 @@ class EmailAuthenticationAnalyzer:
         # 2. Check if DKIM-Signature header exists without verification result
         dkim_sigs = cls._get_header_values(raw_headers, "dkim-signature")
         if dkim_sigs:
+            domain = None
+            selector = None
+            for sig in dkim_sigs:
+                if not domain:
+                    d_m = re.search(r"\bd=([^;\s]+)", sig, re.IGNORECASE)
+                    if d_m:
+                        domain = d_m.group(1).strip("<>\"'")
+                if not selector:
+                    s_m = re.search(r"\bs=([^;\s]+)", sig, re.IGNORECASE)
+                    if s_m:
+                        selector = s_m.group(1).strip("<>\"'")
+
             return ProtocolAuthResult(
                 protocol="dkim",
                 status=AuthStatus.NONE,
                 normalized_status="none",
+                domain=domain,
+                selector=selector,
                 source_header="dkim-signature",
                 explanation="DKIM signature is attached but receiving MTA did not record verification result.",
             )
@@ -283,6 +342,13 @@ class EmailAuthenticationAnalyzer:
 
                     domain_match = RE_HEADER_FROM.search(val_clean)
                     domain = domain_match.group(1) if domain_match else None
+                    if not domain and "from" in raw_headers:
+                        from_val = str(raw_headers["from"]).split("@")[-1].strip("<>\"'()\r\n ")
+                        if from_val and "." in from_val:
+                            domain = from_val
+
+                    policy_match = re.search(r"\((p=[^)]+)\)", val_clean, re.IGNORECASE)
+                    evidence_str = policy_match.group(1) if policy_match else match.group(0).strip()
 
                     explanation = cls._generate_dmarc_explanation(status, domain)
 

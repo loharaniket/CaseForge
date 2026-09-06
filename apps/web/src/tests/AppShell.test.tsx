@@ -30,29 +30,34 @@ vi.mock("@/hooks/useHealth", () => ({
   }),
 }));
 
+import { MemoryRouter } from "react-router-dom";
+
 describe("AppShell & Navigation", () => {
   it("renders branding, sidebar navigation items, and children", () => {
     render(
       <QueryProvider>
         <AuthProvider>
-          <AppShell>
-            <div data-testid="test-content">Investigation Content</div>
-          </AppShell>
+          <MemoryRouter>
+            <AppShell>
+              <div data-testid="test-content">Investigation Content</div>
+            </AppShell>
+          </MemoryRouter>
         </AuthProvider>
       </QueryProvider>
     );
 
     // 1. Verify header branding
-    expect(screen.getByText("ThreatTrace AI")).toBeInTheDocument();
+    expect(screen.getByText("CaseForge")).toBeInTheDocument();
     expect(
       screen.getByText("Enterprise SOC Platform")
     ).toBeInTheDocument();
 
-    // 2. Verify sidebar navigation
-    expect(screen.getByText("INVESTIGATIONS")).toBeInTheDocument();
-    expect(screen.getAllByText("Investigations").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("New Investigation").length).toBeGreaterThan(0);
-    expect(screen.getByText("Settings")).toBeInTheDocument();
+    // 2. Verify top navigation
+    const investigationsLink = screen.getByRole("link", { name: /investigations/i });
+    expect(investigationsLink).toHaveAttribute("href", "/investigations");
+
+    const newInvestigationLink = screen.getByRole("link", { name: /new investigation/i });
+    expect(newInvestigationLink).toHaveAttribute("href", "/new-investigation");
 
     // 3. Verify content
     expect(screen.getByTestId("test-content")).toHaveTextContent(
@@ -61,7 +66,7 @@ describe("AppShell & Navigation", () => {
 
     // 4. Verify footer
     expect(
-      screen.getByText(/ThreatTrace AI SOC Investigation Platform/i)
+      screen.getByText(/CaseForge SOC Investigation Platform/i)
     ).toBeInTheDocument();
   });
 });

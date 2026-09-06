@@ -61,10 +61,19 @@ export const ThreatIntelGeoWidget: React.FC<ThreatIntelGeoWidgetProps> = ({
 
                 <div className="flex flex-col">
                   <span className="text-[11px] font-[600] text-text-muted uppercase tracking-wider">
+                    Candidate Origin IP
+                  </span>
+                  <span className="text-[13px] font-mono text-primary mt-1 bg-primary-soft px-1.5 py-0.5 rounded w-fit">
+                    {geo.candidate_origin_ip || "Not available (No hop IP)"}
+                  </span>
+                </div>
+
+                <div className="flex flex-col">
+                  <span className="text-[11px] font-[600] text-text-muted uppercase tracking-wider">
                     Origin Country
                   </span>
                   <span className="text-[14px] font-[700] text-text-primary mt-1">
-                    {geo.origin_country || "Not available"} {geo.origin_country_code ? `(${geo.origin_country_code})` : ""}
+                    {geo.origin_country || "Not available"} {geo.origin_country_code && geo.origin_country_code !== "LOCAL" ? `(${geo.origin_country_code})` : ""}
                   </span>
                 </div>
 
@@ -77,7 +86,7 @@ export const ThreatIntelGeoWidget: React.FC<ThreatIntelGeoWidgetProps> = ({
                   </span>
                 </div>
 
-                <div className="flex flex-col">
+                <div className="flex flex-col sm:col-span-2">
                   <span className="text-[11px] font-[600] text-text-muted uppercase tracking-wider">
                     Network Provider / ISP & Org
                   </span>
@@ -86,6 +95,13 @@ export const ThreatIntelGeoWidget: React.FC<ThreatIntelGeoWidgetProps> = ({
                   </span>
                 </div>
               </div>
+
+              {geo.total_ips_analyzed === 0 && (
+                <div className="mt-3 p-2.5 rounded bg-warning-soft text-warning text-xs flex items-center gap-2 border border-warning/20">
+                  <Info className="w-4 h-4 shrink-0" />
+                  <span>No MTA transmission hops or sender IPs were recorded in the headers of this email. Estimated location requires at least one relay hop, SPF sender IP, or resolvable domain.</span>
+                </div>
+              )}
 
               {/* Mandatory Rule 14 Disclaimer */}
               <div className="mt-4 pt-3 border-t border-border flex items-start gap-2">

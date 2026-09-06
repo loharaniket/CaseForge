@@ -68,6 +68,32 @@ class HeaderForensicsService:
             return False
 
     @classmethod
+    def _extract_valid_ips(cls, text: str) -> list[str]:
+        """Safely extracts all valid IPv4 and IPv6 addresses from a string in order of appearance."""
+        candidates: list[str] = []
+        # Bracketed and parenthesized IPs e.g. [198.51.100.1] or (198.51.100.1)
+        for m in re.findall(r"\[([0-9a-fA-F:.]+)\]|\(([0-9a-fA-F:.]+)\)", text):
+            candidates.extend([x for x in m if x])
+        # IPv4
+        candidates.extend(re.findall(r"\b(?:\d{1,3}\.){3}\d{1,3}\b", text))
+        # IPv6
+        candidates.extend(re.findall(r"\b(?:[0-9a-fA-F]{1,4}:){1,7}:?(?:[0-9a-fA-F]{1,4})?\b", text))
+
+        valid: list[str] = []
+        seen: set[str] = set()
+        for c in candidates:
+            clean = c.strip("[]() ")
+            try:
+                ip_obj = ipaddress.ip_address(clean)
+                norm = str(ip_obj)
+                if norm not in seen:
+                    seen.add(norm)
+                    valid.append(norm)
+            except ValueError:
+                pass
+        return valid
+
+    @classmethod
     def parse_relay_chain(cls, raw_headers: dict[str, Any]) -> list[RelayHop]:
         """Reconstructs the chronological relay chain from Received header hops."""
         received_raw: list[str] = []
@@ -107,20 +133,15 @@ class HeaderForensicsService:
             if from_match:
                 from_host = from_match.group(1).strip("()[]")
 
-            # Better IP extraction: isolate the 'from' clause
+            # Better IP extraction: isolate the 'from' clause first
             from_clause = rec_clean.split(" by ")[0] if " by " in rec_clean.lower() else rec_clean
-            ip_candidates = re.findall(r'(?:\d{1,3}\.){3}\d{1,3}|(?:[a-fA-F0-9]{1,4}:){7}[a-fA-F0-9]{1,4}', from_clause)
-            valid_ips = []
-            for c in ip_candidates:
-                try:
-                    import ipaddress
-                    ipaddress.ip_address(c)
-                    valid_ips.append(c)
-                except ValueError:
-                    pass
-                    
+            valid_ips = cls._extract_valid_ips(from_clause)
+            if not valid_ips:
+                # If no IP in from clause, search entire hop text
+                valid_ips = cls._extract_valid_ips(rec_clean)
+
             if valid_ips:
-                # The MTA usually appends the true IP at the end of the from clause
+                # The sending MTA usually appends the true IP at the end of the from clause
                 ip_addr = valid_ips[-1]
             elif from_match and from_match.group(2):
                 confidence -= 0.2
@@ -201,12 +222,43 @@ class HeaderForensicsService:
         return hops
 
     @classmethod
-    def extract_origin_ips(cls, hops: list[RelayHop]) -> tuple[list[str], str | None]:
+    def extract_origin_ips(
+        cls,
+        hops: list[RelayHop],
+        raw_headers: dict[str, Any] | None = None,
+    ) -> tuple[list[str], str | None]:
         """Extracts candidate origin IPs and identifies the first external/public source MTA IP."""
         candidates: list[str] = []
         for hop in hops:
             if hop.ip_address and hop.ip_address not in candidates:
                 candidates.append(hop.ip_address)
+
+        # Also inspect raw headers for explicit origin and authentication IP indicators
+        if raw_headers:
+            origin_headers = (
+                "x-originating-ip",
+                "x-sender-ip",
+                "client-ip",
+                "x-client-ip",
+                "x-mailer-ip",
+                "x-aol-ip",
+            )
+            for h_name in origin_headers:
+                for k, v in raw_headers.items():
+                    if k.lower() == h_name:
+                        v_str = " ".join([str(x) for x in v]) if isinstance(v, list) else str(v)
+                        for ip in cls._extract_valid_ips(v_str):
+                            if ip not in candidates:
+                                candidates.append(ip)
+
+            # Check Authentication-Results and Received-SPF for sender/client IP
+            for auth_hdr in ("received-spf", "authentication-results", "arc-authentication-results"):
+                for k, v in raw_headers.items():
+                    if k.lower() == auth_hdr:
+                        v_str = " ".join([str(x) for x in v]) if isinstance(v, list) else str(v)
+                        for ip in cls._extract_valid_ips(v_str):
+                            if ip not in candidates:
+                                candidates.append(ip)
 
         # Probable origin: earliest non-private candidate IP in transmission order
         probable: str | None = None
@@ -246,6 +298,7 @@ class HeaderForensicsService:
             dmarc_status=dmarc_status_val,
             dmarc_details=normalized.dmarc.explanation,
             raw_auth_results=auth_hdr_raw,
+            details=normalized.to_dict(),
         )
 
     @staticmethod
@@ -280,10 +333,17 @@ class HeaderForensicsService:
         if return_path and from_domain:
             rp_domain = cls._extract_domain(return_path)
             if rp_domain and rp_domain != from_domain:
-                spoofing.append(
-                    f"Return-Path domain mismatch: Return-Path ('{rp_domain}') does not match From ('{from_domain}')."
-                )
-                risk_score += 35.0
+                rp_base = ".".join(rp_domain.lower().split(".")[-2:])
+                from_base = ".".join(from_domain.lower().split(".")[-2:])
+                if rp_base != from_base:
+                    spoofing.append(
+                        f"Return-Path domain mismatch: Return-Path ('{rp_domain}') does not match From ('{from_domain}')."
+                    )
+                    risk_score += 35.0
+                else:
+                    anomalies.append(
+                        f"Subdomain Return-Path variation: Return-Path ('{rp_domain}') is an aligned subdomain of ('{from_domain}')."
+                    )
 
         # 2. Reply-To Mismatch Check
         reply_to_list = list(getattr(email_data, "reply_to", []) or [])
@@ -337,8 +397,17 @@ class HeaderForensicsService:
         raw_headers = getattr(email_data, "raw_headers", {}) or {}
 
         relay_hops = self.parse_relay_chain(raw_headers)
-        origin_candidates, probable_origin = self.extract_origin_ips(relay_hops)
         auth_result = self.parse_authentication_results(raw_headers)
+        origin_candidates, probable_origin = self.extract_origin_ips(relay_hops, raw_headers)
+
+        # If probable origin not found from hops or headers, check SPF authorized sender IP
+        if not probable_origin and auth_result and auth_result.details:
+            spf_details = auth_result.details.get("spf", {})
+            sender_ip = spf_details.get("sender_ip") if isinstance(spf_details, dict) else None
+            if sender_ip and sender_ip not in origin_candidates:
+                origin_candidates.append(sender_ip)
+                probable_origin = sender_ip
+
         spoofing, anomalies, risk_score = self.evaluate_spoofing(email_data, auth_result)
 
         return HeaderForensicsResult(

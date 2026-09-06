@@ -288,16 +288,16 @@ class InvestigationReportService:
             domain_intel_results=intel_data.get("domain_results", [])
             if isinstance(intel_data, dict)
             else [],
-            probable_infrastructure_origin=geo_data.get(
-                "probable_infrastructure_origin", "Not available"
+            probable_infrastructure_origin=(
+                geo_data.get("probable_infrastructure_origin") or "Not available"
             )
             if isinstance(geo_data, dict)
             else "Not available",
-            origin_country=geo_data.get("origin_country", "N/A")
+            origin_country=(geo_data.get("origin_country") or "Not available")
             if isinstance(geo_data, dict)
-            else "N/A",
+            else "Not available",
             origin_asn=geo_data.get("origin_asn") if isinstance(geo_data, dict) else None,
-            origin_isp=geo_data.get("origin_isp", "N/A") if isinstance(geo_data, dict) else "N/A",
+            origin_isp=(geo_data.get("origin_isp") or "Not available") if isinstance(geo_data, dict) else "Not available",
             geo_disclaimer=geo_data.get("disclaimer", "") if isinstance(geo_data, dict) else "",
             timeline_events_count=timeline_count,
             timeline_events=timeline_events,

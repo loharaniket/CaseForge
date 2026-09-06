@@ -19,6 +19,7 @@ vi.mock("@/lib/api/email", () => ({
   getCaseEvidence: vi.fn(),
   verifyCaseEvidence: vi.fn(),
   getCaseThreatGraph: vi.fn(),
+  getAnalysisStatus: vi.fn(),
 }));
 
 const mockParsed = {
@@ -252,6 +253,12 @@ function renderDashboard(caseId: string = "case-uuid-1234") {
 describe("InvestigationDashboard", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(emailApi.getAnalysisStatus).mockResolvedValue({
+      case_id: "case-uuid-1234",
+      analysis_status: "COMPLETED",
+      analysis_step: null,
+      error_message: null,
+    });
     vi.mocked(emailApi.getParsedEmail).mockResolvedValue(mockParsed);
     vi.mocked(emailApi.getCaseRisk).mockResolvedValue(mockRisk);
     vi.mocked(emailApi.getThreatAnalysis).mockResolvedValue(mockThreat);

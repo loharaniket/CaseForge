@@ -54,9 +54,10 @@ class AuthenticationResult:
     dmarc_status: AuthenticationStatus = AuthenticationStatus.UNKNOWN
     dmarc_details: str | None = None
     raw_auth_results: str | None = None
+    details: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        data = {
             "spf_status": self.spf_status.value,
             "spf_details": self.spf_details,
             "dkim_status": self.dkim_status.value,
@@ -65,6 +66,9 @@ class AuthenticationResult:
             "dmarc_details": self.dmarc_details,
             "raw_auth_results": self.raw_auth_results,
         }
+        if self.details:
+            data.update(self.details)
+        return data
 
 
 

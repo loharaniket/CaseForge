@@ -34,7 +34,7 @@ export const RelayHopsTimelineWidget: React.FC<RelayHopsTimelineWidgetProps> = (
           <div className="flex items-center gap-3">
             <Network className="w-5 h-5 text-primary" />
             <h3 className="text-[16px] font-[700] text-text-primary">
-              Mail Relay Path
+              MTA Relay Pathway Timeline
             </h3>
           </div>
 

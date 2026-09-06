@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -10,6 +8,20 @@ import {
   FileDown,
   FileCheck2,
   Share2,
+  Layers,
+  Flame,
+  ShieldAlert,
+  AlertTriangle,
+  ShieldCheck,
+  Globe,
+  Radio,
+  Clock,
+  Lock,
+  ArrowLeft,
+  Copy,
+  Check,
+  ExternalLink,
+  Search,
 } from "lucide-react";
 import {
   downloadInvestigationReport,
@@ -54,15 +66,30 @@ import { ThreatGraphWidget } from "./ThreatGraphWidget";
 import { CampaignWidget } from "./CampaignWidget";
 import { Card, CardContent, Badge, Button } from "@/components/ui";
 
+type ActiveTab =
+  | "overview"
+  | "authentication"
+  | "intel"
+  | "iocs"
+  | "graph"
+  | "timeline"
+  | "evidence";
+
 interface InvestigationDashboardProps {
   caseId: string;
+  onBack?: () => void;
 }
 
-export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ caseId }) => {
+export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({
+  caseId,
+  onBack,
+}) => {
+  const [activeTab, setActiveTab] = useState<ActiveTab>("overview");
   const [bodyFormat, setBodyFormat] = useState<"plain" | "html">("plain");
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [isVerifyingEvidence, setIsVerifyingEvidence] = useState(false);
   const [verifyNotice, setVerifyNotice] = useState<string | null>(null);
+  const [copiedCaseId, setCopiedCaseId] = useState(false);
 
   // 0. Polling Analysis Status Query
   const {
@@ -75,9 +102,9 @@ export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ 
     refetchInterval: (query) => {
       const status = query.state.data?.analysis_status;
       if (status === "QUEUED" || status === "PROCESSING") {
-        return 2000; // Poll every 2 seconds
+        return 2000;
       }
-      return false; // Stop polling
+      return false;
     },
   });
 
@@ -221,6 +248,12 @@ export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ 
     refetchGraph();
   };
 
+  const handleCopyCaseId = () => {
+    navigator.clipboard.writeText(caseId);
+    setCopiedCaseId(true);
+    setTimeout(() => setCopiedCaseId(false), 2000);
+  };
+
   const handleDownloadPdf = async () => {
     setIsDownloadingPdf(true);
     try {
@@ -254,352 +287,605 @@ export const InvestigationDashboard: React.FC<InvestigationDashboardProps> = ({ 
 
   if (analysisStatus?.analysis_status === "QUEUED" || analysisStatus?.analysis_status === "PROCESSING") {
     return (
-      <Card className="p-12 text-center flex flex-col items-center justify-center">
-        <RefreshCw className="w-8 h-8 text-primary animate-spin mb-4" />
-        <h3 className="text-[18px] font-[700] text-text-primary mb-2">
-          {analysisStatus.analysis_step || "Analyzing email..."}
+      <div className="bg-bg-panel border border-border rounded-xl p-12 text-center flex flex-col items-center justify-center shadow-lg">
+        <div className="relative mb-6">
+          <div className="w-16 h-16 rounded-full bg-primary-soft flex items-center justify-center animate-pulse">
+            <Shield className="w-8 h-8 text-primary" />
+          </div>
+          <RefreshCw className="w-6 h-6 text-primary animate-spin absolute -bottom-1 -right-1" />
+        </div>
+        <h3 className="text-xl font-bold text-text-primary mb-2">
+          {analysisStatus.analysis_step || "Analyzing Suspicious Email..."}
         </h3>
-        <p className="text-sm font-mono text-text-secondary">
-          ThreatTrace is performing near-real-time automated analysis...
+        <p className="text-sm font-mono text-text-secondary max-w-md">
+          CaseForge is executing header forensics, reputation lookups, and ML-assisted threat scoring.
         </p>
-      </Card>
+      </div>
     );
   }
 
   if (analysisStatus?.analysis_status === "FAILED") {
     return (
-      <Card className="p-8">
-        <h3 className="text-[18px] font-[700] text-danger-dark mb-4">
-          Investigation Analysis Failed
-        </h3>
-        <div className="p-4 bg-danger-bg border border-danger text-danger-dark rounded-[8px] mb-6 text-sm">
+      <div className="bg-bg-panel border border-danger/40 rounded-xl p-8 shadow-lg">
+        <div className="flex items-center gap-3 text-danger mb-4">
+          <AlertTriangle className="w-6 h-6" />
+          <h3 className="text-lg font-bold">Investigation Analysis Failed</h3>
+        </div>
+        <div className="p-4 bg-danger-bg border border-danger rounded-lg mb-6 text-sm text-critical">
           {analysisStatus.error_message || "A critical error occurred during background analysis."}
         </div>
-      </Card>
+        {onBack && (
+          <Button variant="secondary" onClick={onBack} className="gap-2">
+            <ArrowLeft className="w-4 h-4" />
+            <span>Return to Cases</span>
+          </Button>
+        )}
+      </div>
     );
   }
 
   if (isInitialLoading) {
     return (
-      <Card className="p-12 text-center flex flex-col items-center justify-center">
+      <div className="bg-bg-panel border border-border rounded-xl p-12 text-center flex flex-col items-center justify-center shadow-lg">
         <RefreshCw className="w-8 h-8 text-primary animate-spin mb-4" />
-        <h3 className="text-[18px] font-[700] text-text-primary mb-2">
+        <h3 className="text-lg font-bold text-text-primary mb-2">
           Loading Investigation Telemetry...
         </h3>
         <p className="text-sm font-mono text-text-secondary">
           Aggregating case evidence, header forensics, threat intelligence, and risk assessment
         </p>
-      </Card>
+      </div>
     );
   }
 
   if (isParsedError || !parsed) {
     return (
-      <Card className="p-8">
-        <h3 className="text-[18px] font-[700] text-danger-dark mb-4">
+      <div className="bg-bg-panel border border-border rounded-xl p-8 shadow-lg">
+        <h3 className="text-lg font-bold text-critical mb-4">
           Investigation Loading Notice
         </h3>
-        <div className="p-4 bg-danger-bg border border-danger text-danger-dark rounded-[8px] mb-6 text-sm">
+        <div className="p-4 bg-danger-bg border border-danger rounded-lg mb-6 text-sm text-critical">
           Email parsing failed: {parsedError?.message || "Failed to load case investigation evidence."}
         </div>
-        <div className="text-center">
+        <div className="flex items-center gap-3">
           <Button variant="secondary" onClick={handleRefreshAll} className="gap-2">
             <RefreshCw className="w-4 h-4" />
             <span>Retry Investigation Analysis</span>
           </Button>
+          {onBack && (
+            <Button variant="secondary" onClick={onBack} className="gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Cases</span>
+            </Button>
+          )}
         </div>
-      </Card>
+      </div>
     );
   }
 
+  // Calculate score & severity metrics
+  const totalScore = risk ? Math.round(risk.total_score) : 0;
+  const severity = (risk?.severity || threat?.classification || "low").toLowerCase();
+  const classification = (threat?.classification || "normal").toUpperCase();
+
+  const getSeverityStyle = (sev: string) => {
+    switch (sev) {
+      case "critical":
+        return {
+          bg: "bg-red-500/10",
+          border: "border-red-500/40",
+          text: "text-red-500",
+          ring: "stroke-red-500",
+          glow: "shadow-[0_0_20px_rgba(239,68,68,0.25)]",
+          label: "CRITICAL RISK",
+          icon: Flame,
+        };
+      case "high":
+        return {
+          bg: "bg-orange-500/10",
+          border: "border-orange-500/40",
+          text: "text-orange-500",
+          ring: "stroke-orange-500",
+          glow: "shadow-[0_0_20px_rgba(249,115,22,0.25)]",
+          label: "HIGH RISK",
+          icon: ShieldAlert,
+        };
+      case "medium":
+        return {
+          bg: "bg-amber-500/10",
+          border: "border-amber-500/40",
+          text: "text-amber-500",
+          ring: "stroke-amber-500",
+          glow: "shadow-[0_0_20px_rgba(245,158,11,0.25)]",
+          label: "MEDIUM RISK",
+          icon: AlertTriangle,
+        };
+      default:
+        return {
+          bg: "bg-emerald-500/10",
+          border: "border-emerald-500/40",
+          text: "text-emerald-500",
+          ring: "stroke-emerald-500",
+          glow: "shadow-[0_0_20px_rgba(16,185,129,0.25)]",
+          label: "LOW / BENIGN",
+          icon: ShieldCheck,
+        };
+    }
+  };
+
+  const sevStyle = getSeverityStyle(severity);
+  const SevIcon = sevStyle.icon;
+
+  const totalIocCount = iocs?.total_count ?? iocs?.iocs?.length ?? 0;
+
+  const tabs: { id: ActiveTab; label: string; icon: React.ElementType; badge?: string | number }[] = [
+    { id: "overview", label: "Overview & Verdict", icon: Shield },
+    { id: "authentication", label: "Authentication & Relays", icon: Radio },
+    { id: "intel", label: "Threat Intel & Geo", icon: Globe },
+    {
+      id: "iocs",
+      label: "IOC Indicators",
+      icon: Layers,
+      badge: totalIocCount > 0 ? totalIocCount : undefined,
+    },
+    { id: "graph", label: "Threat Graph", icon: Share2 },
+    { id: "timeline", label: "Forensic Timeline", icon: Clock },
+    {
+      id: "evidence",
+      label: "Evidence & Custody Integrity",
+      icon: Lock,
+      badge: parsed.attachments_metadata?.length ? parsed.attachments_metadata.length : undefined,
+    },
+  ];
+
   return (
     <div className="flex flex-col gap-6">
-      {/* Investigation Top Header Bar */}
-      <Card className="shadow-md">
-        <CardContent className="p-4 sm:p-6">
-          <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4 mb-4">
-            <div className="flex flex-col">
-              <div className="flex items-center gap-3 mb-2">
-                <Shield className="w-6 h-6 text-primary" />
-                <h1 className="text-[20px] font-[800] text-text-primary tracking-tight">
-                  Case Investigation Console
-                </h1>
-                <Badge variant="neutral" className="bg-primary-soft text-primary border-primary font-[700] text-[10px] px-2 py-0.5">
-                  ACTIVE CASE
-                </Badge>
-              </div>
-              <span className="text-[12px] text-text-secondary font-mono">
-                Case ID: {parsed.case_id} • Ingested: {new Date(parsed.created_at).toLocaleString()}
+      {/* TOP EXECUTIVE COMMAND HEADER */}
+      <div className="bg-nav-bg border border-[#243B53] rounded-xl p-5 md:p-6 text-white shadow-xl">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          {/* Left: Case Info & Status */}
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-wrap items-center gap-3">
+              {onBack && (
+                <button
+                  onClick={onBack}
+                  className="flex items-center gap-1 text-xs font-semibold text-[#9FB3C8] hover:text-white bg-[#243B53] hover:bg-[#334E68] px-2.5 py-1 rounded transition-colors"
+                  title="Return to investigation list"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Cases</span>
+                </button>
+              )}
+              <h1 className="text-xl md:text-2xl font-black text-white tracking-tight flex items-center gap-2">
+                <Shield className="w-6 h-6 text-cyan-400" />
+                Case Investigation Console
+              </h1>
+              <span className={`px-2.5 py-0.5 rounded-full text-xs font-black uppercase tracking-wider border ${sevStyle.bg} ${sevStyle.border} ${sevStyle.text}`}>
+                {sevStyle.label}
               </span>
             </div>
 
-            {/* Refresh Header Control */}
-            <div className="flex items-center">
-              <button
-                onClick={handleRefreshAll}
-                className="p-2 rounded hover:bg-bg-panel-subtle text-text-secondary hover:text-text-primary transition-colors"
-                title="Refresh all investigation telemetry"
-                aria-label="Refresh telemetry"
-              >
-                <RefreshCw className="w-4 h-4" />
-              </button>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[#9FB3C8] font-mono">
+              <span className="flex items-center gap-1.5">
+                Case ID:
+                <span className="text-white font-bold">{parsed.case_id}</span>
+                <button
+                  onClick={handleCopyCaseId}
+                  className="p-1 hover:text-white rounded transition-colors"
+                  title="Copy Case ID"
+                >
+                  {copiedCaseId ? (
+                    <Check className="w-3.5 h-3.5 text-emerald-400" />
+                  ) : (
+                    <Copy className="w-3.5 h-3.5" />
+                  )}
+                </button>
+              </span>
+              <span>•</span>
+              <span>Ingested: {new Date(parsed.created_at).toLocaleString()}</span>
+              {parsed.subject && (
+                <>
+                  <span>•</span>
+                  <span className="text-slate-300 font-sans italic truncate max-w-sm">
+                    "{parsed.subject}"
+                  </span>
+                </>
+              )}
             </div>
           </div>
 
-          {verifyNotice && (
-            <div className={`mt-4 p-3 rounded-[8px] border text-sm ${
-              verifyNotice.startsWith("✓") 
-                ? "bg-success-bg border-success text-success-dark" 
-                : "bg-warning-bg border-warning text-warning-dark"
-            }`}>
-              <div className="flex items-center justify-between">
-                <span>{verifyNotice}</span>
-                <button onClick={() => setVerifyNotice(null)} className="opacity-70 hover:opacity-100 text-lg leading-none">&times;</button>
-              </div>
-            </div>
-          )}
+          {/* Right: Quick Actions */}
+          <div className="flex flex-wrap items-center gap-2.5 self-start lg:self-center">
+            <button
+              onClick={handleDownloadPdf}
+              disabled={isDownloadingPdf}
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold text-white bg-[#243B53] hover:bg-[#334E68] border border-cyan-500/40 hover:border-cyan-400 shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <FileDown className="w-4 h-4 text-cyan-400 shrink-0" />
+              <span className="text-white font-bold">{isDownloadingPdf ? "Compiling PDF..." : "Export PDF Report"}</span>
+            </button>
 
-        </CardContent>
-      </Card>
+            <button
+              onClick={handleVerifyEvidence}
+              disabled={isVerifyingEvidence}
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold text-white bg-[#243B53] hover:bg-[#334E68] border border-emerald-500/40 hover:border-emerald-400 shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <FileCheck2 className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span className="text-white font-bold">{isVerifyingEvidence ? "Verifying..." : "Verify Custody"}</span>
+            </button>
 
-      {/* SIH WORKFLOW */}
-      {/* 1. Verdict & 2. Risk & 3. Why Flagged */}
-      <section id="section-verdict-why">
-        <InvestigationConclusionWidget caseId={parsed.case_id} />
-        <ThreatScoreWidget
-          risk={risk}
-          threat={threat}
-          forensics={forensics}
-          caseId={parsed.case_id}
-          isLoading={isRiskLoading || isThreatLoading}
-        />
-      </section>
+            <button
+              onClick={handleRefreshAll}
+              className="p-2 rounded-lg bg-[#243B53] hover:bg-[#334E68] text-[#9FB3C8] hover:text-white transition-colors border border-[#334E68]"
+              title="Refresh all investigation telemetry"
+              aria-label="Refresh telemetry"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
 
-      {/* 4. Authentication */}
-      <section id="section-auth">
-        <AuthenticationForensicsWidget forensics={forensics} isLoading={isForensicsLoading} />
-      </section>
+        {/* Verification Status Alert */}
+        {verifyNotice && (
+          <div
+            className={`mt-4 p-3 rounded-lg border text-sm flex items-center justify-between ${
+              verifyNotice.startsWith("✓")
+                ? "bg-emerald-950/50 border-emerald-500/50 text-emerald-300"
+                : "bg-amber-950/50 border-amber-500/50 text-amber-300"
+            }`}
+          >
+            <span>{verifyNotice}</span>
+            <button
+              onClick={() => setVerifyNotice(null)}
+              className="opacity-70 hover:opacity-100 text-lg leading-none ml-2"
+            >
+              &times;
+            </button>
+          </div>
+        )}
 
-      {/* 5. Sender Identity */}
-      <section id="section-email-summary">
-        <Card className="shadow-md overflow-hidden">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <Mail className="w-5 h-5 text-primary" />
-              <h2 className="text-[16px] font-[700] text-text-primary">
-                Email Envelope & Identity Summary
-              </h2>
-            </div>
-            
-            <div className="p-5 bg-bg-page border border-border rounded-[8px] mb-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div className="flex flex-col gap-1">
-                  <span className="text-[11px] font-[600] text-text-secondary uppercase tracking-wider">
-                    From (Sender)
-                  </span>
-                  <span className="text-[13px] font-[600] text-text-primary break-all">
-                    {parsed.from_name ? `${parsed.from_name} <${parsed.from_address || parsed.sender}>` : parsed.sender || "N/A"}
-                  </span>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-[11px] font-[600] text-text-secondary uppercase tracking-wider">
-                    To (Recipients)
-                  </span>
-                  <span className="text-[13px] font-[600] text-text-primary break-all">
-                    {parsed.recipients && parsed.recipients.length > 0 ? parsed.recipients.join(", ") : "None declared"}
-                  </span>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-[11px] font-[600] text-text-secondary uppercase tracking-wider">
-                    Subject
-                  </span>
-                  <span className="text-[14px] font-[700] text-primary">
-                    {parsed.subject || "(No Subject Declared)"}
-                  </span>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-[11px] font-[600] text-text-secondary uppercase tracking-wider">
-                    Date Declared
-                  </span>
-                  <span className="text-[13px] text-text-primary">
-                    {parsed.date_parsed ? new Date(parsed.date_parsed).toUTCString() : parsed.date_raw || "Not available"}
-                  </span>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-[11px] font-[600] text-text-secondary uppercase tracking-wider">
-                    Message-ID
-                  </span>
-                  <span className="text-[11px] font-mono text-text-muted break-all">
-                    {parsed.message_id || "None declared"}
-                  </span>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-[11px] font-[600] text-text-secondary uppercase tracking-wider">
-                    Reply-To / CC
-                  </span>
-                  <span className="text-[13px] text-text-muted">
-                    {parsed.reply_to && parsed.reply_to.length > 0 ? `Reply-To: ${parsed.reply_to.join(", ")}` : "No Reply-To mismatch"}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="mb-0">
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
-                <h3 className="text-[14px] font-[700] text-text-primary">
-                  Email Body Content Preview
-                </h3>
-                <div className="flex items-center bg-bg-panel-subtle p-1 rounded-[6px] border border-border">
-                  <button
-                    onClick={() => setBodyFormat("plain")}
-                    className={`px-3 py-1 text-[11px] font-[600] rounded-[4px] transition-colors ${
-                      bodyFormat === "plain" ? "bg-white shadow text-text-primary" : "text-text-secondary hover:text-text-primary"
-                    }`}
-                  >
-                    Plain Text
-                  </button>
-                  <button
-                    onClick={() => setBodyFormat("html")}
-                    className={`px-3 py-1 text-[11px] font-[600] rounded-[4px] transition-colors ${
-                      bodyFormat === "html" ? "bg-white shadow text-text-primary" : "text-text-secondary hover:text-text-primary"
-                    }`}
-                  >
-                    Safe HTML
-                  </button>
-                </div>
-              </div>
-
-              {bodyFormat === "plain" ? (
-                <div className="p-4 bg-slate-900 rounded-[8px] border border-slate-700 max-h-[220px] overflow-y-auto custom-scrollbar font-mono text-[12px] text-slate-300 whitespace-pre-wrap">
-                  {parsed.body_plain || "No plain text content available."}
-                </div>
-              ) : (
-                <div 
-                  className="p-4 bg-white rounded-[8px] border border-border max-h-[220px] overflow-y-auto custom-scrollbar text-[13px] text-slate-800"
-                  dangerouslySetInnerHTML={{
-                    __html: parsed.body_html || "<p>No HTML body content available.</p>",
-                  }}
+        {/* KPI TELEMETRY METRIC TILES */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-6 pt-5 border-t border-[#243B53]">
+          {/* Tile 1: Threat Score Gauge */}
+          <div className="flex items-center gap-3.5 bg-[#121A22] p-3 rounded-lg border border-[#243B53]">
+            <div className="relative w-12 h-12 flex items-center justify-center shrink-0">
+              <svg className="w-12 h-12 -rotate-90" viewBox="0 0 36 36">
+                <path
+                  className="text-slate-800"
+                  strokeWidth="3.5"
+                  stroke="currentColor"
+                  fill="none"
+                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                 />
-              )}
+                <path
+                  className={sevStyle.ring}
+                  strokeDasharray={`${totalScore}, 100`}
+                  strokeWidth="3.5"
+                  strokeLinecap="round"
+                  stroke="currentColor"
+                  fill="none"
+                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                />
+              </svg>
+              <span className="absolute font-black text-sm text-white">
+                {totalScore}
+              </span>
             </div>
-          </CardContent>
-        </Card>
-      </section>
+            <div className="flex flex-col">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-[#9FB3C8]">
+                Composite Risk
+              </span>
+              <span className={`text-xs font-black uppercase ${sevStyle.text}`}>
+                {severity}
+              </span>
+            </div>
+          </div>
 
-      {/* 6. Relay/origin */}
-      <section id="section-relay-origin">
-        <RelayHopsTimelineWidget forensics={forensics} isLoading={isForensicsLoading} />
-      </section>
+          {/* Tile 2: AI Classification */}
+          <div className="flex items-center gap-3.5 bg-[#121A22] p-3 rounded-lg border border-[#243B53]">
+            <div className="w-10 h-10 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center shrink-0">
+              <SevIcon className="w-5 h-5 text-cyan-400" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-[#9FB3C8]">
+                AI Classification
+              </span>
+              <span className="text-xs font-black text-white">
+                {classification}
+              </span>
+            </div>
+          </div>
 
-      {/* 7. Infrastructure intelligence */}
-      <section id="section-threat-intel-geo" className="flex flex-col gap-6">
-        <ThreatIntelGeoWidget intel={intel} geo={geo} isLoading={isIntelLoading || isGeoLoading} />
-        <IPIntelligenceWidget caseId={caseId} />
-        <DomainIntelligenceWidget caseId={caseId} />
-        <URLIntelligenceWidget caseId={caseId} />
-      </section>
+          {/* Tile 3: Authentication Alignment */}
+          <div className="flex items-center gap-3.5 bg-[#121A22] p-3 rounded-lg border border-[#243B53]">
+            <div className="w-10 h-10 rounded-lg bg-blue-500/10 border border-blue-500/30 flex items-center justify-center shrink-0">
+              <Radio className="w-5 h-5 text-blue-400" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-[#9FB3C8]">
+                Email Authentication
+              </span>
+              <div className="flex items-center gap-1.5 text-[11px] font-mono mt-0.5">
+                <span className={forensics?.spf_status?.toLowerCase() === "pass" ? "text-emerald-400" : "text-red-400"}>
+                  SPF:{forensics?.spf_status || "N/A"}
+                </span>
+                <span className="text-slate-600">|</span>
+                <span className={forensics?.dkim_status?.toLowerCase() === "pass" ? "text-emerald-400" : "text-red-400"}>
+                  DKIM:{forensics?.dkim_status || "N/A"}
+                </span>
+              </div>
+            </div>
+          </div>
 
-      {/* 8. IOCs */}
-      <section id="section-iocs">
-        <IOCTableWidget iocData={iocs} isLoading={isIocsLoading} />
-      </section>
+          {/* Tile 4: Evidence & IOC Count */}
+          <div className="flex items-center gap-3.5 bg-[#121A22] p-3 rounded-lg border border-[#243B53]">
+            <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center shrink-0">
+              <Lock className="w-5 h-5 text-emerald-400" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-[#9FB3C8]">
+                Evidence Chain
+              </span>
+              <span className="text-xs font-semibold text-white">
+                {totalIocCount} IOCs • SHA-256 Validated
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      {/* 9. Related campaign */}
-      <section id="section-campaign">
-        <CampaignWidget caseId={parsed.case_id} />
-      </section>
+      {/* NAVIGATION TABS */}
+      <div className="flex items-center gap-2 border-b border-border pb-1 overflow-x-auto custom-scrollbar">
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              role="tab"
+              aria-selected={isActive}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-2.5 px-4 py-2.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
+                isActive
+                  ? "bg-primary text-white shadow-md"
+                  : "text-text-secondary hover:text-text-primary hover:bg-bg-panel-subtle bg-bg-panel border border-border/60"
+              }`}
+            >
+              <Icon className={`w-4 h-4 ${isActive ? "text-white" : "text-primary"}`} />
+              <span>{tab.label}</span>
+              {tab.badge !== undefined && (
+                <span
+                  className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                    isActive
+                      ? "bg-white/20 text-white"
+                      : "bg-primary-soft text-primary"
+                  }`}
+                >
+                  {tab.badge}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
 
-      {/* 10. Evidence integrity */}
-      <section id="section-evidence">
-        <EvidenceIntegrityWidget caseId={caseId} />
-        {parsed.attachments_metadata && parsed.attachments_metadata.length > 0 && (
-          <Card className="mt-6">
+      {/* TAB 1: OVERVIEW & VERDICT */}
+      {activeTab === "overview" && (
+        <div className="flex flex-col gap-6 animate-fadeIn">
+          {/* 1. AI Conclusion & Risk Breakdown */}
+          <InvestigationConclusionWidget caseId={parsed.case_id} />
+
+          <ThreatScoreWidget
+            risk={risk}
+            threat={threat}
+            forensics={forensics}
+            caseId={parsed.case_id}
+            isLoading={isRiskLoading || isThreatLoading}
+          />
+
+          {/* 2. Sender Identity & Envelope */}
+          <Card className="shadow-md overflow-hidden">
             <CardContent className="p-6">
-              <h3 className="text-[14px] font-[700] text-text-primary mb-3 flex items-center gap-2">
-                <Paperclip className="w-4 h-4" /> Attached Evidence Files ({parsed.attachments_metadata.length})
-              </h3>
-              <div className="flex flex-col gap-2">
-                {parsed.attachments_metadata.map((att, idx) => (
-                  <div
-                    key={idx}
-                    className="p-3 bg-bg-page border border-border rounded-[8px] flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-                  >
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[13px] font-[600] text-text-primary">
-                        {att.filename}
-                      </span>
-                      <span className="text-[11px] text-text-secondary font-mono">
-                        Size: {(att.file_size_bytes / 1024).toFixed(1)} KB • SHA-256: {att.sha256}
-                      </span>
-                    </div>
-                    <Badge variant="neutral" className="bg-border/50 text-text-muted text-[10px] uppercase w-fit">
-                      {att.extension}
+              <div className="flex items-center gap-3 mb-6">
+                <Mail className="w-5 h-5 text-primary" />
+                <h2 className="text-[16px] font-[700] text-text-primary">
+                  Email Envelope & Identity Summary
+                </h2>
+              </div>
+
+              <div className="p-5 bg-bg-page border border-border rounded-xl mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[11px] font-[700] text-text-secondary uppercase tracking-wider">
+                      From (Sender)
+                    </span>
+                    <span className="text-[13px] font-[700] text-text-primary break-all">
+                      {parsed.from_name && <span className="mr-1">{parsed.from_name}</span>}
+                      <span>{parsed.from_address || parsed.sender || "N/A"}</span>
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[11px] font-[700] text-text-secondary uppercase tracking-wider">
+                      To (Recipients)
+                    </span>
+                    <span className="text-[13px] font-[600] text-text-primary break-all">
+                      {parsed.recipients && parsed.recipients.length > 0
+                        ? parsed.recipients.join(", ")
+                        : "None declared"}
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[11px] font-[700] text-text-secondary uppercase tracking-wider">
+                      Subject
+                    </span>
+                    <span className="text-[14px] font-[800] text-primary">
+                      {parsed.subject || "(No Subject Declared)"}
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[11px] font-[700] text-text-secondary uppercase tracking-wider">
+                      Date Declared
+                    </span>
+                    <span className="text-[13px] text-text-primary">
+                      {parsed.date_parsed
+                        ? new Date(parsed.date_parsed).toUTCString()
+                        : parsed.date_raw || "Not available"}
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[11px] font-[700] text-text-secondary uppercase tracking-wider">
+                      Message-ID
+                    </span>
+                    <span className="text-[11px] font-mono text-text-muted break-all">
+                      {parsed.message_id || "None declared"}
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[11px] font-[700] text-text-secondary uppercase tracking-wider">
+                      Reply-To / CC
+                    </span>
+                    <span className="text-[13px] text-text-muted">
+                      {parsed.reply_to && parsed.reply_to.length > 0
+                        ? `Reply-To: ${parsed.reply_to.join(", ")}`
+                        : "No Reply-To mismatch"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Email Content Preview with Safe HTML toggle */}
+              <div>
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-[14px] font-[700] text-text-primary">
+                      Email Body Content Preview
+                    </h3>
+                    <Badge variant="neutral" className="text-[10px]">
+                      ISOLATED SANDBOX
                     </Badge>
                   </div>
-                ))}
+                  <div className="flex items-center bg-bg-panel-subtle p-1 rounded-lg border border-border">
+                    <button
+                      onClick={() => setBodyFormat("plain")}
+                      className={`px-3 py-1 text-[11px] font-[600] rounded transition-colors ${
+                        bodyFormat === "plain"
+                          ? "bg-white shadow text-text-primary"
+                          : "text-text-secondary hover:text-text-primary"
+                      }`}
+                    >
+                      Plain Text
+                    </button>
+                    <button
+                      onClick={() => setBodyFormat("html")}
+                      className={`px-3 py-1 text-[11px] font-[600] rounded transition-colors ${
+                        bodyFormat === "html"
+                          ? "bg-white shadow text-text-primary"
+                          : "text-text-secondary hover:text-text-primary"
+                      }`}
+                    >
+                      Safe HTML
+                    </button>
+                  </div>
+                </div>
+
+                {bodyFormat === "plain" ? (
+                  <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 max-h-[300px] overflow-y-auto custom-scrollbar font-mono text-[12px] text-slate-300 whitespace-pre-wrap leading-relaxed">
+                    {parsed.body_plain || "No plain text content available."}
+                  </div>
+                ) : (
+                  <div
+                    className="p-5 bg-white rounded-xl border border-border max-h-[300px] overflow-y-auto custom-scrollbar text-[13px] text-slate-800"
+                    dangerouslySetInnerHTML={{
+                      __html: parsed.body_html || "<p>No HTML body content available.</p>",
+                    }}
+                  />
+                )}
               </div>
             </CardContent>
           </Card>
-        )}
-      </section>
-
-      {/* 11. Graph */}
-      <section id="section-graph">
-        <ThreatGraphWidget graph={graph} isLoading={isGraphLoading} onRefresh={refetchGraph} />
-      </section>
-
-      {/* 12. Timeline */}
-      <section id="section-timeline">
-        <ForensicTimelineWidget timelineData={timeline} isLoading={isTimelineLoading} />
-      </section>
-
-      {/* SECTION L: BOTTOM ACTIONS TOOLBAR */}
-      <Card className="p-6">
-        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-          <div className="flex flex-col gap-1">
-            <h3 className="text-[14px] font-[700] text-text-primary">
-              Investigation Actions & Export
-            </h3>
-            <span className="text-[12px] text-text-secondary">
-              Generate tamper-evident PDF reports, verify cryptographic hash records, or re-run analysis.
-            </span>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <Button
-              variant="secondary"
-              onClick={handleDownloadPdf}
-              disabled={isDownloadingPdf}
-              className="gap-2 px-3 py-1.5 h-auto text-xs"
-            >
-              <FileDown className="w-4 h-4" />
-              <span>{isDownloadingPdf ? "Compiling PDF..." : "Export PDF Report"}</span>
-            </Button>
-
-            <Button
-              variant="secondary"
-              onClick={() => {
-                const el = document.getElementById("section-graph");
-                if (el) el.scrollIntoView({ behavior: "smooth" });
-              }}
-              className="gap-2 px-3 py-1.5 h-auto text-xs"
-            >
-              <Share2 className="w-4 h-4" />
-              <span>View Relationship Graph</span>
-            </Button>
-
-            <Button
-              variant="primary"
-              onClick={handleVerifyEvidence}
-              disabled={isVerifyingEvidence}
-              className="gap-2 px-3 py-1.5 h-auto text-xs"
-            >
-              <FileCheck2 className="w-4 h-4" />
-              <span>Verify Evidence Integrity</span>
-            </Button>
-          </div>
         </div>
-      </Card>
+      )}
+
+      {/* TAB 2: AUTHENTICATION & RELAYS */}
+      {activeTab === "authentication" && (
+        <div className="flex flex-col gap-6 animate-fadeIn">
+          <AuthenticationForensicsWidget forensics={forensics} isLoading={isForensicsLoading} />
+          <RelayHopsTimelineWidget forensics={forensics} isLoading={isForensicsLoading} />
+        </div>
+      )}
+
+      {/* TAB 3: THREAT INTEL & GEO */}
+      {activeTab === "intel" && (
+        <div className="flex flex-col gap-6 animate-fadeIn">
+          <ThreatIntelGeoWidget intel={intel} geo={geo} isLoading={isIntelLoading || isGeoLoading} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <IPIntelligenceWidget caseId={caseId} />
+            <DomainIntelligenceWidget caseId={caseId} />
+          </div>
+          <URLIntelligenceWidget caseId={caseId} />
+          <CampaignWidget caseId={parsed.case_id} />
+        </div>
+      )}
+
+      {/* TAB 4: IOC INDICATORS */}
+      {activeTab === "iocs" && (
+        <div className="flex flex-col gap-6 animate-fadeIn">
+          <IOCTableWidget iocData={iocs} isLoading={isIocsLoading} />
+        </div>
+      )}
+
+      {/* TAB 5: RELATIONSHIP GRAPH */}
+      {activeTab === "graph" && (
+        <div className="flex flex-col gap-6 animate-fadeIn">
+          <ThreatGraphWidget graph={graph} isLoading={isGraphLoading} onRefresh={refetchGraph} />
+        </div>
+      )}
+
+      {/* TAB 6: FORENSIC TIMELINE */}
+      {activeTab === "timeline" && (
+        <div className="flex flex-col gap-6 animate-fadeIn">
+          <ForensicTimelineWidget timelineData={timeline} isLoading={isTimelineLoading} />
+        </div>
+      )}
+
+      {/* TAB 7: EVIDENCE & CUSTODY */}
+      {activeTab === "evidence" && (
+        <div className="flex flex-col gap-6 animate-fadeIn">
+          <EvidenceIntegrityWidget caseId={caseId} />
+
+          {/* Attachments Section */}
+          {parsed.attachments_metadata && parsed.attachments_metadata.length > 0 && (
+            <Card className="shadow-md">
+              <CardContent className="p-6">
+                <h3 className="text-[14px] font-[700] text-text-primary mb-4 flex items-center gap-2">
+                  <Paperclip className="w-4 h-4 text-primary" />
+                  Attached Evidence Artifacts ({parsed.attachments_metadata.length})
+                </h3>
+                <div className="flex flex-col gap-2.5">
+                  {parsed.attachments_metadata.map((att, idx) => (
+                    <div
+                      key={idx}
+                      className="p-3.5 bg-bg-page border border-border rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                    >
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[13px] font-[700] text-text-primary">
+                          {att.filename}
+                        </span>
+                        <span className="text-[11px] text-text-secondary font-mono">
+                          Size: {(att.file_size_bytes / 1024).toFixed(1)} KB • SHA-256: {att.sha256}
+                        </span>
+                      </div>
+                      <Badge variant="neutral" className="bg-border/60 text-text-muted text-[10px] uppercase w-fit">
+                        {att.extension}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
     </div>
   );
 };
