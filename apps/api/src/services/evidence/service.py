@@ -262,7 +262,7 @@ class EvidenceIntegrityService:
                         case_id=case_id,
                         evidence_type=ev_type,
                         file_name=file_name
-                        or f"ThreatTrace_Investigation_Report_{case_id[:8]}.pdf",
+                        or f"CaseForge_Investigation_Report_{case_id[:8]}.pdf",
                         expected_sha256=expected_hash,
                         actual_sha256=None,
                         status=EvidenceIntegrityStatus.UNAVAILABLE,

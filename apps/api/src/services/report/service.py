@@ -58,7 +58,7 @@ class InvestigationReportService:
         sev = severity.upper()
         cls_type = classification.upper()
 
-        if sev in ("CRITICAL", "HIGH") or cls_type in ("PHISHING", "BEC", "CREDENTIAL_PHISHING"):
+        if sev in ("CRITICAL", "HIGH") or cls_type in ("PHISHING", "BEC", "CREDENTIAL_PHISHING", "MALWARE"):
             recs.append(
                 "Immediately purge and quarantine matching email messages across all organizational mailboxes."
             )
@@ -76,19 +76,22 @@ class InvestigationReportService:
                 "Add malicious origin and relay IP addresses to network perimeter firewall blocklists."
             )
 
-        if spf_status.lower() == "fail" or dmarc_status.lower() == "fail":
+        if (spf_status.lower() == "fail" or dmarc_status.lower() == "fail") and sev in ("CRITICAL", "HIGH", "MEDIUM"):
             recs.append(
                 "Sender authentication failed: enforce strict DMARC rejection policy (p=reject) on sending domains."
             )
 
-        if attachments_count > 0:
+        if attachments_count > 0 and sev in ("CRITICAL", "HIGH"):
             recs.append(
                 "Submit extracted attachment hashes (SHA-256) to Endpoint Detection and Response (EDR) blocklists."
             )
 
         if not recs:
             recs.append(
-                "Threat risk is low. Continue routine endpoint telemetry monitoring and user security awareness training."
+                "No immediate remediation blocking required: sender authentication verified and no malicious threat intelligence indicators identified."
+            )
+            recs.append(
+                "Maintain standard email gateway hygiene, endpoint telemetry monitoring, and routine security awareness training."
             )
 
         return recs
@@ -209,7 +212,7 @@ class InvestigationReportService:
             severity=threat_sev,
             spf_status=spf_stat,
             dmarc_status=dmarc_stat,
-            malicious_urls=parsed_email.extracted_urls if parsed_email else [],
+            malicious_urls=malicious_domains,
             malicious_ips=malicious_ips,
             attachments_count=att_count,
         )
@@ -317,7 +320,7 @@ class InvestigationReportService:
         """Compiles the report data and returns binary PDF bytes with filename."""
         report_data = self.build_report_data(case_id=case_id, db=db)
         pdf_bytes = self.generator.generate_pdf(report_data)
-        filename = f"ThreatTrace_Investigation_Report_{case_id[:8]}.pdf"
+        filename = f"CaseForge_Investigation_Report_{case_id[:8]}.pdf"
         logger.info(
             f"Generated investigation PDF report for case '{case_id}' ({len(pdf_bytes)} bytes)"
         )

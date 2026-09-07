@@ -15,12 +15,17 @@ from src.services.ioc.types import IOCType
 from src.models.domain_intel import DomainIntelligenceRecord
 from src.models.ip_intel import IPIntelligenceRecord
 from src.models.url_intel import URLIntelligenceRecord
+from src.models.threat import ThreatAssessment
+from src.models.risk import RiskAssessment
 
 logger = logging.getLogger("threattrace")
 
 COMMON_DOMAINS = {
     "gmail.com", "google.com", "yahoo.com", "hotmail.com", "outlook.com", 
-    "microsoft.com", "aol.com", "protonmail.com", "icloud.com", "mail.com", "amazon.com"
+    "microsoft.com", "aol.com", "protonmail.com", "icloud.com", "mail.com", "amazon.com",
+    "shopify.com", "cdn.shopify.com", "cloudfront.net", "salesforce.com",
+    "exacttarget.com", "w3.org", "www.w3.org", "tatacliq.com", "akamaihd.net",
+    "facebook.com", "twitter.com", "instagram.com", "linkedin.com", "apple.com"
 }
 
 COMMON_ORGS = {
@@ -93,6 +98,13 @@ class CampaignCorrelationService:
 
     def correlate_case(self, case_id: str, db: Session):
         """Correlate a case and link it to campaigns if threshold met."""
+        # Only correlate cases that exhibit potential threat activity
+        threat = db.execute(select(ThreatAssessment).where(ThreatAssessment.case_id == case_id)).scalar_one_or_none()
+        risk = db.execute(select(RiskAssessment).where(RiskAssessment.case_id == case_id)).scalar_one_or_none()
+        if threat and threat.classification.lower() == "normal" and (not risk or risk.total_score < 30.0):
+            # Benign normal communications should not be grouped into attacker campaigns
+            return
+
         indicators = self.extract_case_indicators(case_id, db)
         if not indicators:
             return
@@ -149,6 +161,10 @@ class CampaignCorrelationService:
                     add_match(r.case_id, 20, f"org:{r.organization.lower()}")
 
         for match_case_id, data in matched_cases.items():
+            # Ensure matched case is not an unrelated benign case
+            other_threat = db.execute(select(ThreatAssessment).where(ThreatAssessment.case_id == match_case_id)).scalar_one_or_none()
+            if other_threat and other_threat.classification.lower() == "normal":
+                continue
             if data["score"] >= CORRELATION_THRESHOLD:
                 self._link_to_campaign(case_id, match_case_id, data["score"], list(data["matches"]), db)
 

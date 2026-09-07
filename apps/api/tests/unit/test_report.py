@@ -148,7 +148,7 @@ def test_pdf_report_generation_full_sections(db_session: Session, sample_analyst
     assert isinstance(pdf_bytes, bytes)
     assert len(pdf_bytes) > 1000
     assert pdf_bytes.startswith(b"%PDF-")
-    assert filename == f"ThreatTrace_Investigation_Report_{case.id[:8]}.pdf"
+    assert filename == f"CaseForge_Investigation_Report_{case.id[:8]}.pdf"
 
 
 def test_report_data_missing_and_empty_telemetry_handling(
@@ -248,3 +248,115 @@ def test_report_service_nonexistent_case_raises_not_found(db_session: Session):
     service = InvestigationReportService()
     with pytest.raises(NotFoundError):
         service.build_report_data(case_id="nonexistent-case-id", db=db_session)
+
+
+def test_ioc_extraction_sanitizes_html_tags_and_scripts():
+    """Verify that CSS classes like 'div.preheader', script files like 'open.aspx', and XML schemas are NOT extracted as domains."""
+    from src.services.ioc.extractor import default_ioc_extractor
+    from src.services.parser.types import ParsedEmailData
+
+    sample_email = ParsedEmailData(
+        from_address="shop@fashioncollections.tatacliq.com",
+        recipients=["user@example.com"],
+        body_plain="Hello, your order has arrived at https://click.styleupdate.tatacliq.com/path",
+        body_html="""
+            <html>
+                <head><style>div.preheader { display: none; }</style></head>
+                <body xmlns="http://www.w3.org/1999/xhtml">
+                    <div class="preheader">Preview text here</div>
+                    <a href="https://click.styleupdate.tatacliq.com/open.aspx">View Order</a>
+                    <img src="https://image.styleupdate.tatacliq.com/banner.png" />
+                </body>
+            </html>
+        """,
+        raw_headers={
+            "Return-Path": "<bounce@bounce.styleupdate.tatacliq.com>",
+            "Received": ["from mta7.styleupdate.tatacliq.com (mta7.styleupdate.tatacliq.com [198.51.100.1]) by mx.google.com"],
+        },
+    )
+
+    result = default_ioc_extractor.extract_from_email_data(sample_email)
+    domain_values = [ioc.value for ioc in result.iocs if ioc.type.value == "domain"]
+
+    # div.preheader and open.aspx MUST NOT be extracted as domains
+    assert "div.preheader" not in domain_values
+    assert "open.aspx" not in domain_values
+    assert "w3.org" not in domain_values
+    assert "www.w3.org" not in domain_values
+
+    # Genuine domains must be present
+    assert "click.styleupdate.tatacliq.com" in domain_values
+    assert "image.styleupdate.tatacliq.com" in domain_values
+    assert "bounce.styleupdate.tatacliq.com" in domain_values
+
+
+def test_pdf_report_duration_and_campaign_formatting():
+    """Verify that duration formats gracefully (e.g. +21h 43m) and campaign confidence never outputs 10000%."""
+    generator = PDFReportGenerator()
+
+    # Test duration helper
+    assert generator._format_duration(78215.0) == "+21h 43m"
+    assert generator._format_duration(13.0) == "+13s"
+    assert generator._format_duration(0.0) == "-"
+    assert generator._format_duration(None) == "-"
+
+    # Test file size helper
+    assert "24.65 KB" in generator._format_file_size(25241)
+
+    # Test report compiling with related campaigns and high delay
+    report_data = InvestigationReportData(
+        report_title="Incident Report",
+        system_name="ThreatTrace AI",
+        version="0.1.0",
+        generated_at_iso="2026-09-06T11:43:28Z",
+        case_id="f11c8796-b18a-4f4b-837c-96458f8fe09d",
+        file_name="Indianwear Faves Have Arrived.eml",
+        file_size_bytes=25241,
+        sha256_hash="5f286441d34424ae216b82793c23776aa6f0c0201c163348fcafbf0b511a2f9a",
+        case_status="PARSED",
+        threat_classification="normal",
+        threat_score=9.4,
+        threat_severity="low",
+        threat_confidence=0.92,
+        related_campaigns=[
+            {"campaign_id": "CAM-B76B3601", "confidence": 100.0, "first_seen": "2026-08-28T00:00:00Z"},
+            {"campaign_id": "CAM-59EC0AAF", "confidence": 85.5, "first_seen": "2026-09-06T00:00:00Z"},
+        ],
+        timeline_events=[
+            {
+                "title": "Ingested",
+                "timestamp_iso": "2026-09-06T11:14:45Z",
+                "timestamp_quality": "SERVER_INGESTION",
+                "delay_from_previous_seconds": 78215.0,
+            }
+        ],
+        recommendations=[
+            "No immediate remediation blocking required: sender authentication verified.",
+            "Maintain standard email gateway monitoring."
+        ],
+    )
+
+    pdf_bytes = generator.generate_pdf(report_data)
+    assert isinstance(pdf_bytes, bytes)
+    assert len(pdf_bytes) > 2000
+    assert pdf_bytes.startswith(b"%PDF-")
+
+
+def test_benign_email_recommendations_never_instruct_blocking():
+    """Verify that a normal/legitimate email does NOT produce block recommendations for harmless URLs."""
+    service = InvestigationReportService()
+
+    recs = service._generate_recommendations(
+        classification="normal",
+        severity="low",
+        spf_status="pass",
+        dmarc_status="pass",
+        malicious_urls=[],  # No malicious URLs
+        malicious_ips=[],
+        attachments_count=0,
+    )
+
+    # Must advise standard monitoring, NOT blocking
+    assert not any("Block extracted malicious URL" in r for r in recs)
+    assert any("No immediate remediation blocking required" in r for r in recs)
+

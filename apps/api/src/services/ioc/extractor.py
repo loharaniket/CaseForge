@@ -21,6 +21,9 @@ IGNORED_FILE_EXTENSIONS = {
     "gif",
     "svg",
     "bmp",
+    "webp",
+    "tiff",
+    "tif",
     "ico",
     "exe",
     "dll",
@@ -48,6 +51,23 @@ IGNORED_FILE_EXTENSIONS = {
     "js",
     "json",
     "xml",
+    "aspx",
+    "asp",
+    "php",
+    "jsp",
+    "cgi",
+    "cfm",
+    "action",
+    "do",
+    "pl",
+    "py",
+    "rb",
+    "map",
+    "woff",
+    "woff2",
+    "ttf",
+    "eot",
+    "otf",
 }
 
 IGNORED_DOMAIN_TOKENS = {
@@ -62,6 +82,26 @@ IGNORED_DOMAIN_TOKENS = {
     "header.return_path",
     "smtp.mailfrom",
     "body.url_domain",
+    "w3.org",
+    "www.w3.org",
+    "schema.org",
+    "schemas.microsoft.com",
+    "xmlsoap.org",
+}
+
+
+HTML_TAG_NAMES = {
+    "div", "span", "p", "table", "tbody", "thead", "tr", "td", "th",
+    "ul", "ol", "li", "a", "img", "button", "input", "form", "body",
+    "head", "style", "script", "font", "b", "strong", "i", "em",
+    "h1", "h2", "h3", "h4", "h5", "h6", "html", "section", "article"
+}
+
+STANDARD_TLDS = {
+    "com", "org", "net", "edu", "gov", "mil", "int", "io", "ai", "co", "uk", "in",
+    "de", "ca", "app", "dev", "me", "info", "biz", "xyz", "online", "site", "top",
+    "club", "tech", "store", "vip", "pro", "cloud", "agency", "security", "cc", "tv",
+    "us", "au", "fr", "nl", "ru", "jp", "ch", "se", "no", "es", "it", "br", "za"
 }
 
 
@@ -126,6 +166,10 @@ class IOCExtractor:
         if tld in IGNORED_FILE_EXTENSIONS:
             return False
         if len(tld) < 2 or not tld.isalpha():
+            return False
+
+        # Prevent HTML tag class selectors e.g. div.preheader
+        if len(parts) == 2 and parts[0] in HTML_TAG_NAMES and tld not in STANDARD_TLDS:
             return False
 
         return True
@@ -305,9 +349,10 @@ class IOCExtractor:
         for u in extracted_urls:
             add_ioc(IOCType.URL, u, "body.url", confidence=0.95)
 
-        # 5. Extract Content Mentions from Text & HTML Bodies
-        combined_body = f"{body_text}\n{body_html}"
-        if combined_body.strip():
+        # 5. Extract Content Mentions from Text Bodies (HTML tags stripped)
+        clean_html_text = re.sub(r"<[^>]+>", " ", body_html or "") if body_html else ""
+        combined_body = f"{body_text or ''}\n{clean_html_text}".strip()
+        if combined_body:
             # IPv4 in body
             for ip in RE_IPV4.findall(combined_body):
                 add_ioc(IOCType.IPV4, ip, "body.text", confidence=0.90)

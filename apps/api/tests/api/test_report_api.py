@@ -51,7 +51,7 @@ def test_download_case_pdf_report_api(client: TestClient, db_session: Session):
     pdf_res = client.get(f"/api/email/{case_id}/report/pdf", headers=headers)
     assert pdf_res.status_code == 200
     assert pdf_res.headers["content-type"] == "application/pdf"
-    assert "ThreatTrace_Investigation_Report_" in pdf_res.headers["content-disposition"]
+    assert "CaseForge_Investigation_Report_" in pdf_res.headers["content-disposition"]
     assert pdf_res.content.startswith(b"%PDF-")
     assert len(pdf_res.content) > 1000
 

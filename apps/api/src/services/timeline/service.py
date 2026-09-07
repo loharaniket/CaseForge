@@ -106,8 +106,10 @@ class ForensicTimelineService:
         # 2. MTA Relay Transmission Hops
         if forensics and forensics.relay_hops:
             for idx, hop in enumerate(forensics.relay_hops):
-                hop_dt = _safe_parse_iso(hop.get("timestamp_iso")) or _safe_parse_iso(
-                    hop.get("timestamp_raw")
+                hop_dt = (
+                    _safe_parse_iso(hop.get("timestamp_parsed"))
+                    or _safe_parse_iso(hop.get("timestamp_iso"))
+                    or _safe_parse_iso(hop.get("timestamp_raw"))
                 )
                 hop_num = hop.get("hop_number", idx + 1)
                 from_host = hop.get("from_host") or "Unknown"
@@ -153,8 +155,10 @@ class ForensicTimelineService:
             if forensics.relay_hops:
                 # Last hop is receiving MTA
                 last_hop = forensics.relay_hops[-1]
-                receiving_dt = _safe_parse_iso(last_hop.get("timestamp_iso")) or _safe_parse_iso(
-                    last_hop.get("timestamp_raw")
+                receiving_dt = (
+                    _safe_parse_iso(last_hop.get("timestamp_parsed"))
+                    or _safe_parse_iso(last_hop.get("timestamp_iso"))
+                    or _safe_parse_iso(last_hop.get("timestamp_raw"))
                 )
 
             raw_events.append(

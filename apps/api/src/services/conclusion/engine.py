@@ -118,8 +118,8 @@ class ConclusionEngineService:
 
         attribution_assessment = "Origin cannot be conclusively attributed to a human actor."
         limitations = [
-            "Origin cannot be conclusively attributed to a human actor.",
-            "Findings are limited to deterministic signals and available threat intelligence.",
+            "Forensic evaluation is derived from static RFC headers and deterministic threat intelligence feeds.",
+            "Dynamic mailbox telemetry and recipient interaction logs are external to this report scope.",
         ]
 
         if not primary_findings:
