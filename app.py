@@ -1,4 +1,4 @@
-"""ThreatTrace AI — Single-Command Server Launcher & Database Initializer.
+"""CaseForge AI — Single-Command Server Launcher & Database Initializer.
 
 Usage:
     python app.py
