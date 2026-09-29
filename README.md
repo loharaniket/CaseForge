@@ -1,4 +1,4 @@
-# CaseForge — Cybersecurity Email Investigation Platform
+# CaseForge — Email Investigation Platform
 
 CaseForge is a modular cybersecurity email forensics and investigation platform built for Security Operations Centers (SOC).
 
